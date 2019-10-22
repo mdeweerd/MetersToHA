@@ -4,9 +4,9 @@ Charge l'historique de votre consommation d'eau depuis le site Veolia Ile-de-Fra
 ## Features :
 * Chargement de l'integralité de l'historique
 * Gestion multi-contrat
-* Verification de l'installation
+* Verification de l'integrité de l'environnement (pre-requis / configuration domoticz)
 * Mode debug graphique
-* Possible integration avec d'autre solution domotique
+* Possible integration avec d'autre solution domotique (a vous de jouer)
 
 ## Pre-requis :
 * firefox
