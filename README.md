@@ -5,6 +5,8 @@ Ce script s'installe sur le serveur hébergeant l'applicatif domoticz ou sur aut
 
 La récuperation des données se fait grace à l'outil selenium et l'execution en mode Headless de firefox (simulation d'un utilisateur en tâche de fond sans mode graphique).
 
+#### C'est une v1 perfectible, n'hésitez pas à me faire vos retours en cas de problème/difficulté
+
 ## Fonctionnalités :
 * Récupération et chargement de l'intégralité de l'historique
 * Gestion multi-contrat
@@ -95,6 +97,10 @@ exemple ici crontab :
 crontab -e
 ```
 0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /var/log/veolia/veolia-idf.log
+
+## Environnements testés:
+* Debian buster 
+* Ubuntu Zesty (17.04)
 
 ## Remerciements :
 * [k20human](https://github.com/k20human)
