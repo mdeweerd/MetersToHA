@@ -38,8 +38,8 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
 
 Copier les fichiers veolia-idf-domoticz.py et config.json.exemple sur votre serveur. Comme par exemple en :
 ```
-mkdir -p /usr/local
-cd /usr/local
+mkdir -p /opt
+cd /opt
 git clone https://github.com/s0nik42/veolia-idf
 ```
 Pour mettre à jour :
@@ -94,7 +94,7 @@ exemple ici crontab :
 ```
 crontab -e
 ```
-0 1 * * *       /usr/local/veolia-idf/veolia-idf-domoticz.py --run --log /usr/local/veolia-idf/veolia-idf.log
+0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /opt/veolia-idf/veolia-idf.log
 
 ## Remerciements :
 * [k20human](https://github.com/k20human)
