@@ -320,7 +320,7 @@ class VeoliaCrawler():
 
         self.print("Remove temporary download file", end="") #############################################################
         try:
-            os.remove(self.download_filename)
+            os.remove(self.__full_path_download_file)
         except Exception:
             raise
         else:
