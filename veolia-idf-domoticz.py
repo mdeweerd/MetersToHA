@@ -782,8 +782,9 @@ def version():
 
 if __name__ == '__main__':
         # Default config value
-        default_logfile = "/var/log/veolia.log"
-        default_configuration_file = os.path.dirname(os.path.realpath(__file__))+ '/config.json'
+        script_dir=os.path.dirname(os.path.realpath(__file__)) + "/"
+        default_logfile = script_dir + "/veolia.log"
+        default_configuration_file = script_dir + '/config.json'
 
 
         # COMMAND LINE OPTIONS

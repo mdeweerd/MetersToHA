@@ -64,7 +64,7 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 * "domoticz_idx": le numero du "virtual sensor" domoticz crée (se trouve dans : Domoticz/Devices/[Colonne Idx]
 
 ## Première execution :
-Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier /var/log/veolia.log . 
+Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier INSTALL_DIR/veolia.log . 
 Je vous recommande pour la première utilisation d'activer le mode debug. Cela permet d'avoir une sortie visuelle de l'éxecution du script sur la console et un suivi des actions dans Firefox. 
 
 Déroulement de l'éxécution :
@@ -94,7 +94,7 @@ exemple ici crontab :
 ```
 crontab -e
 ```
-0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /opt/veolia-idf/veolia-idf.log
+0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /var/log/veolia/veolia-idf.log
 
 ## Remerciements :
 * [k20human](https://github.com/k20human)
