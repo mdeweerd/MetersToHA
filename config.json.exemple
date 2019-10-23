@@ -1,0 +1,10 @@
+{
+    "veolia_login": "monadresse@email.fr",
+    "veolia_password": "GretaThunberg",
+    "veolia_contract": "MONNUMEROCONTRTAT",
+    "domoticz_server": "http://IP:PORT",
+    "domoticz_idx": "42",
+    "domoticz_login": "",
+    "domoticz_password": "",
+    "timeout": "30" 
+}
