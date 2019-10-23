@@ -378,12 +378,13 @@ class VeoliaCrawler():
             self.print(st = "OK")
  
         self.print("Close Display", end="") #############################################################
-        try:
-            self.__display.stop()
-        except:
-            raise
-        else:
-            self.print(st="ok")
+        if self.__display:
+            try:
+                self.__display.stop()
+            except:
+                raise
+            else:
+                self.print(st="ok")
 
         # Remove downloaded file
         try:
