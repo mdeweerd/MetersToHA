@@ -171,6 +171,7 @@ class VeoliaCrawler():
         self.__display = None
         self.__browser = None
         self.__wait    = None
+        install_dir = os.path.dirname(os.path.realpath(__file__))
         self.configuration = {
             # Mandatory config values
             'veolia_login'      : None,
@@ -178,11 +179,11 @@ class VeoliaCrawler():
             'veolia_contract'   : None,
 
             # Optional config values
-            'geckodriver'       : which('geckodriver') if which('geckodriver') else "/usr/local/bin/geckodriver",
-            'firefox'           : which('firefox') if which('firefox') else "/usr/local/bin/firefox",
+            'geckodriver'       : which('geckodriver') if which('geckodriver') else install_dir + "/geckodriver",
+            'firefox'           : which('firefox') if which('firefox') else install_dir + "/firefox",
             'timeout'           : "30",
-            'download_folder'   : os.path.dirname(os.path.realpath(__file__)) + "/",
-            'logs_folder'       : os.path.dirname(os.path.realpath(__file__)) + "/"
+            'download_folder'   : install_dir + "/",
+            'logs_folder'       : install_dir + "/"
         }
 
         self.print("Start loading veolia configuration")
@@ -252,7 +253,7 @@ class VeoliaCrawler():
             firefox_capabilities['marionette'] = True
 
             # Enable the browser
-            self.__browser = webdriver.Firefox(capabilities=firefox_capabilities, firefox_binary=binary, options = opts, service_log_path=self.configuration['logs_folder'] + "/geckodriver.log")
+            self.__browser = webdriver.Firefox(capabilities=firefox_capabilities, firefox_binary=binary, options = opts, service_log_path=self.configuration['logs_folder'] + "/geckodriver.log", executable_path=self.configuration['geckodriver'])
         except Exception:
             raise
         else:
