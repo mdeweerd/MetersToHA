@@ -61,10 +61,12 @@ except ImportError as e:
 # Output Class in charge of managing all script output to file or console
 ################################################################################
 class Output():
-    def __init__(self, logfile, debug = False):
+    def __init__(self, logs_folder=None, debug = False):
         self.__debug = debug
         self.__logger = logging.getLogger()
         self.__print_buffer=""
+        logs_folder =  os.path.dirname(os.path.realpath(__file__)) if logs_folder == None else logs_folder
+        logfile = logs_folder + '/veolia.log'
 
         # By default log to console
         self.print      = self.__print_to_console
@@ -179,7 +181,8 @@ class VeoliaCrawler():
             'geckodriver'       : which('geckodriver') if which('geckodriver') else "/usr/local/bin/geckodriver",
             'firefox'           : which('firefox') if which('firefox') else "/usr/local/bin/firefox",
             'timeout'           : "30",
-            'download_folder'   : os.path.dirname(os.path.realpath(__file__)) + "/"
+            'download_folder'   : os.path.dirname(os.path.realpath(__file__)) + "/",
+            'logs_folder'       : os.path.dirname(os.path.realpath(__file__)) + "/"
         }
 
         self.print("Start loading veolia configuration")
@@ -249,7 +252,7 @@ class VeoliaCrawler():
             firefox_capabilities['marionette'] = True
 
             # Enable the browser
-            self.__browser = webdriver.Firefox(capabilities=firefox_capabilities, firefox_binary=binary, options = opts)
+            self.__browser = webdriver.Firefox(capabilities=firefox_capabilities, firefox_binary=binary, options = opts, service_log_path=self.configuration['logs_folder'] + "/geckodriver.log")
         except Exception:
             raise
         else:
@@ -783,7 +786,7 @@ def version():
 if __name__ == '__main__':
         # Default config value
         script_dir=os.path.dirname(os.path.realpath(__file__)) + "/"
-        default_logfile = script_dir + "/veolia.log"
+        default_logfolder = script_dir
         default_configuration_file = script_dir + '/config.json'
 
 
@@ -791,7 +794,7 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser(description="Load water consumption from veolia Ile de France into domoticz")
         parser.add_argument("-v", "--version", action="store_true",help="script version")
         parser.add_argument("-d", "--debug", action="store_true",help="active graphical debug mode (only for troubleshooting)")
-        parser.add_argument("-l", "--log", help="specify logfile location (" + default_logfile + ")", default=default_logfile, nargs=1)
+        parser.add_argument("-l", "--logs-folder", help="specify the logs location folder (" + default_logfolder + ")", default=default_logfolder, nargs=1)
         parser.add_argument("-c", "--config", help="specify configuration location (" + default_configuration_file + ")", default=default_configuration_file, nargs=1)
         parser.add_argument("-r", "--run", action="store_true",help="run the script", required=True)
         args = parser.parse_args()
@@ -802,13 +805,14 @@ if __name__ == '__main__':
 
         # Init output
         try:
-            o = Output(logfile = str(args.log).strip("[]'"), debug=args.debug)
+            o = Output(logs_folder = str(args.logs_folder).strip("[]'"), debug=args.debug)
         except Exception as e:
             exit_on_error(string = str(e))
 
-        # Print Debug Message
-        o.print("DEBUG MODE ACTIVATED", end="")
-        o.print("only use '--debug' for troubleshooting", st="WW")
+        # Print debug message
+        if args.debug:
+            o.print("DEBUG MODE ACTIVATED", end="")
+            o.print("only use '--debug' for troubleshooting", st="WW")
 
         # New version checking
         try:
@@ -816,13 +820,14 @@ if __name__ == '__main__':
         except Exception as e:
             exit_on_error(string = str(e))
 
-
         # Load configuration
         try:
             c = Configuration(debug=args.debug, super_print=o.print)
             configuration_json = c.load_configuration_file(str(args.config).strip("[]'"))
+            configuration_json['logs_folder'] = str(args.logs_folder).strip("[]'")
         except Exception as e:
             exit_on_error(string = str(e))
+
 
         # Create objects
         try:
