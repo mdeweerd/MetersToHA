@@ -51,7 +51,7 @@ Donnez la permission d'exécution si vous êtes sous Linux :
 chmod ugo+x veolia-idf-domoticz.py
 ```
 
-# Configuration :
+## Configuration :
 Copier le fichier config.json.exemple en config.json
 ```
 cp  config.json.exemple config.json
@@ -63,7 +63,7 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 * "domoticz_server": url du server domoticz (genre : http://127.0.0.1:8080/)
 * "domoticz_idx": le numero du "virtual sensor" domoticz crée (se trouve dans : Domoticz/Devices/[Colonne Idx]
 
-# Première execution :
+## Première execution :
 Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier /var/log/veolia.log . 
 Je vous recommande pour la première utilisation d'activer le mode debug. Cela permet d'avoir une sortie visuelle de l'éxecution du script sur la console et un suivi des actions dans Firefox. 
 
@@ -84,7 +84,7 @@ Afficher toutes les options disponibles :
 ./veolia-idf-domoticz.py --help
 ```
 
-# Automatisation :
+## Automatisation :
 Une fois que la première execution à terminée correctement, je vous recommande de planifier les executions une fois par jour. En rajoutant la ligne suivante à votre planificateur de tâche :
 ```
 ./veolia-idf-domoticz.py --run
