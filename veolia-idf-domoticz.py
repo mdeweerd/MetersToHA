@@ -182,8 +182,8 @@ class VeoliaCrawler():
             'geckodriver'       : which('geckodriver') if which('geckodriver') else install_dir + "/geckodriver",
             'firefox'           : which('firefox') if which('firefox') else install_dir + "/firefox",
             'timeout'           : "30",
-            'download_folder'   : install_dir + "/",
-            'logs_folder'       : install_dir + "/"
+            'download_folder'   : install_dir + os.path.sep,
+            'logs_folder'       : install_dir + os.path.sep
         }
 
         self.print("Start loading veolia configuration")
@@ -210,12 +210,19 @@ class VeoliaCrawler():
                     self.print('    "' + param + '"', end="") 
                     raise RuntimeError("param is missing in " + self.__configuration_file)
             else:
-                if param == "veolia_password":
-                    self.print('    "' + param + '" = "' + "*"*len(configuration_json[param]) + '"', end="") 
+                if (param == "download_folder" or param == "logs_folder") and configuration_json[param][-1] != os.path.sep:
+                    self.configuration[param] = configuration_json[param] + os.path.sep
                 else:
-                    self.print('    "' + param + '" = "' + configuration_json[param] + '"', end="") 
+                    self.configuration[param] = configuration_json[param]
+
+                if param == "veolia_password":
+                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="") 
+                else:
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+
                 self.print(st = "OK")
-                self.configuration[param] = configuration_json[param]
+
+
 
 
     # INIT DISPLAY & BROWSER
@@ -572,7 +579,7 @@ class DomoticzInjector():
             'domoticz_login'    : "",
             'domoticz_password' : "",
             'timeout'           : "30",
-            'download_folder'   : os.path.dirname(os.path.realpath(__file__)) + "/"
+            'download_folder'   : os.path.dirname(os.path.realpath(__file__)) + os.path.sep
         }
         self.print("Start Loading Domoticz configuration")
         try:
@@ -628,12 +635,20 @@ class DomoticzInjector():
                     self.print('    "' + param + '"', end="") 
                     raise RuntimeError("param is missing in " + self.__configuration_file)
             else:
-                if param == "domoticz_password":
-                    self.print('    "' + param + '" = "' + "*"*len(configuration_json[param]) + '"', end="") 
+                if param == "download_folder" and configuration_json[param][-1] != os.path.sep:
+                    self.configuration[param] = configuration_json[param] + os.path.sep
                 else:
-                    self.print('    "' + param + '" = "' + configuration_json[param] + '"', end="") 
+                    self.configuration[param] = configuration_json[param]
+
+                if param == "domoticz_password":
+                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="") 
+                else:
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+
                 self.print(st = "OK")
-                self.configuration[param] = configuration_json[param]
+
+
+
 
 
     def sanity_check(self):
@@ -787,7 +802,7 @@ def version():
 
 if __name__ == '__main__':
         # Default config value
-        script_dir=os.path.dirname(os.path.realpath(__file__)) + "/"
+        script_dir=os.path.dirname(os.path.realpath(__file__)) + os.path.sep
         default_logfolder = script_dir
         default_configuration_file = script_dir + '/config.json'
 
