@@ -235,7 +235,7 @@ class VeoliaCrawler():
         try:
             self.__display.start()
         except Exception as e:
-            raise RuntimeError(str(e) + "if you launch the script from a ssh connection ensure X11 forwarding is activated")
+            raise RuntimeError(str(e) + "if you launch the script through a ssh connection with '--debug' ensure X11 forwarding is activated")
         else:
             self.print(st = "OK")
 
