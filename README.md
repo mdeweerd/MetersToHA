@@ -65,6 +65,16 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 * "domoticz_server": url du server domoticz (genre : http://127.0.0.1:8080/)
 * "domoticz_idx": le numero du "virtual sensor" domoticz crée (se trouve dans : Domoticz/Devices/[Colonne Idx]
 
+## Paramètrer votre système pour le mode debug (optionnel, mais recommandé)
+Si vous rencontrez des problèmes à l'execution, il sera utile d'utiliser le mode debug (--debug). 2 senarios :
+1/ Le script est executé en locale part l'utilisateur avec lequel vous êtes logués  ==> ca devrait fonctionner tout seul.
+2/ Vous executez le script sur une machine distante linux. Il convient alors de vérifier que la commande suivante fonctionne apres être connecté sur la machine linux distante (via ssh probablement) :
+```xlogo```
+
+Si vous voyez bien une fenetre X s'afficher à l'écran c'est que l'environnement X11 est correctement configuré. Le mode debug du script devrait fonctionner.
+
+Si par contre rien ne s'affiche, il convient de chercher sur internet comment le faire fonctionner, il y a pleins de tutos pour cela. Ensuite vous pourrez utiliser le mode debug.
+
 ## Première execution :
 Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier INSTALL_DIR/veolia.log . 
 Je vous recommande pour la première utilisation d'activer le mode debug. Cela permet d'avoir une sortie visuelle de l'éxecution du script sur la console et un suivi des actions dans Firefox. 
