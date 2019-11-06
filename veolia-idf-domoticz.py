@@ -614,7 +614,7 @@ class DomoticzInjector():
             raise RuntimeError('url=' + url_test + ' - (code = ' + str(response.status) + ')\ncontent=' + str(response.data))
 
         try:
-            j=json.loads(response.data)
+            j=json.loads(response.data.decode('utf-8'))
         except Exception as e:
             # Handle JSON ERROR
             raise RuntimeError("unable to parse the JSON : " + str(e))
