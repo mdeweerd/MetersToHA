@@ -473,16 +473,17 @@ class VeoliaCrawler():
         else:
             self.print(st="ok")
 
-        self.print('Wait for MENU contrats', end="") #############################################################
+        ### COMPORTEMENT DIFFERENT S IL S AGIT D UN MULTU CONTRATS OU D U NCONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
+        self.print('Wait for MENU contrats or historique', end="") #############################################################
         try:
-            ep = EC.visibility_of_element_located((By.XPATH,"//span[contains(text(), 'CONTRATS')]"))
+            ep = EC.visibility_of_element_located((By.XPATH,"//span[contains(text(), 'CONTRATS') or contains(text(), 'HISTORIQUE')]"))
             el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
         except Exception:
             raise
         else:
             self.print(st="ok")
 
-        self.print('Click on menu : contrats', end="") #############################################################
+        self.print('Click on menu : ' + el.get_attribute('innerHTML') , end="") #############################################################
         try:
             el.click()
         except Exception:
@@ -490,42 +491,43 @@ class VeoliaCrawler():
         else:
             self.print(st="ok")
 
-        self.print('Select contract : ' + self.configuration['veolia_contract'], end="") #############################################################
-        try:
-            ep = EC.visibility_of_element_located((By.LINK_TEXT,self.configuration['veolia_contract']))
-            el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        # GESTION DU PARCOUR MULTICONTRATS
+        if (el.get_attribute('innerHTML') == "CONTRATS"):
+            self.print('Select contract : ' + self.configuration['veolia_contract'], end="") #############################################################
+            try:
+                ep = EC.visibility_of_element_located((By.LINK_TEXT,self.configuration['veolia_contract']))
+                el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
+            except Exception:
+                raise
+            else:
+                self.print(st="ok")
 
-        self.print('Click on contract', end="") #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+            self.print('Click on contract', end="") #############################################################
+            try:
+                el.click()
+            except Exception:
+                raise
+            else:
+                self.print(st="ok")
 
-        self.print('Wait for historique menu', end="") #############################################################
-        try:
-            ep = EC.visibility_of_element_located((By.LINK_TEXT,"Historique"))
-            el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-
-        self.print('Click on historique menu', end="") #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+            self.print('Wait for historique menu', end="") #############################################################
+            try:
+                ep = EC.visibility_of_element_located((By.LINK_TEXT,"Historique"))
+                el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
+            except Exception:
+                raise
+            else:
+                self.print(st="ok")
 
 
+            self.print('Click on historique menu', end="") #############################################################
+            try:
+                el.click()
+            except Exception:
+                raise
+            else:
+                self.print(st="ok")
+        
         self.print('Wait for boutton telechargement', end="") #############################################################
         try:
             ep = EC.presence_of_element_located((By.XPATH,'//*[contains(text(),"charger la p")]'))
@@ -556,7 +558,7 @@ class VeoliaCrawler():
             self.print(st="ok")
         else:
             raise RuntimeError("File download timeout")
-
+        
         return self.__full_path_download_file
 
 ################################################################################
