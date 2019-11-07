@@ -43,6 +43,7 @@ Copier les fichiers veolia-idf-domoticz.py et config.json.exemple sur votre serv
 mkdir -p /opt
 cd /opt
 git clone https://github.com/s0nik42/veolia-idf
+cd veolia-idf
 ```
 Pour mettre à jour :
 ```
@@ -51,6 +52,10 @@ git pull
 Donnez la permission d'exécution si vous êtes sous Linux :
 ```
 chmod ugo+x veolia-idf-domoticz.py
+```
+Ajouter les prerequis python:
+```
+pip3 install -r requirements.txt 
 ```
 
 ## Configuration :
