@@ -18,11 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 #
 VERSION="v1.2"
 ################################################################################
-# SCRIPT DEPENDENCIES 
+# SCRIPT DEPENDENCIES
 ################################################################################
 
 try:
@@ -34,25 +34,26 @@ try:
     import http.cookiejar
     import json
     import logging
-    from   logging.handlers import RotatingFileHandler
+    from logging.handlers import RotatingFileHandler
     import os
-    from   pyvirtualdisplay import Display  
+    from pyvirtualdisplay import Display
     import re
-    from   selenium import webdriver
-    from   selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-    from   selenium.webdriver.common.by import By
+    from selenium import webdriver
+    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+    from selenium.webdriver.common.by import By
     import selenium.webdriver.firefox
-    from   selenium.webdriver.firefox.options import Options
-    from   selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-    from   selenium.webdriver.support.ui import WebDriverWait
-    from   selenium.webdriver.support import expected_conditions as EC
-    from   shutil import which
+    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from shutil import which
     import signal
     import subprocess
     import sys
     import time
     import urllib3
-    from   urllib.parse import urlencode
+    from urllib.parse import urlencode
+    from datetime import datetime
 except ImportError as e:
     print("Error: failed to import python required module : " + str(e), file=sys.stderr)
     sys.exit(2)
@@ -95,7 +96,7 @@ class Output():
             st = st.replace("WW", Fore.YELLOW + "WW")
             st = st.replace("EE", Fore.RED + "EE")
             st = "[" + st + Style.RESET_ALL + "] "
-        
+
         if end != None:
             st = st + " " if st else ""
             print(st + "{:75s}".format(string), end="", flush=True)
@@ -118,7 +119,7 @@ class Output():
             self.__logger.info(st.upper() + " : " + (self.__print_buffer.lstrip().rstrip() + " " + string.lstrip().rstrip()).lstrip())
             self.__print_buffer=""
         pass
-        
+
     def print():
         pass
 
@@ -129,18 +130,18 @@ class Configuration():
 
     def __init__(self, super_print=None, debug = False):
         self.__debug = debug
-        
+
         # Supersede local print function if provided as an argument
         self.print = super_print if super_print else self.print
 
     def load_configuration_file(self, configuration_file):
         self.print("Loading configuration file : " + configuration_file, end="") #############################################################
-        try: 
+        try:
             with open(configuration_file) as data_file:
                 content =  json.load(data_file)
         except json.JSONDecodeError as e:
             raise RuntimeError("json format error : " + str(e))
-        except Exception: 
+        except Exception:
             raise
         else:
             self.print(st = "OK")
@@ -194,7 +195,7 @@ class VeoliaCrawler():
             raise
         else:
             self.print(st="ok")
- 
+
         self.__full_path_download_file = self.configuration['download_folder'] + self.download_filename
 
         pass
@@ -204,11 +205,11 @@ class VeoliaCrawler():
         for param in list((self.configuration).keys()):
             if param not in configuration_json:
                 if self.configuration[param] is not None:
-                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="")
                     self.print("param is not found in config file, using default value","WW")
                 else:
-                    self.print('    "' + param + '"', end="") 
-                    raise RuntimeError("param is missing in " + self.__configuration_file)
+                    self.print('    "' + param + '"', end="")
+                    raise RuntimeError("param is missing in configuration file")
             else:
                 if (param == "download_folder" or param == "logs_folder") and configuration_json[param][-1] != os.path.sep:
                     self.configuration[param] = configuration_json[param] + os.path.sep
@@ -216,9 +217,9 @@ class VeoliaCrawler():
                     self.configuration[param] = configuration_json[param]
 
                 if param == "veolia_password":
-                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="") 
+                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="")
                 else:
-                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="")
 
                 self.print(st = "OK")
 
@@ -229,9 +230,9 @@ class VeoliaCrawler():
     def init_browser_firefox(self):
         self.print("Start virtual display", end="") #############################################################
         if self.__debug:
-            self.__display = Display(visible=1, size=(1280, 1024))   
-        else: 
-            self.__display = Display(visible=0, size=(1280, 1024))   
+            self.__display = Display(visible=1, size=(1280, 1024))
+        else:
+            self.__display = Display(visible=0, size=(1280, 1024))
         try:
             self.__display.start()
         except Exception as e:
@@ -244,7 +245,7 @@ class VeoliaCrawler():
             # Enable Download
             opts = Options()
             fp = webdriver.FirefoxProfile()
-            opts.profile = fp 
+            opts.profile = fp
             fp.set_preference('browser.download.dir', self.configuration['download_folder'])
             fp.set_preference('browser.download.folderList', 2)
             fp.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
@@ -290,11 +291,11 @@ class VeoliaCrawler():
 
         self.print("Start virtual display", end="") #############################################################
         if self.__debug:
-            self.__display = Display(visible=1, size=(1280, 1024))   
-        else: 
+            self.__display = Display(visible=1, size=(1280, 1024))
+        else:
             options.add_argument("--headless")
             options.add_argument("--disable-gpu")
-            self.__display = Display(visible=0, size=(1280, 1024))   
+            self.__display = Display(visible=0, size=(1280, 1024))
         try:
             self.__display.start()
         except Exception:
@@ -314,7 +315,7 @@ class VeoliaCrawler():
         pass
 
     def sanity_check(self):
-        
+
         self.print("Check download location integrity", end="") #############################################################
         if os.path.exists(self.__full_path_download_file):
             self.print(self.__full_path_download_file + " already exists, will be removed", "WW")
@@ -383,7 +384,7 @@ class VeoliaCrawler():
                 self.print(st = "OK")
         else:
             self.print(st = "OK")
- 
+
         self.print("Close Display", end="") #############################################################
         if self.__display:
             try:
@@ -401,7 +402,7 @@ class VeoliaCrawler():
         else:
             if os.path.exists(self.__full_path_download_file):
                 self.print("Remove downloaded file "+ self.download_filename, end="") #############################################################
-            
+
                 # Remove file
                 try:
                     os.remove(self.__full_path_download_file)
@@ -412,7 +413,7 @@ class VeoliaCrawler():
         pass
 
     def get_file(self):
-         
+
         self.print('Connexion au site Veolia Eau Ile de France', end="") #############################################################
         try:
             self.__browser.get(self.__class__.site_url)
@@ -439,7 +440,7 @@ class VeoliaCrawler():
         else:
             self.print(st="ok")
 
-        self.print('Type Email', end="") ############################################################# 
+        self.print('Type Email', end="") #############################################################
         try:
             el_email.clear()
             el_email.send_keys(self.configuration['veolia_login'])
@@ -527,7 +528,45 @@ class VeoliaCrawler():
                 raise
             else:
                 self.print(st="ok")
-        
+
+        time.sleep(2)
+        self.print('Wait for bouton Litres', end="") #############################################################
+        try:
+            ep = EC.visibility_of_element_located((By.XPATH,"//span[contains(text(), 'Litres')]/parent::node()"))
+            el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
+        time.sleep(2)
+        self.print('Click on bouton litres ', end="") #############################################################
+        try:
+            el.click()
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
+        time.sleep(2)
+        self.print('Wait for bouton jours', end="") #############################################################
+        try:
+            ep = EC.visibility_of_element_located((By.XPATH,"//span[contains(text(), 'Jours')]/parent::node()"))
+            el = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
+        time.sleep(2)
+        self.print('Click on bouton jours', end="") #############################################################
+        try:
+            el.click()
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
         self.print('Wait for boutton telechargement', end="") #############################################################
         try:
             ep = EC.presence_of_element_located((By.XPATH,'//*[contains(text(),"charger la p")]'))
@@ -558,14 +597,14 @@ class VeoliaCrawler():
             self.print(st="ok")
         else:
             raise RuntimeError("File download timeout")
-        
+
         return self.__full_path_download_file
 
 ################################################################################
 # Object injects historical data into domoticz
 ################################################################################
 class DomoticzInjector():
-    
+
     def __init__(self, configuration_json, super_print, debug = False):
         self.__debug = debug
 
@@ -591,7 +630,7 @@ class DomoticzInjector():
             raise
         else:
             self.print(st="ok")
- 
+
         self.__http = urllib3.PoolManager(retries=1, timeout=int(self.configuration['timeout']))
         pass
 
@@ -631,11 +670,11 @@ class DomoticzInjector():
         for param in list((self.configuration).keys()):
             if param not in configuration_json:
                 if self.configuration[param] is not None:
-                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="")
                     self.print("param is not found in config file, using default value","WW")
                 else:
-                    self.print('    "' + param + '"', end="") 
-                    raise RuntimeError("param is missing in " + self.__configuration_file)
+                    self.print('    "' + param + '"', end="")
+                    raise RuntimeError("param is missing in configuration file")
             else:
                 if param == "download_folder" and configuration_json[param][-1] != os.path.sep:
                     self.configuration[param] = configuration_json[param] + os.path.sep
@@ -643,9 +682,9 @@ class DomoticzInjector():
                     self.configuration[param] = configuration_json[param]
 
                 if param == "domoticz_password":
-                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="") 
+                    self.print('    "' + param + '" = "' + "*"*len(self.configuration[param]) + '"', end="")
                 else:
-                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="") 
+                    self.print('    "' + param + '" = "' + self.configuration[param] + '"', end="")
 
                 self.print(st = "OK")
 
@@ -662,7 +701,7 @@ class DomoticzInjector():
         self.print('Check domoticz Device', end="") #############################################################
         # generate 2 urls, one for historique, one for update
         response = self.open_url('/json.htm?type=devices&rid=' + self.configuration['domoticz_idx'])
-        
+
         if not "result" in response:
                 raise RuntimeError('device ' + self.configuration['domoticz_idx'] + " could not be found on domoticz server " + self.configuration['domoticz_server'])
         else :
@@ -679,7 +718,7 @@ class DomoticzInjector():
                 # Retrieve Device Name
                 self.print('    Device Name            : "' + dev_Name + '" (idx=' +  self.configuration['domoticz_idx'] + ')' , end="") #############################################################
                 self.print(st="ok")
-               
+
                 # Checking Device Type
                 self.print('    Device Type            : "' + dev_Type + '"', end="") #############################################################
                 if dev_Type =="General":
@@ -695,7 +734,7 @@ class DomoticzInjector():
                 else:
                     self.print('wrong sensor type. Go to Domoticz/Hardware - Create a pseudo-sensor type "Managed Counter"', st="ee")
                     properly_configured = False
-    
+
                 # Checking for SwitchType
                 self.print('    Device SwitchType      : "' + str(dev_SwitchTypeVal), end="") #############################################################
                 if dev_SwitchTypeVal == 2:
@@ -703,7 +742,7 @@ class DomoticzInjector():
                 else:
                     self.print("wrong switch type. Go to Domoticz - Select your counter - click edit - change type to water", st="ee")
                     properly_configured = False
-    
+
                 # Checking for Counter Divider
                 self.print('    Device Counter Divided : "' + str(dev_AddjValue2) + '"', end="") #############################################################
                 if dev_AddjValue2 == 1000:
@@ -711,7 +750,7 @@ class DomoticzInjector():
                 else:
                     self.print('wrong counter divided. Go to Domoticz - Select your counter - click edit - set "Counter Divided" to 1000', st="ee")
                     properly_configured = False
-    
+
                 # Checking Meter Offset
                 self.print('    Device Meter Offset    : "' + str(dev_AddjValue) + '"', end="") #############################################################
                 if dev_AddjValue == 0:
@@ -727,25 +766,35 @@ class DomoticzInjector():
     def update_device(self, data_file):
         self.print("Parsing csv file")
         with open(data_file, 'r') as f:
-            # PArse each line of the file. 
+            # Remove first line
+
+            # PArse each line of the file.
+
             for row in list(csv.reader(f, delimiter=';')):
                 date      = row[0][0:10]
                 date_time = row[0]
                 counter   = row[1]
                 conso     = row[2]
 
-                # Generate 2 URLs, one for historique, one for update
-                args = {'type': 'command', 'param': 'udevice', 'idx': self.configuration['domoticz_idx'], 'svalue': counter + ";" + conso + ";" + date}
-                url_historique = '/json.htm?' + urlencode(args)
-                
-                args['svalue'] = counter + ";" + conso + ";" + date_time
-                url_daily = '/json.htm?' + urlencode(args)
-
-                args['svalue'] = conso
-                url_current = '/json.htm?' + urlencode(args)
-
                 # Check line integrity (Date starting by 2 or 1)
                 if date[0] == "2" or date[0] == "1":
+
+                    # Verify data integrity :
+                    d1 = datetime.strptime(date, '%Y-%m-%d')
+                    d2 = datetime.now()
+                    if abs((d2 - d1).days) > 30:
+                        raise RuntimeError("File contains to old data (monthly?!?): "+str(row))
+
+                    # Generate 2 URLs, one for historique, one for update
+                    args = {'type': 'command', 'param': 'udevice', 'idx': self.configuration['domoticz_idx'], 'svalue': counter + ";" + conso + ";" + date}
+                    url_historique = '/json.htm?' + urlencode(args)
+
+                    args['svalue'] = counter + ";" + conso + ";" + date_time
+                    url_daily = '/json.htm?' + urlencode(args)
+
+                    args['svalue'] = conso
+                    url_current = '/json.htm?' + urlencode(args)
+
                     self.print("    update value for " + date, end="") #############################################################
                     self.open_url(url_historique)
                     self.print(st = "ok")
@@ -766,11 +815,11 @@ class DomoticzInjector():
 def exit_on_error(veolia=None, domoticz=None, string=""):
     try:
         o
-    except: 
+    except:
         print(string)
     else:
         o.print(string,st="EE")
- 
+
     if veolia is not None:
         veolia.clean_up()
     if domoticz:
@@ -798,10 +847,6 @@ def check_new_script_version():
         else:
             o.print(st="ok")
 
-def version():
-    print(VERSION)
-    sys.exit(0)
-
 if __name__ == '__main__':
         # Default config value
         script_dir=os.path.dirname(os.path.realpath(__file__)) + os.path.sep
@@ -811,16 +856,12 @@ if __name__ == '__main__':
 
         # COMMAND LINE OPTIONS
         parser = argparse.ArgumentParser(description="Load water consumption from veolia Ile de France into domoticz")
-        parser.add_argument("-v", "--version", action="store_true",help="script version")
+        parser.add_argument('--version', action='version', version=VERSION)
         parser.add_argument("-d", "--debug", action="store_true",help="active graphical debug mode (only for troubleshooting)")
         parser.add_argument("-l", "--logs-folder", help="specify the logs location folder (" + default_logfolder + ")", default=default_logfolder, nargs=1)
         parser.add_argument("-c", "--config", help="specify configuration location (" + default_configuration_file + ")", default=default_configuration_file, nargs=1)
         parser.add_argument("-r", "--run", action="store_true",help="run the script", required=True)
         args = parser.parse_args()
-
-        # VERSION
-        if args.version:
-            version()
 
         # Init output
         try:
@@ -854,7 +895,7 @@ if __name__ == '__main__':
             domoticz = DomoticzInjector(configuration_json, super_print=o.print, debug=args.debug)
         except Exception as e:
             exit_on_error(string = str(e))
-        
+
         # Check requirements
         try:
             veolia.sanity_check()
