@@ -424,7 +424,7 @@ class VeoliaCrawler():
 
         self.print('Waiting for Email', end="") #############################################################
         try:
-            ep = EC.presence_of_element_located((By.CSS_SELECTOR,"input[type='email'"))
+            ep = EC.presence_of_element_located((By.CSS_SELECTOR,"input[inputmode='email'"))
             el_email = self.__wait.until(ep, message="failed, page timeout (timeout=" + self.configuration['timeout'] + ")")
         except Exception:
             raise
