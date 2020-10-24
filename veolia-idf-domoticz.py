@@ -800,13 +800,16 @@ class DomoticzInjector():
                     self.print(st = "ok")
 
         # Update Dashboard
-        self.print("    update current value", end="") #############################################################
-        self.open_url(url_current)
-        self.print(st = "ok")
+        if url_current:
+            self.print("    update current value", end="") #############################################################
+            self.open_url(url_current)
+            self.print(st = "ok")
 
-        self.print("    update daily value", end="") #############################################################
-        self.open_url(url_daily)
-        self.print(st = "ok")
+        if url_daily:
+            self.print("    update daily value", end="") #############################################################
+            self.open_url(url_daily)
+            self.print(st = "ok")
+
         pass
 
     def clean_up(self):
