@@ -28,6 +28,8 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
   * qq autres... (le script commence par verifier la présence des modules)
 * Un Virtual Sensor Domoticz 
 
+## Tester sur ubuntu 20.04
+
 Sur ubuntu ca donne :
 ```
 apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium python3-pyvirtualdisplay python3-colorama python3-urllib3
