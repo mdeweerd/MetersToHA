@@ -28,6 +28,12 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
   * qq autres... (le script commence par verifier la présence des modules)
 * Un Virtual Sensor Domoticz 
 
+Sur ubuntu ca donne :
+```
+apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium python3-pyvirtualdisplay python3-colorama python3-urllib3
+```
+
+
 ## Création du "Virtual Sensor" Domoticz :
 * Créer un Matériel de Type "Dummy" -> Domoticz / Setup / Hardware / Dummy
 * Créer un "Virtual Sensor" de type : "Managed Counter"
