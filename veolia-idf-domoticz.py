@@ -46,6 +46,7 @@ try:
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.firefox.service import Service
     from shutil import which
     import signal
     import subprocess
@@ -254,14 +255,15 @@ class VeoliaCrawler():
             fp.set_preference("browser.helperApps.alwaysAsk.force", False);
 
             # Set firefox binary to use
-            binary = FirefoxBinary(self.configuration['firefox'])
+            opts.binary_location = FirefoxBinary(self.configuration['firefox'])
 
-            # Enable Mirionette drivers
-            firefox_capabilities = DesiredCapabilities.FIREFOX
-            firefox_capabilities['marionette'] = True
+            service = Service(self.configuration['geckodriver'])
 
             # Enable the browser
-            self.__browser = webdriver.Firefox(capabilities=firefox_capabilities, firefox_binary=binary, options = opts, service_log_path=self.configuration['logs_folder'] + "/geckodriver.log", executable_path=self.configuration['geckodriver'])
+            try:
+                self.__browser = webdriver.Firefox(options=opts, service_log_path=self.configuration['logs_folder'] + "/geckodriver.log", service=service)
+            except Exception as e:
+                raise RuntimeError(str(e) + "if you launch the script through a ssh connection with '--debug' ensure X11 forwarding is activated, and you have a working X environment. debug mode start Firefox and show all clicks over the website")
         except Exception:
             raise
         else:
@@ -639,7 +641,7 @@ class DomoticzInjector():
         url_test = self.configuration["domoticz_server"] + uri
 
         # Add authentification Items if needed
-        if self.configuration['domoticz_login'] is not "":
+        if self.configuration['domoticz_login'] != "":
             b64domoticz_login = base64.b64encode(self.configuration['domoticz_login'].encode())
             b64domoticz_password = base64.b64encode(self.configuration['domoticz_password'].encode())
             url_test = url_test + '&username=' + b64domoticz_login.decode()  + '&password=' + b64domoticz_password.decode()
