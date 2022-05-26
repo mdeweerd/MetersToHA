@@ -230,10 +230,11 @@ class VeoliaCrawler():
     # INIT DISPLAY & BROWSER
     def init_browser_firefox(self):
         self.print("Start virtual display", end="") #############################################################
+        # veolia website needs at least 1600x1200 to render all components
         if self.__debug:
-            self.__display = Display(visible=1, size=(1280, 1024))
+            self.__display = Display(visible=1, size=(1600, 1200))
         else:
-            self.__display = Display(visible=0, size=(1280, 1024))
+            self.__display = Display(visible=0, size=(1600, 1200))
         try:
             self.__display.start()
         except Exception as e:
@@ -271,7 +272,9 @@ class VeoliaCrawler():
 
         self.print("Start Firefox", end="") #############################################################
         try:
-            self.__browser.maximize_window()
+            #self.__browser.maximize_window()
+            # replacing maximize_window by set_window_size to get the window full screen 
+            self.__browser.set_window_size(1600, 1200)
             self.__wait = WebDriverWait(self.__browser, int(self.configuration["timeout"]))
         except Exception:
             raise
