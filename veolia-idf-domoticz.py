@@ -419,18 +419,19 @@ class VeoliaCrawler:
             else:
                 self.print(st="ok")
 
-        self.print(
-            "Remove temporary download file", end=""
-        )  #############################################################
-        try:
-            os.remove(self.__full_path_download_file)
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        #############################################################
+        if not debug:
+            try:
+                self.print( "Remove temporary download file", end="")
+                os.remove(self.__full_path_download_file)
+            except Exception:
+                raise
+            else:
+                self.print(st="ok")
 
         self.print(
-            'Check if "geckodriver" is intalled properly', end=""
+            'Check if "geckodriver" is installed properly', end=""
+    
         )  #############################################################
         if os.access(self.configuration["geckodriver"], os.X_OK):
             self.print(st="ok")
@@ -442,7 +443,7 @@ class VeoliaCrawler:
             )
 
         self.print(
-            'Check if "firefox" is intalled properly', end=""
+            'Check if "firefox" is installed properly', end=""
         )  #############################################################
         if os.access(self.configuration["firefox"], os.X_OK):
             self.print(st="ok")
@@ -523,22 +524,15 @@ class VeoliaCrawler:
 
         # Remove downloaded file
         try:
-            os.path.exists(self.__full_path_download_file)
-        except:
-            pass
-        else:
-            if os.path.exists(self.__full_path_download_file):
-                self.print(
-                    "Remove downloaded file " + self.download_filename, end=""
-                )  #############################################################
-
+            if not debug and os.path.exists(self.__full_path_download_file):
+                #############################################################
                 # Remove file
-                try:
-                    os.remove(self.__full_path_download_file)
-                except Exception as e:
-                    self.print(str(e), st="EE")
-                else:
-                    self.print(st="ok")
+                self.print( "Remove downloaded file " + self.download_filename, end="")  
+                os.remove(self.__full_path_download_file)
+            else:
+                self.print(st="ok")
+        except Exception as e:
+            self.print(str(e), st="EE")
 
     def get_file(self):
 
