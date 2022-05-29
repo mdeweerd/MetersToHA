@@ -121,7 +121,7 @@ crontab -e
 ```
 ```crontab
 0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /var/log/veolia/veolia-idf.log
-```shell
+```
 
 ## Environnements testés:
 * Debian buster
