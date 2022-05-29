@@ -32,4 +32,5 @@ RUN pip3 install --upgrade pip \
        "urllib3>=1.24.2" \
        "colorama>=0.3.7" \
        "selenium>=3.14.1" \
-       "PyVirtualDisplay>=0.2.4"
+       "PyVirtualDisplay>=0.2.4" \
+       "requests>=2.23.0"

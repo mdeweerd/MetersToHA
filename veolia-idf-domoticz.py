@@ -1,7 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 @author: s0nik42
 """
+from __future__ import annotations
 # veolia-idf
 # Copyright (C) 2019 Julien NOEL
 #
@@ -24,6 +25,7 @@ VERSION = "v1.3"
 # SCRIPT DEPENDENCIES
 ################################################################################
 
+
 try:
     import argparse
     import base64
@@ -32,6 +34,7 @@ try:
     import logging
     import os
     import re
+    import requests
     import signal
     import subprocess
     import sys
@@ -51,9 +54,9 @@ try:
     from selenium.webdriver.firefox.service import Service
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
-except ImportError as e:
+except ImportError as exc:
     print(
-        "Error: failed to import python required module : " + str(e),
+        "Error: failed to import python required module : " + str(exc),
         file=sys.stderr,
     )
     sys.exit(2)
@@ -68,7 +71,7 @@ class Output:
         self.__print_buffer = ""
         logs_folder = (
             os.path.dirname(os.path.realpath(__file__))
-            if logs_folder == None
+            if logs_folder is None
             else logs_folder
         )
         logfile = logs_folder + "/veolia.log"
@@ -80,9 +83,9 @@ class Output:
         if self.__debug is False:
             # Check if we can create logfile
             try:
-                f = open(logfile, "a+").close()
+                open(logfile, "a+").close()
             except Exception as e:
-                raise RuntimeError('"' + logfile + '" ' + e.strerror)
+                raise RuntimeError(f'"{logfile}" {e}')
 
             # Set the logfile format
             file_handler = RotatingFileHandler(logfile, "a", 1000000, 1)
@@ -100,7 +103,7 @@ class Output:
             st = st.replace("EE", Fore.RED + "EE")
             st = "[" + st + Style.RESET_ALL + "] "
 
-        if end != None:
+        if end is not None:
             st = st + " " if st else ""
             print(st + f"{string:75s}", end="", flush=True)
             self.__print_buffer = self.__print_buffer + string
@@ -114,23 +117,17 @@ class Output:
             self.__print_buffer = ""
 
     def __print_to_logfile(self, string="", st=None, end=None):
-        if end != None:
+        if end is not None:
             self.__print_buffer = self.__print_buffer + string
         else:
             st = st if st else "--"
             self.__logger.info(
-                st.upper()
-                + " : "
-                + (
-                    self.__print_buffer.lstrip().rstrip()
-                    + " "
-                    + string.lstrip().rstrip()
-                ).lstrip()
+                "%s : %s %s",
+                st.upper().lstrip(),
+                self.__print_buffer.lstrip().rstrip(),
+                string.lstrip().rstrip()
             )
             self.__print_buffer = ""
-
-    def print():
-        pass
 
 
 ################################################################################
@@ -148,8 +145,8 @@ class Configuration:
             "Loading configuration file : " + configuration_file, end=""
         )  #############################################################
         try:
-            with open(configuration_file) as data_file:
-                content = json.load(data_file)
+            with open(configuration_file) as conf_file:
+                content = json.load(conf_file)
         except json.JSONDecodeError as e:
             raise RuntimeError("json format error : " + str(e))
         except Exception:
@@ -157,6 +154,7 @@ class Configuration:
         else:
             self.print(st="OK")
             return content
+
 
     def print(self, string="", st=None, end=None):
         st = "[" + st + "] " if st else ""
@@ -173,17 +171,17 @@ class VeoliaCrawler:
     site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
     download_filename = "historique_jours_litres.csv"
 
-    def __init__(self, configuration_json, super_print=None, debug=False):
+    def __init__(self, config_dict, super_print=None, debug=False):
         self.__debug = debug
 
         # Supersede local print function if provided as an argument
         self.print = super_print if super_print else self.print
 
         self.__display = None
-        self.__browser = None
-        self.__wait = None
+        self.__browser = None  # type: webdriver.Firefox
+        self.__wait = None  # type: WebDriverWait
         install_dir = os.path.dirname(os.path.realpath(__file__))
-        self.configuration = {
+        self.configuration: dict[str, str|None] = {
             # Mandatory config values
             "veolia_login": None,
             "veolia_password": None,
@@ -202,7 +200,7 @@ class VeoliaCrawler:
 
         self.print("Start loading veolia configuration")
         try:
-            self.__load_configuration_items(configuration_json)
+            self._load_configururation_items(config_dict)
             self.print("End loading veolia configuration", end="")
         except Exception:
             raise
@@ -210,20 +208,20 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.__full_path_download_file = (
-            self.configuration["download_folder"] + self.download_filename
+            str(self.configuration["download_folder"]) + self.download_filename
         )
 
 
     # Load configuration items
-    def __load_configuration_items(self, configuration_json):
+    def _load_configururation_items(self, config_dict):
         for param in list((self.configuration).keys()):
-            if param not in configuration_json:
+            if param not in config_dict:
                 if self.configuration[param] is not None:
                     self.print(
                         '    "'
                         + param
                         + '" = "'
-                        + self.configuration[param]
+                        + str(self.configuration[param])
                         + '"',
                         end="",
                     )
@@ -238,20 +236,20 @@ class VeoliaCrawler:
                     )
             else:
                 if (
-                    param == "download_folder" or param == "logs_folder"
-                ) and configuration_json[param][-1] != os.path.sep:
+                    param in ("download_folder", "logs_folder",)
+                ) and config_dict[param][-1] != os.path.sep:
                     self.configuration[param] = (
-                        configuration_json[param] + os.path.sep
+                        str(config_dict[param]) + os.path.sep
                     )
                 else:
-                    self.configuration[param] = configuration_json[param]
+                    self.configuration[param] = config_dict[param]
 
                 if param == "veolia_password":
                     self.print(
                         '    "'
                         + param
                         + '" = "'
-                        + "*" * len(self.configuration[param])
+                        + "*" * len(str(self.configuration[param]))
                         + '"',
                         end="",
                     )
@@ -260,7 +258,7 @@ class VeoliaCrawler:
                         '    "'
                         + param
                         + '" = "'
-                        + self.configuration[param]
+                        + str(self.configuration[param])
                         + '"',
                         end="",
                     )
@@ -311,7 +309,7 @@ class VeoliaCrawler:
             fp.set_preference("browser.helperApps.alwaysAsk.force", False)
 
             # Set firefox binary to use
-            opts.binary_location = FirefoxBinary(self.configuration["firefox"])
+            opts.binary_location = FirefoxBinary(str(self.configuration["firefox"]))
 
             service = Service(self.configuration["geckodriver"])
 
@@ -319,7 +317,7 @@ class VeoliaCrawler:
             try:
                 self.__browser = webdriver.Firefox(
                     options=opts,
-                    service_log_path=self.configuration["logs_folder"]
+                    service_log_path=str(self.configuration["logs_folder"])
                     + "/geckodriver.log",
                     service=service,
                 )
@@ -398,7 +396,7 @@ class VeoliaCrawler:
         else:
             self.print(st="OK")
 
-    def sanity_check(self, debug=False):
+    def sanity_check(self, debug=False):  # pylint: disable=unused-argument
 
         self.print(
             "Check download location integrity", end=""
@@ -411,46 +409,45 @@ class VeoliaCrawler:
             )
         else:
             try:
-                f = open(self.__full_path_download_file, "a+").close()
+                open(self.__full_path_download_file, "a+").close()
             except Exception as e:
                 raise RuntimeError(
-                    '"' + self.__full_path_download_file + '" ' + e.strerror
+                    '"' + self.__full_path_download_file + f'" {e}'
                 )
             else:
                 self.print(st="ok")
 
         #############################################################
-        if not debug:
-            try:
-                self.print( "Remove temporary download file", end="")
-                os.remove(self.__full_path_download_file)
-            except Exception:
-                raise
-            else:
-                self.print(st="ok")
+        try:
+            self.print( "Remove temporary download file", end="")
+            os.remove(self.__full_path_download_file)
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
 
         self.print(
             'Check if "geckodriver" is installed properly', end=""
 
         )  #############################################################
-        if os.access(self.configuration["geckodriver"], os.X_OK):
+        if os.access(str(self.configuration["geckodriver"]), os.X_OK):
             self.print(st="ok")
         else:
             raise OSError(
                 '"'
-                + self.configuration["geckodriver"]
+                + str(self.configuration["geckodriver"])
                 + '" is not executable or not found'
             )
 
         self.print(
             'Check if "firefox" is installed properly', end=""
         )  #############################################################
-        if os.access(self.configuration["firefox"], os.X_OK):
+        if os.access(str(self.configuration["firefox"]), os.X_OK):
             self.print(st="ok")
         else:
             raise OSError(
                 '"'
-                + self.configuration["firefox"]
+                + str(self.configuration["firefox"])
                 + '" is not executable or not found'
             )
 
@@ -477,7 +474,7 @@ class VeoliaCrawler:
     def __get_firefox_version(self):
         try:
             output = subprocess.check_output(
-                [self.configuration["firefox"], "--version"]
+                [str(self.configuration["firefox"]), "--version"]
             )
         except Exception:
             raise
@@ -556,7 +553,7 @@ class VeoliaCrawler:
             el_email = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -574,7 +571,7 @@ class VeoliaCrawler:
             el_password = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -613,7 +610,7 @@ class VeoliaCrawler:
             el = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -633,7 +630,7 @@ class VeoliaCrawler:
 
         ### COMPORTEMENT DIFFERENT S IL S AGIT D UN MULTU CONTRATS OU D U NCONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
         self.print(
-            "Wait for MENU contrats or history", end=""
+            "Wait for MENU contrats or historique", end=""
         )  #############################################################
         try:
             ep = EC.visibility_of_element_located(
@@ -645,7 +642,7 @@ class VeoliaCrawler:
             el = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -663,20 +660,20 @@ class VeoliaCrawler:
         else:
             self.print(st="ok")
 
-        # GESTION DU PARCOUR MULTICONTRATS
+        # GESTION DU PARCOURS MULTICONTRATS
         if el.get_attribute("innerHTML") == "CONTRATS":
             self.print(
-                "Select contract : " + self.configuration["veolia_contract"],
+                "Select contract : " + str(self.configuration["veolia_contract"]),
                 end="",
             )  #############################################################
             try:
                 ep = EC.visibility_of_element_located(
-                    (By.LINK_TEXT, self.configuration["veolia_contract"])
+                    (By.LINK_TEXT, str(self.configuration["veolia_contract"]))
                 )
                 el = self.__wait.until(
                     ep,
                     message="failed, page timeout (timeout="
-                    + self.configuration["timeout"]
+                    + str(self.configuration["timeout"])
                     + ")",
                 )
             except Exception:
@@ -704,7 +701,7 @@ class VeoliaCrawler:
                 el = self.__wait.until(
                     ep,
                     message="failed, page timeout (timeout="
-                    + self.configuration["timeout"]
+                    + str(self.configuration["timeout"])
                     + ")",
                 )
             except Exception:
@@ -724,7 +721,7 @@ class VeoliaCrawler:
 
         time.sleep(2)
         self.print(
-            "Wait for bouton Litres", end=""
+            "Wait for button Litres", end=""
         )  #############################################################
         try:
             ep = EC.visibility_of_element_located(
@@ -733,7 +730,7 @@ class VeoliaCrawler:
             el = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -743,7 +740,7 @@ class VeoliaCrawler:
 
         time.sleep(2)
         self.print(
-            "Click on bouton litres ", end=""
+            "Click on button Litres ", end=""
         )  #############################################################
         try:
             el.click()
@@ -754,7 +751,7 @@ class VeoliaCrawler:
 
         time.sleep(2)
         self.print(
-            "Wait for bouton jours", end=""
+            "Wait for button jours", end=""
         )  #############################################################
         try:
             ep = EC.visibility_of_element_located(
@@ -763,7 +760,7 @@ class VeoliaCrawler:
             el = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -773,7 +770,7 @@ class VeoliaCrawler:
 
         time.sleep(2)
         self.print(
-            "Click on bouton jours", end=""
+            "Click  n button jours", end=""
         )  #############################################################
         try:
             el.click()
@@ -783,7 +780,7 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            "Wait for boutton telechargement", end=""
+            "Wait for button téléchargement", end=""
         )  #############################################################
         try:
             ep = EC.presence_of_element_located(
@@ -792,7 +789,7 @@ class VeoliaCrawler:
             el = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
-                + self.configuration["timeout"]
+                + str(self.configuration["timeout"])
                 + ")",
             )
         except Exception:
@@ -807,7 +804,7 @@ class VeoliaCrawler:
         self.print(st="ok")
 
         self.print(
-            "Click on Button telechargement", end=""
+            "Click on button téléchargement", end=""
         )  #############################################################
         try:
             el.click()
@@ -817,10 +814,10 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            "Wait for download finished of " + self.__full_path_download_file,
+            "Wait for end of download to " + self.__full_path_download_file,
             end="",
         )  #############################################################
-        t = int(self.configuration["timeout"])
+        t = int(str(self.configuration["timeout"]))
         while t > 0 and not os.path.exists(self.__full_path_download_file):
             time.sleep(1)
             t - 1
@@ -836,13 +833,13 @@ class VeoliaCrawler:
 # Object injects historical data into domoticz
 ################################################################################
 class DomoticzInjector:
-    def __init__(self, configuration_json, super_print, debug=False):
+    def __init__(self, config_dict, super_print, debug=False):
         self.__debug = debug
 
         # Supersede local print function if provided as an argument
         self.print = super_print if super_print else self.print
 
-        self.configuration = {
+        self.configuration: dict[str,str|int|None] = {
             # Mandatory config values
             "domoticz_idx": None,
             "domoticz_server": None,
@@ -855,7 +852,7 @@ class DomoticzInjector:
         }
         self.print("Start Loading Domoticz configuration")
         try:
-            self.__load_configuration_items(configuration_json)
+            self._load_configururation_items(config_dict)
             self.print("End loading domoticz configuration", end="")
         except Exception:
             raise
@@ -863,20 +860,20 @@ class DomoticzInjector:
             self.print(st="ok")
 
         self.__http = urllib3.PoolManager(
-            retries=1, timeout=int(self.configuration["timeout"])
+            retries=1, timeout=int(str(self.configuration["timeout"]))
         )
 
-    def open_url(self, uri):
+    def open_url(self, uri, data=None):  # pylint: disable=unused-argument
         # Generate URL
-        url_test = self.configuration["domoticz_server"] + uri
+        url_test = str(self.configuration["domoticz_server"]) + uri
 
-        # Add authentication Items if needed
+        # Add Authentication Items if needed
         if self.configuration["domoticz_login"] != "":
             b64domoticz_login = base64.b64encode(
-                self.configuration["domoticz_login"].encode()
+                str(self.configuration["domoticz_login"]).encode()
             )
             b64domoticz_password = base64.b64encode(
-                self.configuration["domoticz_password"].encode()
+                str(self.configuration["domoticz_password"]).encode()
             )
             url_test = (
                 url_test
@@ -909,7 +906,7 @@ class DomoticzInjector:
             # Handle JSON ERROR
             raise RuntimeError("unable to parse the JSON : " + str(e))
 
-        if (int(response.status) != 200) or (j["status"].lower() != "ok"):
+        if j["status"].lower() != "ok":
             raise RuntimeError(
                 "url="
                 + url_test
@@ -922,16 +919,15 @@ class DomoticzInjector:
         return j
 
     # Load configuration items
-    def __load_configuration_items(self, configuration_json):
+    def _load_configururation_items(self, config_dict: dict[str,str|int]):
         for param in list((self.configuration).keys()):
-            if param not in configuration_json:
+            if param not in config_dict:
                 if self.configuration[param] is not None:
                     self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + self.configuration[param]
-                        + '"',
+                        '    "%s" = "%s"' % (
+                            param,
+                            self.configuration[param],
+                        ),
                         end="",
                     )
                     self.print(
@@ -946,20 +942,20 @@ class DomoticzInjector:
             else:
                 if (
                     param == "download_folder"
-                    and configuration_json[param][-1] != os.path.sep
+                    and str(config_dict[param])[-1] != os.path.sep
                 ):
                     self.configuration[param] = (
-                        configuration_json[param] + os.path.sep
+                        str(config_dict[param]) + os.path.sep
                     )
                 else:
-                    self.configuration[param] = configuration_json[param]
+                    self.configuration[param] = config_dict[param]
 
-                if param == "domoticz_password":
+                if re.match(r".*(token|password).*", param, re.IGNORECASE):
                     self.print(
                         '    "'
                         + param
                         + '" = "'
-                        + "*" * len(self.configuration[param])
+                        + "*" * len(str(self.configuration[param]))
                         + '"',
                         end="",
                     )
@@ -968,16 +964,16 @@ class DomoticzInjector:
                         '    "'
                         + param
                         + '" = "'
-                        + self.configuration[param]
+                        + str(self.configuration[param])
                         + '"',
                         end="",
                     )
 
                 self.print(st="OK")
 
-    def sanity_check(self, debug=False):
+    def sanity_check(self, debug=False):  # pylint: disable=unused-argument
         self.print(
-            "Check domoticz connectivity", end=""
+            "Check domoticz connectivity", st="--", end=""
         )  #############################################################
         response = self.open_url("/json.htm?type=command&param=getversion")
         if response["status"].lower() == "ok":
@@ -988,15 +984,15 @@ class DomoticzInjector:
         )  #############################################################
         # generate 2 urls, one for historique, one for update
         response = self.open_url(
-            "/json.htm?type=devices&rid=" + self.configuration["domoticz_idx"]
+            "/json.htm?type=devices&rid=" + str(self.configuration["domoticz_idx"])
         )
 
         if not "result" in response:
             raise RuntimeError(
                 "device "
-                + self.configuration["domoticz_idx"]
+                + str(self.configuration["domoticz_idx"])
                 + " could not be found on domoticz server "
-                + self.configuration["domoticz_server"]
+                + str(self.configuration["domoticz_server"])
             )
         else:
             properly_configured = True
@@ -1088,14 +1084,14 @@ class DomoticzInjector:
                 )
                 properly_configured = False
 
-            if properly_configured == False:
+            if properly_configured is False:
                 raise RuntimeError(
                     "Set your device correctly and run the script again"
                 )
 
-    def update_device(self, data_file):
+    def update_device(self, csv_file):
         self.print("Parsing csv file")
-        with open(data_file) as f:
+        with open(csv_file) as f:
             # Remove first line
 
             # PArse each line of the file.
@@ -1114,24 +1110,24 @@ class DomoticzInjector:
                     d2 = datetime.now()
                     if abs((d2 - d1).days) > 30:
                         raise RuntimeError(
-                            "File contains to old data (monthly?!?): "
+                            "File contains too old data (monthly?!?): "
                             + str(row)
                         )
 
                     # Generate 2 URLs, one for historique, one for update
-                    args = {
+                    url_args = {
                         "type": "command",
                         "param": "udevice",
                         "idx": self.configuration["domoticz_idx"],
                         "svalue": counter + ";" + conso + ";" + date,
                     }
-                    url_historique = "/json.htm?" + urlencode(args)
+                    url_historique = "/json.htm?" + urlencode(url_args)
 
-                    args["svalue"] = counter + ";" + conso + ";" + date_time
-                    url_daily = "/json.htm?" + urlencode(args)
+                    url_args["svalue"] = counter + ";" + conso + ";" + date_time
+                    url_daily = "/json.htm?" + urlencode(url_args)
 
-                    args["svalue"] = conso
-                    url_current = "/json.htm?" + urlencode(args)
+                    url_args["svalue"] = conso
+                    url_current = "/json.htm?" + urlencode(url_args)
 
                     self.print(
                         "    update value for " + date, end=""
@@ -1159,7 +1155,115 @@ class DomoticzInjector:
         pass
 
 
-def exit_on_error(veolia=None, domoticz=None, string="", debug=False):
+class HomeAssistantInjector(DomoticzInjector):
+
+    def __init__(self, config_dict, super_print, debug=False):
+        # pylint: disable=super-init-not-called
+        self.__debug = debug
+
+        # Supersede local print function if provided as an argument
+        self.print = super_print if super_print else self.print
+
+        self.configuration = {
+            # Mandatory config values
+            "ha_server": None,
+            "ha_token": None,
+            "veolia_contract": None,
+            # Optional config values
+            "timeout": "30",
+            "download_folder": os.path.dirname(os.path.realpath(__file__))
+            + os.path.sep,
+        }
+        self.print("Start Loading Home Assistant configuration")
+        try:
+            self._load_configururation_items(config_dict)
+            self.print("End loading Home Assistant configuration", end="")
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
+
+    def open_url(self, uri, data=None):
+        # Generate URL
+        api_url = self.configuration["ha_server"] + uri
+
+        headers = {
+            "Authorization": f"Bearer {self.configuration['ha_token']}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            if data is None:
+                response = requests.get(api_url, headers=headers)
+            else:
+                response = requests.post(api_url, headers=headers, json=data)
+        except Exception as e:
+            # HANDLE CONNECTIVITY ERROR
+            raise RuntimeError(f"url={api_url} : {e}")
+
+        # HANDLE SERVER ERROR CODE
+        if response.status_code != 200:
+            raise RuntimeError(
+                "url=%s - (code = %u)\ncontent=%r)" % (api_url, response.status_code, response.content,)
+            )
+
+        try:
+            j = json.loads(response.content.decode("utf-8"))
+        except Exception as e:
+            # Handle JSON ERROR
+            raise RuntimeError(f"Unable to parse JSON : {e}")
+
+        return j
+
+
+
+    def sanity_check(self, debug=False):
+        self.print(
+            "Check Home Assistant connectivity", st="--", end=""
+        )
+        response = self.open_url("/api/")
+        if response["message"] == "API running":
+            self.print(st="ok")
+
+
+    def update_device(self, csv_file):
+        self.print("Parsing csv file")
+        with open(csv_file) as f:
+            row = list(csv.reader(f, delimiter=";"))[-1]
+            date = row[0][0:10]
+            date_time = row[0]
+            meter_total = row[1]
+            meter_period_total = row[2]
+
+            # Check line integrity (Date starting with 2 (Year))
+            if date[0] == "2":
+                # Verify data integrity :
+                d1 = datetime.strptime(date, "%Y-%m-%d")
+                d2 = datetime.now()
+                if abs((d2 - d1).days) > 30:
+                    raise RuntimeError(
+                        f"File contains too old data (monthly?!?): {row}"
+                    )
+                self.print(
+                    f"    update value for {date}", end=""
+                )
+                data = {
+                    "state":meter_total,
+                    "attributes": { "date_time": date_time, "unit_of_measurement": "L", }
+                }
+                self.open_url(f"/api/states/sensor.veolia_{self.configuration['veolia_contract']}_total", data)
+                data["state"] = meter_period_total
+                self.open_url(f"/api/states/sencor.veolia_{self.configuration['veolia_contract']}_period_total", data)
+                self.print(st="ok")
+
+
+    def clean_up(self, debug=False):
+        pass
+
+
+o: Output
+def exit_on_error(veolia_obj=None, domoticz=None, string="", debug=False):
     try:
         o
     except:
@@ -1167,17 +1271,17 @@ def exit_on_error(veolia=None, domoticz=None, string="", debug=False):
     else:
         o.print(string, st="EE")
 
-    if veolia is not None:
-        veolia.clean_up(debug)
+    if veolia_obj is not None:
+        veolia_obj.clean_up(debug)
     if domoticz:
         domoticz.clean_up(debug)
     try:
         o
     except:
-        print("Ended with error : // re-run the program with '--debug' option")
+        print("Ended with error%s" % ("" if debug else " : // re-run the program with '--debug' option",))
     else:
         o.print(
-            "Ended with error : // re-run the program with '--debug' option",
+            "Ended with error%s" % ("" if debug else " : // re-run the program with '--debug' option",),
             st="EE",
         )
     sys.exit(2)
@@ -1257,8 +1361,8 @@ if __name__ == "__main__":
         o = Output(
             logs_folder=str(args.logs_folder).strip("[]'"), debug=args.debug
         )
-    except Exception as e:
-        exit_on_error(string=str(e))
+    except Exception as exc:
+        exit_on_error(string=str(exc), debug=args.debug)
 
     # Print debug message
     if args.debug:
@@ -1268,8 +1372,8 @@ if __name__ == "__main__":
     # New version checking
     try:
         check_new_script_version()
-    except Exception as e:
-        exit_on_error(string=str(e))
+    except Exception as exc:
+        exit_on_error(string=str(exc), debug=args.debug)
 
     # Load configuration
     try:
@@ -1278,53 +1382,59 @@ if __name__ == "__main__":
             str(args.config).strip("[]'")
         )
         configuration_json["logs_folder"] = str(args.logs_folder).strip("[]'")
-    except Exception as e:
-        exit_on_error(string=str(e))
+    except Exception as exc:
+        exit_on_error(string=str(exc), debug=args.debug)
 
     # Create objects
     try:
         veolia = VeoliaCrawler(
             configuration_json, super_print=o.print, debug=args.debug
         )
-        domoticz = DomoticzInjector(
-            configuration_json, super_print=o.print, debug=args.debug
-        )
-    except Exception as e:
-        exit_on_error(string=str(e))
+        server_type = configuration_json.get("type",None)
+        if server_type not in ["ha"]:
+            server = DomoticzInjector(
+                configuration_json, super_print=o.print, debug=args.debug
+            )
+        elif server_type == "ha":
+            server = HomeAssistantInjector(
+                configuration_json, super_print=o.print, debug=args.debug
+            )
+    except Exception as exc:
+        exit_on_error(string=str(exc), debug=args.debug)
 
     # Check requirements
     try:
         veolia.sanity_check(args.debug)
-    except Exception as e:
-        exit_on_error(veolia, domoticz, str(e))
+    except Exception as exc:
+        exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     try:
-        domoticz.sanity_check(args.debug)
-    except Exception as e:
-        exit_on_error(veolia, domoticz, str(e))
+        server.sanity_check(args.debug)
+    except Exception as exc:
+        exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     try:
         veolia.init_browser_firefox()
-    except Exception as e:
-        exit_on_error(veolia, domoticz, str(e))
+    except Exception as exc:
+        exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     try:
         data_file = veolia.get_file()
-    except Exception as e:
-        # REtry once on failure to manage stalement exception that occur sometimes
+    except Exception as exc:
+        # Retry once on failure to manage stalement exception that occur sometimes
         try:
             o.print(
-                "Encountered error" + str(e).rstrip() + "// -> Retrying once",
+                "Encountered error" + str(exc).rstrip() + "// -> Retrying once",
                 st="ww",
             )
             data_file = veolia.get_file()
-        except Exception as e:
-            exit_on_error(veolia, domoticz, str(e))
+        except Exception as exc:
+            exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     try:
-        domoticz.update_device(data_file)
-    except Exception as e:
-        exit_on_error(veolia, domoticz, str(e))
+        server.update_device(data_file)
+    except Exception as exc:
+        exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     veolia.clean_up(args.debug)
     o.print("Finished on success")
