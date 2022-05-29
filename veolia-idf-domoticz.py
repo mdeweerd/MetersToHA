@@ -167,7 +167,7 @@ class Configuration:
 
 
 ################################################################################
-# Object that retrieve the historycal data from Veolia website
+# Object that retrieve the historical data from Veolia website
 ################################################################################
 class VeoliaCrawler:
     site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
@@ -500,7 +500,7 @@ class VeoliaCrawler:
             except Exception as e:
                 os.kill(self.__browser.service.process.pid, signal.SIGTERM)
                 self.print(
-                    "selenium didnt properly close the process, so we kill firefox manually (pid="
+                    "selenium didn't properly close the process, so we kill firefox manually (pid="
                     + str(self.__browser.service.process.pid)
                     + ")",
                     "WW",
@@ -639,7 +639,7 @@ class VeoliaCrawler:
 
         ### COMPORTEMENT DIFFERENT S IL S AGIT D UN MULTU CONTRATS OU D U NCONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
         self.print(
-            "Wait for MENU contrats or historique", end=""
+            "Wait for MENU contrats or history", end=""
         )  #############################################################
         try:
             ep = EC.visibility_of_element_located(
@@ -701,7 +701,7 @@ class VeoliaCrawler:
                 self.print(st="ok")
 
             self.print(
-                "Wait for historique menu", end=""
+                "Wait for history menu", end=""
             )  #############################################################
             try:
                 ep = EC.visibility_of_element_located(
@@ -719,7 +719,7 @@ class VeoliaCrawler:
                 self.print(st="ok")
 
             self.print(
-                "Click on historique menu", end=""
+                "Click on history menu", end=""
             )  #############################################################
             try:
                 el.click()
@@ -876,7 +876,7 @@ class DomoticzInjector:
         # Generate URL
         url_test = self.configuration["domoticz_server"] + uri
 
-        # Add authentification Items if needed
+        # Add authentication Items if needed
         if self.configuration["domoticz_login"] != "":
             b64domoticz_login = base64.b64encode(
                 self.configuration["domoticz_login"].encode()
