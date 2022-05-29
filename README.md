@@ -79,7 +79,7 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 * "domoticz_idx": le numero du "virtual sensor" domoticz crée (se trouve dans : Domoticz/Devices/[Colonne Idx]
 
 ## Paramètrer votre système pour le mode debug (optionnel, mais recommandé)
-Si vous rencontrez des problèmes à l'execution, il sera utile d'utiliser le mode debug (--debug). 2 senarios :
+Si vous rencontrez des problèmes à l'execution, il sera utile d'utiliser le mode debug (--debug). 2 scenarios :
 1/ Le script est executé en locale par l'utilisateur avec lequel vous êtes logués  ==> ca devrait fonctionner tout seul.
 2/ Vous executez le script sur une machine distante linux. Il convient alors de vérifier que la commande suivante fonctionne apres être connecté sur la machine linux distante (via ssh probablement) :
 `xlogo`
