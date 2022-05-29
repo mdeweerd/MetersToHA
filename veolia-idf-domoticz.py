@@ -1156,7 +1156,6 @@ class DomoticzInjector:
 
 
 class HomeAssistantInjector(DomoticzInjector):
-
     def __init__(self, config_dict, super_print, debug=False):
         # pylint: disable=super-init-not-called
         self.__debug = debug
@@ -1183,7 +1182,6 @@ class HomeAssistantInjector(DomoticzInjector):
         else:
             self.print(st="ok")
 
-
     def open_url(self, uri, data=None):
         # Generate URL
         api_url = self.configuration["ha_server"] + uri
@@ -1205,7 +1203,12 @@ class HomeAssistantInjector(DomoticzInjector):
         # HANDLE SERVER ERROR CODE
         if response.status_code != 200:
             raise RuntimeError(
-                "url=%s - (code = %u)\ncontent=%r)" % (api_url, response.status_code, response.content,)
+                "url=%s - (code = %u)\ncontent=%r)"
+                % (
+                    api_url,
+                    response.status_code,
+                    response.content,
+                )
             )
 
         try:
@@ -1216,16 +1219,11 @@ class HomeAssistantInjector(DomoticzInjector):
 
         return j
 
-
-
     def sanity_check(self, debug=False):
-        self.print(
-            "Check Home Assistant connectivity", st="--", end=""
-        )
+        self.print("Check Home Assistant connectivity", st="--", end="")
         response = self.open_url("/api/")
         if response["message"] == "API running":
             self.print(st="ok")
-
 
     def update_device(self, csv_file):
         self.print("Parsing csv file")
@@ -1245,18 +1243,24 @@ class HomeAssistantInjector(DomoticzInjector):
                     raise RuntimeError(
                         f"File contains too old data (monthly?!?): {row}"
                     )
-                self.print(
-                    f"    update value for {date}", end=""
-                )
+                self.print(f"    update value for {date}", end="")
                 data = {
-                    "state":meter_total,
-                    "attributes": { "date_time": date_time, "unit_of_measurement": "L", }
+                    "state": meter_total,
+                    "attributes": {
+                        "date_time": date_time,
+                        "unit_of_measurement": "L",
+                    },
                 }
-                self.open_url(f"/api/states/sensor.veolia_{self.configuration['veolia_contract']}_total", data)
+                self.open_url(
+                    f"/api/states/sensor.veolia_{self.configuration['veolia_contract']}_total",
+                    data,
+                )
                 data["state"] = meter_period_total
-                self.open_url(f"/api/states/sencor.veolia_{self.configuration['veolia_contract']}_period_total", data)
+                self.open_url(
+                    f"/api/states/sencor.veolia_{self.configuration['veolia_contract']}_period_total",
+                    data,
+                )
                 self.print(st="ok")
-
 
     def clean_up(self, debug=False):
         pass
