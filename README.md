@@ -1,7 +1,7 @@
 # veolia-idf
 Ce script automatise le chargement de l'historique de votre consommation d'eau récupèré sur le site de Veolia Ile-de-France dans la solution domotique Domoticz
 
-Ce script s'installe sur le serveur hébergeant l'applicatif domoticz ou sur autre. Son execution est manuelle ou peut se planifier à travers un planificateur de tâche tel que "cron". 
+Ce script s'installe sur le serveur hébergeant l'applicatif domoticz ou sur autre. Son execution est manuelle ou peut se planifier à travers un planificateur de tâche tel que "cron".
 
 La récuperation des données se fait grace à l'outil selenium et l'execution en mode Headless de firefox (simulation d'un utilisateur en tâche de fond sans mode graphique).
 
@@ -26,7 +26,7 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
   * colorama
   * urllib3
   * qq autres... (le script commence par verifier la présence des modules)
-* Un Virtual Sensor Domoticz 
+* Un Virtual Sensor Domoticz
 
 ## Tester sur ubuntu 20.04
 
@@ -43,7 +43,7 @@ apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium pyt
   * Type Counter : water
   * Counter Divider : 1000
   * Meter Offset : 0
-    
+
 ## Installation :
 
 Copier les fichiers veolia-idf-domoticz.py et config.json.exemple sur votre serveur. Comme par exemple en :
@@ -63,7 +63,7 @@ chmod ugo+x veolia-idf-domoticz.py
 ```
 Ajouter les prerequis python:
 ```shell
-pip3 install -r requirements.txt 
+pip3 install -r requirements.txt
 ```
 
 ## Configuration :
@@ -89,20 +89,20 @@ Si vous voyez bien une fenetre X s'afficher à l'écran c'est que l'environnemen
 Si par contre rien ne s'affiche, il convient de chercher sur internet comment le faire fonctionner, il y a pleins de tutos pour cela. Ensuite vous pourrez utiliser le mode debug.
 
 ## Première execution :
-Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier INSTALL_DIR/veolia.log . 
-Je vous recommande pour la première utilisation d'activer le mode debug. Cela permet d'avoir une sortie visuelle de l'éxecution du script sur la console et un suivi des actions dans Firefox. 
+Par default le script est muet (il n'affiche rien sur la console et ne lance pas la version graphique de Firefox). Il enregistre toutes les actions dans le fichier INSTALL_DIR/veolia.log .
+Je vous recommande pour la première utilisation d'activer le mode debug. Cela permet d'avoir une sortie visuelle de l'éxecution du script sur la console et un suivi des actions dans Firefox.
 
 Déroulement de l'éxécution :
 1/ Chargement de tous les modules python --> si erreur installer les modules manquants (pip3 install ...)
 2/ Sanity check de l'environnement :
  * Version
- * Pre-requis logiciel externe --> si erreur installer le logiciel manquant 
+ * Pre-requis logiciel externe --> si erreur installer le logiciel manquant
  * Configuration domoticz --> si erreur configurer correctement domoticz
 3/ Connection au site Veolia et téléchargement de l'historique
 4/ Téléversement des données dans domoticz
 
 ```shell
-./veolia-idf-domoticz.py --run --debug 
+./veolia-idf-domoticz.py --run --debug
 ```
 Afficher toutes les options disponibles :
 ```shell
@@ -124,7 +124,7 @@ crontab -e
 ```shell
 
 ## Environnements testés:
-* Debian buster 
+* Debian buster
 * Ubuntu Zesty (17.04)
 
 ## Remerciements :
