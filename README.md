@@ -31,7 +31,7 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
 ## Tester sur ubuntu 20.04
 
 Sur ubuntu ca donne :
-```
+```shell
 apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium python3-pyvirtualdisplay python3-colorama python3-urllib3
 ```
 
@@ -47,28 +47,28 @@ apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium pyt
 ## Installation :
 
 Copier les fichiers veolia-idf-domoticz.py et config.json.exemple sur votre serveur. Comme par exemple en :
-```
+```shell
 mkdir -p /opt
 cd /opt
 git clone https://github.com/s0nik42/veolia-idf
 cd veolia-idf
 ```
 Pour mettre à jour :
-```
+```shell
 git pull
 ```
 Donnez la permission d'exécution si vous êtes sous Linux :
-```
+```shell
 chmod ugo+x veolia-idf-domoticz.py
 ```
 Ajouter les prerequis python:
-```
+```shell
 pip3 install -r requirements.txt 
 ```
 
 ## Configuration :
 Copier le fichier config.json.exemple en config.json
-```
+```shell
 cp  config.json.exemple config.json
 ```
 Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
@@ -80,9 +80,9 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 
 ## Paramètrer votre système pour le mode debug (optionnel, mais recommandé)
 Si vous rencontrez des problèmes à l'execution, il sera utile d'utiliser le mode debug (--debug). 2 senarios :
-1/ Le script est executé en locale part l'utilisateur avec lequel vous êtes logués  ==> ca devrait fonctionner tout seul.
+1/ Le script est executé en locale par l'utilisateur avec lequel vous êtes logués  ==> ca devrait fonctionner tout seul.
 2/ Vous executez le script sur une machine distante linux. Il convient alors de vérifier que la commande suivante fonctionne apres être connecté sur la machine linux distante (via ssh probablement) :
-```xlogo```
+`xlogo`
 
 Si vous voyez bien une fenetre X s'afficher à l'écran c'est que l'environnement X11 est correctement configuré. Le mode debug du script devrait fonctionner.
 
@@ -101,25 +101,27 @@ Déroulement de l'éxécution :
 3/ Connection au site Veolia et téléchargement de l'historique
 4/ Téléversement des données dans domoticz
 
-```
+```shell
 ./veolia-idf-domoticz.py --run --debug 
 ```
 Afficher toutes les options disponibles :
-```
+```shell
 ./veolia-idf-domoticz.py --help
 ```
 
 ## Automatisation :
 Une fois que la première execution à terminée correctement, je vous recommande de planifier les executions une fois par jour. En rajoutant la ligne suivante à votre planificateur de tâche :
-```
+```shell
 ./veolia-idf-domoticz.py --run
 ```
 
 exemple ici crontab :
-```
+```shell
 crontab -e
 ```
+```crontab
 0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /var/log/veolia/veolia-idf.log
+```shell
 
 ## Environnements testés:
 * Debian buster 
