@@ -398,7 +398,7 @@ class VeoliaCrawler:
         else:
             self.print(st="OK")
 
-    def sanity_check(self):
+    def sanity_check(self, debug=False):
 
         self.print(
             "Check download location integrity", end=""
@@ -431,7 +431,7 @@ class VeoliaCrawler:
 
         self.print(
             'Check if "geckodriver" is installed properly', end=""
-    
+
         )  #############################################################
         if os.access(self.configuration["geckodriver"], os.X_OK):
             self.print(st="ok")
@@ -491,7 +491,7 @@ class VeoliaCrawler:
 
         return major, minor
 
-    def clean_up(self):
+    def clean_up(self, debug=False):
         self.print(
             "Close Browser", end=""
         )  #############################################################
@@ -527,7 +527,7 @@ class VeoliaCrawler:
             if not debug and os.path.exists(self.__full_path_download_file):
                 #############################################################
                 # Remove file
-                self.print( "Remove downloaded file " + self.download_filename, end="")  
+                self.print( "Remove downloaded file " + self.download_filename, end="")
                 os.remove(self.__full_path_download_file)
             else:
                 self.print(st="ok")
@@ -975,7 +975,7 @@ class DomoticzInjector:
 
                 self.print(st="OK")
 
-    def sanity_check(self):
+    def sanity_check(self, debug=False):
         self.print(
             "Check domoticz connectivity", end=""
         )  #############################################################
@@ -1155,11 +1155,11 @@ class DomoticzInjector:
             self.print(st="ok")
 
 
-    def clean_up(self):
+    def clean_up(self, debug=False):
         pass
 
 
-def exit_on_error(veolia=None, domoticz=None, string=""):
+def exit_on_error(veolia=None, domoticz=None, string="", debug=False):
     try:
         o
     except:
@@ -1168,9 +1168,9 @@ def exit_on_error(veolia=None, domoticz=None, string=""):
         o.print(string, st="EE")
 
     if veolia is not None:
-        veolia.clean_up()
+        veolia.clean_up(debug)
     if domoticz:
-        domoticz.clean_up()
+        domoticz.clean_up(debug)
     try:
         o
     except:
@@ -1294,12 +1294,12 @@ if __name__ == "__main__":
 
     # Check requirements
     try:
-        veolia.sanity_check()
+        veolia.sanity_check(args.debug)
     except Exception as e:
         exit_on_error(veolia, domoticz, str(e))
 
     try:
-        domoticz.sanity_check()
+        domoticz.sanity_check(args.debug)
     except Exception as e:
         exit_on_error(veolia, domoticz, str(e))
 
@@ -1326,6 +1326,6 @@ if __name__ == "__main__":
     except Exception as e:
         exit_on_error(veolia, domoticz, str(e))
 
-    veolia.clean_up()
+    veolia.clean_up(args.debug)
     o.print("Finished on success")
     sys.exit(0)
