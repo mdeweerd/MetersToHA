@@ -1,7 +1,6 @@
 {
     "veolia_login": "monadresse@email.fr",
     "veolia_password": "GretaThunberg",
-    "veolia_contract": "6402275",
     "veolia_contract": "MONNUMEROCONTRTAT",
     "ha_server": "http://SERVER:PORT",
     "ha_token": "MONTOKEN - voir https://my.home-assistant.io/redirect/profile/ - Jetons d'accès de longue durée",
