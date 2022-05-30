@@ -2,7 +2,6 @@
 """
 @author: s0nik42
 """
-from __future__ import annotations
 # veolia-idf
 # Copyright (C) 2019 Julien NOEL
 #
@@ -85,7 +84,7 @@ class Output:
             try:
                 open(logfile, "a+").close()
             except Exception as e:
-                raise RuntimeError(f'"{logfile}" {e}')
+                raise RuntimeError('"%s" %s' % (logfile, e,))
 
             # Set the logfile format
             file_handler = RotatingFileHandler(logfile, "a", 1000000, 1)
@@ -105,7 +104,7 @@ class Output:
 
         if end is not None:
             st = st + " " if st else ""
-            print(st + f"{string:75s}", end="", flush=True)
+            print(st + "%75s" % (string,), end="", flush=True)
             self.__print_buffer = self.__print_buffer + string
         elif self.__print_buffer:
             st = st if st else "[--] "
@@ -181,7 +180,7 @@ class VeoliaCrawler:
         self.__browser = None  # type: webdriver.Firefox
         self.__wait = None  # type: WebDriverWait
         install_dir = os.path.dirname(os.path.realpath(__file__))
-        self.configuration: dict[str, str|None] = {
+        self.configuration = {
             # Mandatory config values
             "veolia_login": None,
             "veolia_password": None,
@@ -412,7 +411,7 @@ class VeoliaCrawler:
                 open(self.__full_path_download_file, "a+").close()
             except Exception as e:
                 raise RuntimeError(
-                    '"' + self.__full_path_download_file + f'" {e}'
+                    '"%s" %s' % (self.__full_path_download_file, e,)
                 )
             else:
                 self.print(st="ok")
@@ -839,7 +838,7 @@ class DomoticzInjector:
         # Supersede local print function if provided as an argument
         self.print = super_print if super_print else self.print
 
-        self.configuration: dict[str,str|int|None] = {
+        self.configuration = {
             # Mandatory config values
             "domoticz_idx": None,
             "domoticz_server": None,
@@ -919,7 +918,7 @@ class DomoticzInjector:
         return j
 
     # Load configuration items
-    def _load_configururation_items(self, config_dict: dict[str,str|int]):
+    def _load_configururation_items(self, config_dict):
         for param in list((self.configuration).keys()):
             if param not in config_dict:
                 if self.configuration[param] is not None:
@@ -1187,7 +1186,7 @@ class HomeAssistantInjector(DomoticzInjector):
         api_url = self.configuration["ha_server"] + uri
 
         headers = {
-            "Authorization": f"Bearer {self.configuration['ha_token']}",
+            "Authorization": "Bearer %s" % (self.configuration['ha_token'],),
             "Content-Type": "application/json",
         }
 
@@ -1198,7 +1197,7 @@ class HomeAssistantInjector(DomoticzInjector):
                 response = requests.post(api_url, headers=headers, json=data)
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
-            raise RuntimeError(f"url={api_url} : {e}")
+            raise RuntimeError("url=%s : %s" % (api_url, e,))
 
         # HANDLE SERVER ERROR CODE
         if response.status_code != 200:
@@ -1215,7 +1214,7 @@ class HomeAssistantInjector(DomoticzInjector):
             j = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             # Handle JSON ERROR
-            raise RuntimeError(f"Unable to parse JSON : {e}")
+            raise RuntimeError("Unable to parse JSON : %s" % (e,))
 
         return j
 
@@ -1241,9 +1240,9 @@ class HomeAssistantInjector(DomoticzInjector):
                 d2 = datetime.now()
                 if abs((d2 - d1).days) > 30:
                     raise RuntimeError(
-                        f"File contains too old data (monthly?!?): {row}"
+                        "File contains too old data (monthly?!?): %s" % (row,)
                     )
-                self.print(f"    update value for {date}", end="")
+                self.print("    update value for %s" % (date,), end="")
                 data = {
                     "state": meter_total,
                     "attributes": {
@@ -1252,12 +1251,12 @@ class HomeAssistantInjector(DomoticzInjector):
                     },
                 }
                 self.open_url(
-                    f"/api/states/sensor.veolia_{self.configuration['veolia_contract']}_total",
+                    "/api/states/sensor.veolia_%s_total" % (self.configuration['veolia_contract'],),
                     data,
                 )
                 data["state"] = meter_period_total
                 self.open_url(
-                    f"/api/states/sencor.veolia_{self.configuration['veolia_contract']}_period_total",
+                    "/api/states/sensor.veolia_%s_period_total" % (self.configuration['veolia_contract'],),
                     data,
                 )
                 self.print(st="ok")
@@ -1266,7 +1265,6 @@ class HomeAssistantInjector(DomoticzInjector):
         pass
 
 
-o: Output
 def exit_on_error(veolia_obj=None, domoticz=None, string="", debug=False):
     try:
         o
