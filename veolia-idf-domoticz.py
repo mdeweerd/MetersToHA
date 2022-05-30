@@ -324,7 +324,7 @@ class VeoliaCrawler:
             # Enable the browser
             try:
                 self.__browser = webdriver.Firefox(
-                    options=opts,
+                    chrome_options=opts,
                     service_log_path=str(self.configuration["logs_folder"])
                     + "/geckodriver.log",
                     service=service,
