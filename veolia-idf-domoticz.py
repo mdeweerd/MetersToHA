@@ -45,7 +45,7 @@ try:
 
     import urllib3
     from colorama import Fore, Style
-    from pyvirtualdisplay import Display
+    from pyvirtualdisplay import Display, xauth
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
@@ -129,6 +129,9 @@ class Output:
             self.__print_buffer = ""
 
 
+def document_initialised(driver):
+    return driver.execute_script("return true;")
+
 ################################################################################
 # Configuration Class toparse and load config.json
 ################################################################################
@@ -192,6 +195,12 @@ class VeoliaCrawler:
             "firefox": which("firefox")
             if which("firefox")
             else install_dir + "/firefox",
+            "chromium": which("chromium")
+            if which("chromium")
+            else install_dir + "/chromium",
+            "chromedriver": which("chromedriver")
+            if which("chromedriver")
+            else install_dir + "/chromedriver",
             "timeout": "30",
             "download_folder": install_dir + os.path.sep,
             "logs_folder": install_dir + os.path.sep,
@@ -338,7 +347,7 @@ class VeoliaCrawler:
             # replacing maximize_window by set_window_size to get the window full screen
             self.__browser.set_window_size(1600, 1200)
             self.__wait = WebDriverWait(
-                self.__browser, int(self.configuration["timeout"])
+                self.__browser, timeout=int(self.configuration["timeout"])
             )
         except Exception:
             raise
@@ -363,18 +372,26 @@ class VeoliaCrawler:
         )
 
         self.print(
-            "Start virtual display", end=""
+            "Start virtual display (chrome)", end=""
         )  #############################################################
         if self.__debug:
             self.__display = Display(visible=1, size=(1280, 1024))
         else:
             options.add_argument("--headless")
             options.add_argument("--disable-gpu")
-            self.__display = Display(visible=0, size=(1280, 1024))
+            self.print("Before display", end="")
+            try:
+              self.__display = Display(visible=0, size=(1280, 1024))
+            except Exception as e:
+              print("%r" % (e))  
+              raise e
+            self.print("After display", end="")
+
         try:
             self.__display.start()
-        except Exception:
-            raise
+        except Exception as e:
+            print(str(e))
+            raise e
         else:
             self.print(st="OK")
 
@@ -384,7 +401,7 @@ class VeoliaCrawler:
         try:
             self.__browser = webdriver.Chrome(
                 executable_path=self.configuration["chromedriver"],
-                chrome_options=options,
+                options=options,
             )
             self.__browser.maximize_window()
             self.__wait = WebDriverWait(
@@ -426,49 +443,45 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            'Check if "geckodriver" is installed properly', end=""
+            'Check if "geckodriver"+"firefox" or "chromedriver"+"chrome" is installed properly', end=""
 
         )  #############################################################
-        if os.access(str(self.configuration["geckodriver"]), os.X_OK):
+        if ( os.access(str(self.configuration["geckodriver"]), os.X_OK) and
+           os.access(str(self.configuration["firefox"]), os.X_OK)):
             self.print(st="ok")
-        else:
-            raise OSError(
-                '"'
-                + str(self.configuration["geckodriver"])
-                + '" is not executable or not found'
-            )
-
-        self.print(
-            'Check if "firefox" is installed properly', end=""
-        )  #############################################################
-        if os.access(str(self.configuration["firefox"]), os.X_OK):
-            self.print(st="ok")
-        else:
-            raise OSError(
-                '"'
-                + str(self.configuration["firefox"])
-                + '" is not executable or not found'
-            )
-
-        self.print(
-            "Check firefox browser version", end=""
-        )  #############################################################
-        try:
-            major, minor = self.__get_firefox_version()
-        except Exception:
-            raise
-        else:
-            if (major, minor) < (60, 9):
-                self.print(
-                    "Firefox version ("
-                    + str(major)
-                    + "."
-                    + str(minor)
-                    + " is too old (< 60.9) script may fail",
-                    st="WW",
-                )
+            self.print(
+                "Check firefox browser version", end=""
+            )  #############################################################
+            try:
+                major, minor = self.__get_firefox_version()
+            except Exception:
+                raise
             else:
-                self.print(st="ok")
+                if (major, minor) < (60, 9):
+                    self.print(
+                        "Firefox version ("
+                        + str(major)
+                        + "."
+                        + str(minor)
+                        + " is too old (< 60.9) script may fail",
+                        st="WW",
+                    )
+                else:
+                    self.print(st="ok")
+        elif (os.access(str(self.configuration["chromedriver"]), os.X_OK) and
+             os.access(str(self.configuration["chromium"]), os.X_OK)):
+            self.print(st="ok")
+        else:    
+            raise OSError(
+                '"%s"/"%s" or "%s"/"%s": no valid pair of executables found' % (
+                  self.configuration["geckodriver"],
+                  self.configuration["firefox"],
+                  self.configuration["chromedriver"],
+                  self.configuration["chromium"],
+                ) 
+            )
+
+
 
     def __get_firefox_version(self):
         try:
@@ -543,13 +556,13 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            "Waiting for Email", end=""
+            "Waiting for Password", end=""
         )  #############################################################
         try:
             ep = EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "input[inputmode='email'")
+                (By.CSS_SELECTOR, 'input[type="password"]')
             )
-            el_email = self.__wait.until(
+            el_password = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
                 + str(self.configuration["timeout"])
@@ -561,13 +574,14 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            "Waiting for Password", end=""
+            "Waiting for Email", end=""
         )  #############################################################
         try:
+            self.__wait.until(document_initialised)
             ep = EC.presence_of_element_located(
-                (By.CSS_SELECTOR, 'input[type="password"]')
+                (By.XPATH, r"//input[@inputmode='email']")
             )
-            el_password = self.__wait.until(
+            el_email = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
                 + str(self.configuration["timeout"])
@@ -1221,8 +1235,14 @@ class HomeAssistantInjector(DomoticzInjector):
     def sanity_check(self, debug=False):
         self.print("Check Home Assistant connectivity", st="--", end="")
         response = self.open_url("/api/")
-        if response["message"] == "API running":
+        if response["message"] == "API running.":
             self.print(st="ok")
+        else:
+            self.print(st="EE")
+            if not "result" in response:
+                raise RuntimeError(
+                    "No valid response '%s' from %s" % (response['message'], self.configuration["ha_server"],)
+                )
 
     def update_device(self, csv_file):
         self.print("Parsing csv file")
@@ -1417,8 +1437,12 @@ if __name__ == "__main__":
 
     try:
         veolia.init_browser_firefox()
-    except Exception as exc:
-        exit_on_error(veolia, server, str(exc), debug=args.debug)
+    except (Exception, xauth.NotFoundError) as exc:
+        o.print(st="~~")
+        try:
+            veolia.init_browser_chrome()
+        except Exception as exc:
+            exit_on_error(veolia, server, str(exc), debug=args.debug)
 
     try:
         data_file = veolia.get_file()
