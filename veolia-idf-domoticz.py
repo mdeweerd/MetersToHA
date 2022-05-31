@@ -841,6 +841,13 @@ class VeoliaCrawler:
         if os.path.exists(self.__full_path_download_file):
             self.print(st="ok")
         else:
+            try:
+                error_img = "%serror.png" % (self.configuration["logs_folder"],)
+                self.print( "Get & Save '%s'" % (error_img,), end="")
+                # img = self.__display.waitgrab()
+                self.__browser.get_screenshot_as_file(error_img)
+            except Exception as e:
+                self.print( "Exception while getting image: %s" % (e,), end="")
             raise RuntimeError("File download timeout")
 
         return self.__full_path_download_file
