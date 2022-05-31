@@ -17,6 +17,7 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
         xauth \
         xserver-xephyr \
         chromium-driver \
+        chromium \ 
         python3-pip \
         python3-selenium \
         python3-pyvirtualdisplay \
