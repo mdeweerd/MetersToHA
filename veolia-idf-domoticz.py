@@ -50,7 +50,7 @@ try:
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
     from selenium.webdriver.firefox.options import Options
-    from selenium.webdriver.firefox.service import FirefoxService
+    from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
 except ImportError as exc:
@@ -327,7 +327,7 @@ class VeoliaCrawler:
             # Enable the browser
             try:
                 self.__browser = webdriver.Firefox(
-                    chrome_options=opts,
+                    options=opts,
                     service_log_path=str(self.configuration["logs_folder"])
                     + "/geckodriver.log",
                     service=service,
@@ -382,19 +382,15 @@ class VeoliaCrawler:
         else:
             options.add_argument("--headless")
             options.add_argument("--disable-gpu")
-            self.print("Before display", end="")
             try:
               self.__display = Display(visible=0, size=(1280, 1024))
-            except Exception as e:
-              print("%r" % (e))  
-              raise e
-            self.print("After display", end="")
+            except Exception:
+              raise
 
         try:
             self.__display.start()
-        except Exception as e:
-            print(str(e))
-            raise e
+        except Exception:
+            raise
         else:
             self.print(st="OK")
 
@@ -404,7 +400,7 @@ class VeoliaCrawler:
         try:
             self.__browser = webdriver.Chrome(
                 executable_path=self.configuration["chromedriver"],
-                options=options,
+                chrome_options=options,
             )
             self.__browser.maximize_window()
             self.__wait = WebDriverWait(
