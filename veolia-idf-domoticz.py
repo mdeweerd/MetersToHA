@@ -50,7 +50,7 @@ try:
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
     from selenium.webdriver.firefox.options import Options
-    from selenium.webdriver.firefox.service import Service
+    from selenium.webdriver.firefox.service import FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
 except ImportError as exc:
@@ -319,7 +319,10 @@ class VeoliaCrawler:
             # Set firefox binary to use
             opts.binary_location = FirefoxBinary(str(self.configuration["firefox"]))
 
-            service = Service(self.configuration["geckodriver"])
+            service = FirefoxService(self.configuration["geckodriver"])
+            if not hasattr(service, 'process'):
+                # Webdriver may complain about missing process.
+                service.process = None
 
             # Enable the browser
             try:
