@@ -1,5 +1,5 @@
 ## Start from the official Ubuntu image
-FROM debian:buster
+FROM debian:bullseye
 
 LABEL maintainer="MDW <MDW@private.fr>"
 

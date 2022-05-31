@@ -12,6 +12,6 @@ SET DISPLAY=host.docker.internal:0.0
 SET ARGS=./veolia-idf-domoticz.py --run --debug
 
 REM This does not need an XServer
-REM SET ARGS=./veolia-idf-domoticz.py --run
+SET ARGS=./veolia-idf-domoticz.py --run
 
 docker run --rm -it -e DISPLAY=%DISPLAY% -v %cd%:/root/workdir --env NO_AT_BRIDGE=1 --workdir="/root" %IMAGE% /bin/bash -c "cd workdir ; %ARGS%" 
