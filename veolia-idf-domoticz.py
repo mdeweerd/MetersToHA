@@ -793,7 +793,7 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            "Wait for button téléchargement", end=""
+            "Wait for button telechargement", end=""
         )  #############################################################
         try:
             ep = EC.presence_of_element_located(
@@ -817,7 +817,7 @@ class VeoliaCrawler:
         self.print(st="ok")
 
         self.print(
-            "Click on button téléchargement", end=""
+            "Click on button telechargement", end=""
         )  #############################################################
         try:
             el.click()
