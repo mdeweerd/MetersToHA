@@ -366,12 +366,15 @@ class VeoliaCrawler:
         options.add_argument("--disable-renderer-backgrounding")
         options.add_argument("--disable-background-timer-throttling")
         options.add_argument("--disable-backgrounding-occluded-wndows")
+        options.add_argument("--disable-translate")
+        options.add_argument("--disable-popup-blocking")
         options.add_experimental_option(
             "prefs",
             {
                 "download.default_directory": self.configuration[
                     "download_folder"
                 ],
+                "profile.default_content_settings.popups": 0,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 "extensions_to_open": "text/csv",
@@ -800,8 +803,8 @@ class VeoliaCrawler:
             "Wait for button telechargement", end=""
         )  #############################################################
         try:
-            ep = EC.presence_of_element_located(
-                (By.XPATH, '//*[contains(text(),"charger la p")]')
+            ep = EC.visibility_of_element_located(
+                (By.XPATH, '//button[contains(text(),"charger la p")]')
             )
             el = self.__wait.until(
                 ep,
@@ -817,8 +820,9 @@ class VeoliaCrawler:
         self.print(
             "Wait before clicking (10)", end=""
         )  #############################################################
+        self.print(st="~~")
+
         time.sleep(10)
-        self.print(st="ok")
 
         self.print(
             "Click on button telechargement", end=""
