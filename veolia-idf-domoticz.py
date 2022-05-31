@@ -361,6 +361,11 @@ class VeoliaCrawler:
         # Set Chrome options
         options = webdriver.ChromeOptions()
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-modal-animations")
+        options.add_argument("--disable-login-animations")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-wndows")
         options.add_experimental_option(
             "prefs",
             {
