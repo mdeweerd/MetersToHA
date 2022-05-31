@@ -832,7 +832,7 @@ class VeoliaCrawler:
         t = int(str(self.configuration["timeout"]))
         while t > 0 and not os.path.exists(self.__full_path_download_file):
             time.sleep(1)
-            t - 1
+            t -= 1
         if os.path.exists(self.__full_path_download_file):
             self.print(st="ok")
         else:
