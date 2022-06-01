@@ -1,4 +1,4 @@
-## Start from the official Ubuntu image
+## Start from the official Debian image
 FROM debian:bullseye
 
 LABEL maintainer="MDW <MDW@private.fr>"
