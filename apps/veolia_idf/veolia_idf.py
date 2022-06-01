@@ -1,5 +1,5 @@
 """
-Module for use with AppDaemon on Home Assistant. 
+Module for use with AppDaemon on Home Assistant.
 """
 import os
 import subprocess as s
