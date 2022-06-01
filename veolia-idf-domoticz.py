@@ -451,7 +451,7 @@ class VeoliaCrawler:
             self.print(st="ok")
 
         self.print(
-            'Check availabilty of "geckodriver"+"firefox" or "chromedriver"+"chromium"', end=""
+            'Check availability of "geckodriver"+"firefox" or "chromedriver"+"chromium"', end=""
 
         )  #############################################################
         if ( os.access(str(self.configuration["geckodriver"]), os.X_OK) and
