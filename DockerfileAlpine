@@ -1,0 +1,35 @@
+## Start from the official Alpine image
+FROM alpine:3.16
+
+LABEL maintainer="MDW <MDW@private.fr>"
+
+## Set environment variables
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+# Not on Debian: firefox firefox-geckodriver
+
+RUN apk add \
+        py-urllib3 \
+        py3-colorama \
+        xvfb \
+        py3-pip \
+        xorg-server-xephyr \
+        chromium-chromedriver \
+        chromium \
+        py3-openssl \
+        py3-pysocks \
+        py3-wsproto \
+        py3-sniffio \
+        py3-async_generator \
+        py3-sortedcontainers \
+        py3-attrs \
+        py3-outcome \
+        py3-trio \
+  && pip install \
+        'urllib3>=1.24.2' \
+        'colorama>=0.3.7' \
+        'selenium>=3.14.1' \
+        'PyVirtualDisplay>=0.2.4' \
+        'requests>=2.23.0'
+
+
