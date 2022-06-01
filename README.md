@@ -1,22 +1,21 @@
 # veolia-idf
-Ce script automatise le chargement de l'historique de votre consommation d'eau récupèré sur le site de Veolia Ile-de-France dans la solution domotique Domoticz
+Ce script automatise le chargement de l'historique de votre consommation d'eau récupèré sur le site de Veolia Ile-de-France dans les solutions domotiques :
+ - [Domoticz](https://domoticz.com/)
+ - [Home Assistant](https://www.home-assistant.io/)
 
-Ce script s'installe sur le serveur hébergeant l'applicatif domoticz ou sur autre. Son execution est manuelle ou peut se planifier à travers un planificateur de tâche tel que "cron".
+Ce script s'installe sur le serveur domotique ou sur autre serveur. Son execution est manuelle ou peut se planifier à travers un planificateur de tâche tel que "cron".
 
-La récuperation des données se fait grace à l'outil selenium et l'execution en mode Headless de firefox (simulation d'un utilisateur en tâche de fond sans mode graphique).
-
-#### C'est une v1 perfectible, n'hésitez pas à me faire vos retours en cas de problème/difficulté
+La récuperation des données se fait grace à l'outil selenium et l'execution en mode Headless de firefox ou chromium (simulation d'un utilisateur en tâche de fond sans mode graphique).
 
 ## Fonctionnalités :
 * Récupération et chargement de l'intégralité de l'historique
 * Gestion multi-contrat
-* Vérification de l'intégrité de l'environnement (prérequis / configuration domoticz)
+* Vérification de l'intégrité de l'environnement (prérequis / configuration sur serveur domotique)
 * Mode debug graphique
 * Possible integration avec d'autre solution domotique (à vous de jouer)
 
 ## Prérequis :
-* firefox
-* geckodriver
+* firefox + geckodriver OU chromium+chromium-driver
 * python 3
 * xvfb
 * xephyr (recommandé)
@@ -28,15 +27,12 @@ La récuperation des données se fait grace à l'outil selenium et l'execution e
   * qq autres... (le script commence par verifier la présence des modules)
 * Un Virtual Sensor Domoticz
 
-## Tester sur ubuntu 20.04
-
-Sur ubuntu ca donne :
+## Exemple d'instalation des prérequis sur ubuntu 20.04 :
 ```shell
 apt install firefox firefox-geckodriver xvfb xserver-xephyr python3-selenium python3-pyvirtualdisplay python3-colorama python3-urllib3
 ```
 
-
-## Création du "Virtual Sensor" Domoticz :
+## Création du "Virtual Sensor" sur Domoticz :
 * Créer un Matériel de Type "Dummy" -> Domoticz / Setup / Hardware / Dummy
 * Créer un "Virtual Sensor" de type : "Managed Counter"
 * Configurer le sensor -> Domoticz / Utility / [Bouton "edit" de votre sensor]
@@ -123,10 +119,17 @@ crontab -e
 0 1 * * *       /opt/veolia-idf/veolia-idf-domoticz.py --run --log /var/log/veolia/veolia-idf.log
 ```
 
+## Docker
+Lire le fichier : dockerDebianRun.BAT
+
 ## Environnements testés:
-* Debian buster
-* Ubuntu Zesty (17.04)
+* Debian Buster - chromium
+* Debian Bullseye - chromium
+* Alpine 3.16 - chromium
+* Ubuntu 20.04 - firefox
+* Ubuntu 21.04 - firefox (firefox-geckodriver non dispo sur Ubuntu 22.04).
 
 ## Remerciements :
 * [k20human](https://github.com/k20human)
 * [guillaumezin](https://github.com/guillaumezin)
+* [mdeweerd](https://github.com/mdeweerd) | support de Home Assistant + Docker
