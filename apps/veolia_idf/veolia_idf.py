@@ -1,7 +1,11 @@
-import hassapi as hass
+"""
+Module for use with AppDaemon on Home Assistant. 
+"""
 import os
 import subprocess as s
+
 import adbase as ad
+import hassapi as hass
 
 
 class VeoliaIDF(hass.Hass):
@@ -9,7 +13,7 @@ class VeoliaIDF(hass.Hass):
         self.listen_event(self.call_veolia_idf, "call_veolia")
 
     @ad.app_lock
-    def call_veolia_idf(self, *args, **kwargs):
+    def call_veolia_idf(self, *args, **kwargs):  # pylint: disable=unused-argument
         if "script" in self.args:
             script = self.args["script"]
         else:
