@@ -158,7 +158,7 @@ class Configuration:
             return content
 
 
-    def print(self, string="", st=None, end=None):
+    def print(self, string="", st=None, end=None):  # pylint: disable=no-self-use
         st = "[" + st + "] " if st else ""
         if end is None:
             print(st + string)
@@ -392,9 +392,9 @@ class VeoliaCrawler:
             options.add_argument("--headless")
             options.add_argument("--disable-gpu")
             try:
-              self.__display = Display(visible=0, size=(1280, 1024))
+                self.__display = Display(visible=0, size=(1280, 1024))
             except Exception:
-              raise
+                raise
 
         try:
             self.__display.start()
@@ -479,14 +479,14 @@ class VeoliaCrawler:
         elif (os.access(str(self.configuration["chromedriver"]), os.X_OK) and
              os.access(str(self.configuration["chromium"]), os.X_OK)):
             self.print(st="ok")
-        else:    
+        else:
             raise OSError(
                 '"%s"/"%s" or "%s"/"%s": no valid pair of executables found' % (
                   self.configuration["geckodriver"],
                   self.configuration["firefox"],
                   self.configuration["chromedriver"],
                   self.configuration["chromium"],
-                ) 
+                )
             )
 
 
