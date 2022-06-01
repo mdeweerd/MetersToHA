@@ -104,7 +104,7 @@ class Output:
 
         if end is not None:
             st = st + " " if st else ""
-            print(st + "%75s" % (string,), end="", flush=True)
+            print(st + "%-75s" % (string,), end="", flush=True)
             self.__print_buffer = self.__print_buffer + string
         elif self.__print_buffer:
             st = st if st else "[--] "
@@ -197,6 +197,7 @@ class VeoliaCrawler:
             else install_dir + "/firefox",
             "chromium": which("chromium")
             if which("chromium")
+            else which("chromium-browser") if which("chromium-browser")
             else install_dir + "/chromium",
             "chromedriver": which("chromedriver")
             if which("chromedriver")
