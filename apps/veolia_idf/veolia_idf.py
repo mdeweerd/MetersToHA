@@ -28,5 +28,7 @@ class VeoliaIDF(hass.Hass):
             log_folder = self.args["log_folder"]
             script_args.append("-l")
             script_args.append(str(log_folder))
+        if "keep_csv" in self.args and self.args["keep_csv"]:
+            script_args.append("--keep_csv")
 
         s.call(script_args)
