@@ -508,7 +508,8 @@ class VeoliaCrawler:
 
         return major, minor
 
-    def clean_up(self, debug=False):
+
+    def clean_up(self, debug=False, keep_csv=False):
         self.print(
             "Close Browser", end=""
         )  #############################################################
@@ -541,7 +542,7 @@ class VeoliaCrawler:
 
         # Remove downloaded file
         try:
-            if not debug and os.path.exists(self.__full_path_download_file):
+            if not debug and not keep_csv and os.path.exists(self.__full_path_download_file):
                 #############################################################
                 # Remove file
                 self.print( "Remove downloaded file " + self.download_filename, end="")
@@ -1278,7 +1279,8 @@ class HomeAssistantInjector(DomoticzInjector):
                     raise RuntimeError(
                         "File contains too old data (monthly?!?): %s" % (row,)
                     )
-                self.print("    update value for %s" % (date,), end="")
+                self.print("    update value for %s - %sL - %sL"
+                           % (date, meter_total, meter_period_total), end="")
                 data = {
                     "state": meter_total,
                     "attributes": {
@@ -1392,6 +1394,13 @@ if __name__ == "__main__":
         help="run the script",
         required=True,
     )
+    parser.add_argument(
+        "-k",
+        "--keep_csv",
+        action="store_true",
+        help="Keep the downloaded CSV file",
+        required=False,
+    )
     args = parser.parse_args()
 
     # Init output
@@ -1478,6 +1487,6 @@ if __name__ == "__main__":
     except Exception as exc:
         exit_on_error(veolia, server, str(exc), debug=args.debug)
 
-    veolia.clean_up(args.debug)
+    veolia.clean_up(debug=args.debug, keep_csv=args.keep_csv)
     o.print("Finished on success")
     sys.exit(0)
