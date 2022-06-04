@@ -1,0 +1,31 @@
+---
+version: '3.5'
+
+services:
+  # Base image using alpine
+  veolia-idf-alpine:
+    build:
+      context: .
+      args:
+        - --rm
+      dockerfile: ./DockerfileAlpine
+    working_dir: /root/workdir
+    environment:
+      DISPLAY: host.docker.internal:0.0
+      NO_AT_BRIDGE: 1
+    volumes:
+      - .:/root/workdir
+
+  # Run script in normal mode
+  #
+  # Run this using `docker compose run --rm veolia-run` on the CLI
+  veolia-run:
+    extends: veolia-idf-alpine
+    command: ./veolia-idf-domoticz.py --run
+
+  # Run script in debug mode and keep the CSV
+  #
+  # Run this using `docker compose run --rm veolia-run` on the CLI
+  veolia-debug:
+    extends: veolia-idf-alpine
+    command: ./veolia-idf-domoticz.py --run --debug --keep_csv
