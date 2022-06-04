@@ -141,14 +141,28 @@ crontab -e
 ```
 
 ## Docker
-Voir les fichiers `docker*Run.BAT`.
-
-La proposition `dockerAlpineRun.BAT` se mets en place le plus rapidement et c'est aussi le plus petit (<500Mo).
-
-La lecture des divers fichiers `Dockerfile*` permettent aussi de déterminer une méthode efficace d'installation sur le système de type `Linux` correspondant.
+Voir les fichiers `docker*Run.BAT`, `docker-compose.yml`, `DockerFile*`.
 
 Ces scripts permettent aussi de valider le fonctionnement sous divers environnements Linux.  Il n'y a pas besoin de serveur X local tant que vous n'activez pas l'option débogue.
 
+Vous avez bien évidemment besoin de [Docker](https://www.docker.com/).
+
+### Démarrage rapide avec `docker compose`
+
+Pour démarrer rapidement (après création du fichier de configuration `config.json`):
+
+```shell
+docker compose run --rm veolia-run
+```
+
+Ou en mode débogue (nécessite un serveur X local):
+```shell
+docker compose run --rm veolia-debug
+
+```
+### Scripts `docker*.BAT` (Windows)
+
+La proposition `dockerAlpineRun.BAT` se mets en place le plus rapidement et c'est aussi le plus petit (<500Mo).
 
 ## Environnements testés:
 * Debian Buster - chromium
