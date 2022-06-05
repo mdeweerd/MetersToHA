@@ -19,7 +19,7 @@ class VeoliaIDF(hass.Hass):
         else:
             mydir = os.path.dirname(os.path.realpath(__file__))
             script = os.path.join(mydir, "veolia-idf-domoticz.py")
-        script_args = [ "python3", "-", script, "-r" ]
+        script_args = [ "python3", script, "-r" ]
         if "config_file" in self.args:
             cfg = self.args["config_file"]
             script_args.append("-c")
