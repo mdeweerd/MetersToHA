@@ -384,7 +384,7 @@ class VeoliaCrawler:
         )
 
         self.print(
-            "Start virtual display (chrome)", end=""
+            "Start virtual display (chromium)", end=""
         )  #############################################################
         if self.__debug:
             self.__display = Display(visible=1, size=(1280, 1024))
@@ -730,6 +730,8 @@ class VeoliaCrawler:
                 raise
             else:
                 self.print(st="ok")
+
+            time.sleep(2)
 
             self.print(
                 "Click on history menu", end=""
