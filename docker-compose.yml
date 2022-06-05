@@ -21,11 +21,11 @@ services:
   # Run this using `docker compose run --rm veolia-run` on the CLI
   veolia-run:
     extends: veolia-idf-alpine
-    command: ./veolia-idf-domoticz.py --run
+    command: ./apps/veolia-idf-domoticz.py --run
 
   # Run script in debug mode and keep the CSV
   #
   # Run this using `docker compose run --rm veolia-run` on the CLI
   veolia-debug:
     extends: veolia-idf-alpine
-    command: ./veolia-idf-domoticz.py --run --debug --keep_csv
+    command: ./apps/veolia-idf-domoticz.py --run --debug --keep_csv
