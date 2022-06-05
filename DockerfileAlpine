@@ -6,7 +6,9 @@ LABEL maintainer="MDW <MDW@private.fr>"
 ## Set environment variables
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-# Not on Debian: firefox firefox-geckodriver
+# Using Chromium, firfox not available on Alpine Linux
+
+# Might benefit from `mesa-dri-swrast` module
 
 RUN apk add \
         py-urllib3 \
