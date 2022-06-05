@@ -29,3 +29,7 @@ services:
   veolia-debug:
     extends: veolia-idf-alpine
     command: ./apps/veolia_idf/veolia-idf-domoticz.py --run --debug --keep_csv
+
+  chromium:
+    extends: veolia-idf-alpine
+    command: chromium-browser --no-sandbox
