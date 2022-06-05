@@ -1233,7 +1233,7 @@ class HomeAssistantInjector(DomoticzInjector):
             raise RuntimeError("url=%s : %s" % (api_url, e,))
 
         # HANDLE SERVER ERROR CODE
-        if response.status_code != 200:
+        if response.status_code not in (200, 201):
             raise RuntimeError(
                 "url=%s - (code = %u)\ncontent=%r)"
                 % (
