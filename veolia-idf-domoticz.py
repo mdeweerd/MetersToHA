@@ -49,7 +49,7 @@ try:
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.firefox.options import Options as FirefoxOptions
     from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
@@ -299,7 +299,7 @@ class VeoliaCrawler:
         )  #############################################################
         try:
             # Enable Download
-            opts = Options()
+            opts = FirefoxOptions()
             fp = webdriver.FirefoxProfile()
             opts.profile = fp
             fp.set_preference(
@@ -350,8 +350,9 @@ class VeoliaCrawler:
             # self.__browser.maximize_window()
             # replacing maximize_window by set_window_size to get the window full screen
             self.__browser.set_window_size(1600, 1200)
+            timeout = int(self.configuration["timeout"])  # type: ignore[arg-type]
             self.__wait = WebDriverWait(
-                self.__browser, timeout=int(self.configuration["timeout"])
+                self.__browser, timeout=timeout
             )
         except Exception:
             raise
@@ -412,8 +413,9 @@ class VeoliaCrawler:
                 chrome_options=options,
             )
             self.__browser.maximize_window()
+            timeout = int(self.configuration["timeout"])  # type: ignore[arg-type]
             self.__wait = WebDriverWait(
-                self.__browser, int(self.configuration["timeout"])
+                self.__browser, timeout
             )
         except Exception:
             raise
@@ -1264,13 +1266,23 @@ class HomeAssistantInjector(DomoticzInjector):
                 )
 
     def update_device(self, csv_file):
+        # pylint: disable=too-many-locals
         self.print("Parsing csv file")
+
         with open(csv_file) as f:
-            row = list(csv.reader(f, delimiter=";"))[-1]
+            rows = list(csv.reader(f, delimiter=";"))
+            # List has at least two rows, the exception handles it.
+            row = rows[-1]
+            p_row = rows[-2]
+
             date = row[0][0:10]
             date_time = row[0]
             meter_total = row[1]
             meter_period_total = row[2]
+
+            p_date_time = p_row[0]
+            p_meter_total = p_row[1]
+            p_meter_period_total = p_row[2]
 
             # Check line integrity (Date starting with 2 (Year))
             if date[0] == "2":
@@ -1281,20 +1293,32 @@ class HomeAssistantInjector(DomoticzInjector):
                     raise RuntimeError(
                         "File contains too old data (monthly?!?): %s" % (row,)
                     )
-                self.print("    update value for %s - %sL - %sL"
-                           % (date, meter_total, meter_period_total), end="")
+                self.print("    previous value  %s: %sL - %sL"
+                           % (p_date_time, p_meter_total, p_meter_period_total), end="")
+                self.print("    update value is %s: %sL - %sL"
+                           % (date_time, meter_total, meter_period_total), end="")
                 data = {
                     "state": meter_total,
                     "attributes": {
                         "date_time": date_time,
                         "unit_of_measurement": "L",
+                        # "device_class": "water",  # When this becomes available in HA
+                        "state_class": "total_increasing",
                     },
                 }
                 self.open_url(
                     "/api/states/sensor.veolia_%s_total" % (self.configuration['veolia_contract'],),
                     data,
                 )
-                data["state"] = meter_period_total
+                data = {
+                    "state": meter_period_total,
+                    "attributes": {
+                        "date_time": date_time,
+                        "unit_of_measurement": "L",
+                        # "device_class": "water",  # When this becomes available in HA
+                        "state_class": "measurement",
+                    },
+                }
                 self.open_url(
                     "/api/states/sensor.veolia_%s_period_total" % (self.configuration['veolia_contract'],),
                     data,
