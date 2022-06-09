@@ -33,3 +33,7 @@ services:
   chromium:
     extends: veolia-idf-alpine
     command: chromium-browser --no-sandbox
+
+  ash:
+    extends: veolia-idf-alpine
+    command: /bin/ash
