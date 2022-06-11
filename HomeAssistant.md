@@ -42,13 +42,13 @@ Exemple:
 
 ```json
 {
-    "veolia_login": "MONLOGIN",
-    "veolia_password": "MONPASSE",
-    "veolia_contract": "MONCONTRAT",
-    "ha_server": "https://MONINSTANCEHA",
-    "ha_token": "MONTOKEN",
-    "type": "ha",
-    "timeout": "30"
+  "veolia_login": "MONLOGIN",
+  "veolia_password": "MONPASSE",
+  "veolia_contract": "MONCONTRAT",
+  "ha_server": "https://MONINSTANCEHA",
+  "ha_token": "MONTOKEN",
+  "type": "ha",
+  "timeout": "30"
 }
 ```
 
