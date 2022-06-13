@@ -49,7 +49,6 @@ try:
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-    from selenium.webdriver.firefox.options import Options as FirefoxOptions
     from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
@@ -299,7 +298,7 @@ class VeoliaCrawler:
         )  #############################################################
         try:
             # Enable Download
-            opts = FirefoxOptions()
+            opts = webdriver.FirefoxOptions()
             fp = webdriver.FirefoxProfile()
             opts.profile = fp
             fp.set_preference(
@@ -410,7 +409,7 @@ class VeoliaCrawler:
         try:
             self.__browser = webdriver.Chrome(
                 executable_path=self.configuration["chromedriver"],
-                chrome_options=options,
+                options=options,
             )
             self.__browser.maximize_window()
             timeout = int(self.configuration["timeout"])  # type: ignore[arg-type]
@@ -554,291 +553,218 @@ class VeoliaCrawler:
         except Exception as e:
             self.print(str(e), st="EE")
 
+    def wait_until_disappeared(self, method, key, wait_message=None):
+        """Wait until element is gone"""
+        if wait_message is None:
+            wait_message = "Wait for missing %s" % (key,)
+        self.print(wait_message, end="")
+
+        ep = EC.visibility_of_element_located(
+            (
+                method,
+                key,
+            )
+        )
+
+        timeout_message = "Failed, page timeout (timeout=%s)" % (
+            str(self.configuration["timeout"]),
+        )
+        self.__wait.until_not(ep, message=timeout_message)
+
+        self.print(st="ok")
+
+    def click_in_view(
+        self, method, key, click_message=None, wait_message=None, delay=0
+    ):
+        """
+        1. Wait until element is visible
+        2. Wait for delay.
+        3. Bring into view (location may have changed)
+        4. Click
+        """
+        # Wait until element is visible
+        ep = EC.visibility_of_element_located(
+            (
+                method,
+                key,
+            )
+        )
+
+        if wait_message is None:
+            wait_message = "Wait for Button %s" % (key,)
+        self.print(wait_message, end="")
+
+        timeout_message = "Failed, page timeout (timeout=%s)" % (
+            str(self.configuration["timeout"]),
+        )
+        el = self.__wait.until(ep, message=timeout_message)
+
+        self.print(st="ok")
+
+        if delay != 0.0:
+            self.print("Wait before clicking (%.1fs)" % (delay,), end="")
+            self.print(st="~~")
+            time.sleep(delay)
+
+        # Bring the element into view
+        el.location_once_scrolled_into_view
+
+        # Click
+        if click_message is None:
+            click_message = "Click on %s" % (key,)
+        self.print(click_message, end="")
+
+        try:
+            el.click()
+        except Exception:
+            raise
+        else:
+            self.print(st="ok")
+
     def get_file(self):
 
-        self.print(
-            "Connexion au site Veolia Eau Ile de France", end=""
-        )  #############################################################
-        try:
-            self.__browser.get(self.__class__.site_url)
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Wait for Connexion #####
+        self.print("Connexion au site Veolia Eau Ile de France", end="")
 
-        self.print(
-            "Waiting for Password", end=""
-        )  #############################################################
-        try:
-            ep = EC.presence_of_element_located(
-                (By.CSS_SELECTOR, 'input[type="password"]')
-            )
-            el_password = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        self.__browser.get(self.__class__.site_url)
+        self.print(st="ok")
 
-        self.print(
-            "Waiting for Email", end=""
-        )  #############################################################
-        try:
-            self.__wait.until(document_initialised)
-            ep = EC.presence_of_element_located(
-                (By.XPATH, r"//input[@inputmode='email']")
-            )
-            el_email = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Wait for Password #####
+        self.print("Waiting for Password", end="")
 
-        self.print(
-            "Type Email", end=""
-        )  #############################################################
-        try:
-            el_email.clear()
-            el_email.send_keys(self.configuration["veolia_login"])
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ep = EC.presence_of_element_located(
+            (By.CSS_SELECTOR, 'input[type="password"]')
+        )
+        el_password = self.__wait.until(
+            ep,
+            message="failed, page timeout (timeout="
+            + str(self.configuration["timeout"])
+            + ")",
+        )
+        self.print(st="ok")
 
-        self.print(
-            "Type Password", end=""
-        )  #############################################################
-        try:
-            el_password.send_keys(self.configuration["veolia_password"])
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Wait for Email #####
+        self.print("Waiting for Email", end="")
+        self.__wait.until(document_initialised)
+        ep = EC.presence_of_element_located(
+            (By.XPATH, r"//input[@inputmode='email']")
+        )
+        el_email = self.__wait.until(
+            ep,
+            message="failed, page timeout (timeout="
+            + str(self.configuration["timeout"])
+            + ")",
+        )
+        self.print(st="ok")
 
-        self.print(
-            "Waiting for submit button", end=""
-        )  #############################################################
-        try:
-            ep = EC.visibility_of_element_located(
-                (By.CLASS_NAME, "submit-button")
-            )
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Type Email #####
+        self.print("Type Email", end="")
+        el_email.clear()
+        el_email.send_keys(self.configuration["veolia_login"])
+        self.print(st="ok")
 
-        self.print(
-            "Click on submit button", end=""
-        )  #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Type Password #####
+        self.print("Type Password", end="")
+        el_password.send_keys(self.configuration["veolia_password"])
+        self.print(st="ok")
 
-        ### COMPORTEMENT DIFFERENT S IL S AGIT D UN MULTU CONTRATS OU D U NCONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
-        self.print(
-            "Wait for MENU contrats or historique", end=""
-        )  #############################################################
-        try:
-            ep = EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    "//span[contains(text(), 'CONTRATS') or contains(text(), 'HISTORIQUE')]",
-                )
-            )
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        self.print(
-            "Click on menu : " + el.get_attribute("innerHTML"), end=""
-        )  #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        # GESTION DU PARCOURS MULTICONTRATS
-        if el.get_attribute("innerHTML") == "CONTRATS":
-            self.print(
-                "Select contract : " + str(self.configuration["veolia_contract"]),
-                end="",
-            )  #############################################################
-            try:
-                ep = EC.visibility_of_element_located(
-                    (By.LINK_TEXT, str(self.configuration["veolia_contract"]))
-                )
-                el = self.__wait.until(
-                    ep,
-                    message="failed, page timeout (timeout="
-                    + str(self.configuration["timeout"])
-                    + ")",
-                )
-            except Exception:
-                raise
-            else:
-                self.print(st="ok")
-
-            self.print(
-                "Click on contract", end=""
-            )  #############################################################
-            try:
-                el.click()
-            except Exception:
-                raise
-            else:
-                self.print(st="ok")
-
-            self.print(
-                "Wait for history menu", end=""
-            )  #############################################################
-            try:
-                ep = EC.visibility_of_element_located(
-                    (By.LINK_TEXT, "Historique")
-                )
-                el = self.__wait.until(
-                    ep,
-                    message="failed, page timeout (timeout="
-                    + str(self.configuration["timeout"])
-                    + ")",
-                )
-            except Exception:
-                raise
-            else:
-                self.print(st="ok")
-
-            time.sleep(2)
-
-            self.print(
-                "Click on history menu", end=""
-            )  #############################################################
-            try:
-                el.click()
-            except Exception:
-                raise
-            else:
-                self.print(st="ok")
-
-        time.sleep(2)
-        self.print(
-            "Wait for button Litres", end=""
-        )  #############################################################
-        try:
-            ep = EC.visibility_of_element_located(
-                (By.XPATH, "//span[contains(text(), 'Litres')]/parent::node()")
-            )
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        time.sleep(2)
-        self.print(
-            "Click on button Litres ", end=""
-        )  #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        time.sleep(2)
-        self.print(
-            "Wait for button jours", end=""
-        )  #############################################################
-        try:
-            ep = EC.visibility_of_element_located(
-                (By.XPATH, "//span[contains(text(), 'Jours')]/parent::node()")
-            )
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        time.sleep(2)
-        self.print(
-            "Click  n button jours", end=""
-        )  #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        self.print(
-            "Wait for button telechargement", end=""
-        )  #############################################################
-        try:
-            ep = EC.visibility_of_element_located(
-                (By.XPATH, '//button[contains(text(),"charger la p")]')
-            )
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration["timeout"])
-                + ")",
-            )
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
-
-        self.print(
-            "Wait before clicking (10)", end=""
-        )  #############################################################
-        self.print(st="~~")
+        ###### Click Submit #####
+        self.click_in_view(
+            By.CLASS_NAME,
+            "submit-button",
+            wait_message="Waiting for submit button",
+            click_message="Click on submit button",
+            delay=1,
+        )
 
         time.sleep(10)
 
-        self.print(
-            "Click on button telechargement", end=""
-        )  #############################################################
-        try:
-            el.click()
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        ###### Wait until spinner is gone #####
+        self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
+        time.sleep(1)
+
+        ### COMPORTEMENT DIFFERENT S'IL S AGIT D'UN MULTU CONTRATS
+        ### OU D'UN CONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
+
+        self.print("Wait for MENU contrats or historique", end="")
+        ep = EC.visibility_of_element_located(
+            (
+                By.XPATH,
+                "//span[contains(text(), 'CONTRATS') or contains(text(), 'HISTORIQUE')]",
+            )
+        )
+        el = self.__wait.until(
+            ep,
+            message="failed, page timeout (timeout="
+            + str(self.configuration["timeout"])
+            + ")",
+        )
+        self.print(st="ok")
+
+        time.sleep(2)
+
+        menu_type = str(el.get_attribute("innerHTML"))
+
+        ###### Click on Menu #####
+        self.print("Click on menu : " + menu_type, end="")
+
+        el.click()
+
+        self.print(st="ok")
+
+        # GESTION DU PARCOURS MULTICONTRATS
+        if menu_type == "CONTRATS":
+            time.sleep(2)
+            self.click_in_view(
+                By.LINK_TEXT,
+                str(self.configuration["veolia_contract"]),
+                wait_message="Select contract : %s"
+                % (str(self.configuration["veolia_contract"]),),
+                click_message="Click on contract",
+                delay=0,
+            )
+
+        time.sleep(2)
+
+        ###### Click Historique #####
+        self.click_in_view(
+            By.LINK_TEXT,
+            "Historique",
+            wait_message="Wait for historique menu",
+            click_message="Click on historique menu",
+            delay=4,
+        )
+
+        time.sleep(10)
+
+        ###### Click Litres #####
+        self.click_in_view(
+            By.XPATH,
+            "//span[contains(text(), 'Litres')]/parent::node()",
+            wait_message="Wait for button Litres",
+            click_message="Click on button Litres",
+            delay=2,
+        )
+
+        time.sleep(2)
+
+        ###### Click Jours #####
+        self.click_in_view(
+            By.XPATH,
+            "//span[contains(text(), 'Jours')]/parent::node()",
+            wait_message="Wait for button Jours",
+            click_message="Click on button Jours",
+            delay=2,
+        )
+
+        ###### Click Telechargement #####
+        self.click_in_view(
+            By.XPATH,
+            '//button[contains(text(),"charger la p")]',
+            wait_message="Wait for button Telechargement",
+            click_message="Click on button Telechargement",
+            delay=10,
+        )
 
         self.print(
             "Wait for end of download to " + self.__full_path_download_file,
@@ -852,12 +778,14 @@ class VeoliaCrawler:
             self.print(st="ok")
         else:
             try:
-                error_img = "%serror.png" % (self.configuration["logs_folder"],)
-                self.print( "Get & Save '%s'" % (error_img,), end="")
+                error_img = "%serror.png" % (
+                    self.configuration["logs_folder"],
+                )
+                self.print("Get & Save '%s'" % (error_img,), end="")
                 # img = self.__display.waitgrab()
                 self.__browser.get_screenshot_as_file(error_img)
             except Exception as e:
-                self.print( "Exception while getting image: %s" % (e,), end="")
+                self.print("Exception while getting image: %s" % (e,), end="")
             raise RuntimeError("File download timeout")
 
         return self.__full_path_download_file
