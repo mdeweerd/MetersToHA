@@ -1,4 +1,4 @@
-﻿# Documentation spécifique pour Home Assistant avec AppDaemon et HACS
+# Documentation spécifique pour Home Assistant avec AppDaemon et HACS
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=4 --minlevel=1 -->
 
