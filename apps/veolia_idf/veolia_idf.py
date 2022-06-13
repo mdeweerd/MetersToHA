@@ -1,5 +1,14 @@
+#
+# veolia_idf - Home Assistant AppDaemon Class
+#
+# Author: https://github.com/mdeweerd
+#
+# License: GNU General Public License V3
+#
+#
+
 """
-Module for use with AppDaemon on Home Assistant.
+Module for use with AppDaemon on Home Assistant
 """
 import os
 import subprocess as s
