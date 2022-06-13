@@ -2,6 +2,52 @@
 version: '3.5'
 
 services:
+  # Base image using ubuntu
+  veolia-idf-ubuntu:
+    build:
+      context: .
+      args:
+        - --rm
+      dockerfile: ./Dockerfile
+    working_dir: /root/workdir
+    environment:
+      DISPLAY: host.docker.internal:0.0
+      NO_AT_BRIDGE: 1
+    volumes:
+      - .:/root/workdir
+
+  veolia-run-ubuntu:
+    extends: veolia-idf-ubuntu
+    command: ./apps/veolia_idf/veolia-idf-domoticz.py --run
+
+  veolia-debug-ubuntu:
+    extends: veolia-idf-ubuntu
+    command: ./apps/veolia_idf/veolia-idf-domoticz.py --run --debug --keep_csv
+
+
+  # Base image using debian
+  veolia-idf-debian:
+    build:
+      context: .
+      args:
+        - --rm
+      dockerfile: ./DockerfileDebian
+    working_dir: /root/workdir
+    environment:
+      DISPLAY: host.docker.internal:0.0
+      NO_AT_BRIDGE: 1
+    volumes:
+      - .:/root/workdir
+
+  veolia-run-debian:
+    extends: veolia-idf-debian
+    command: ./apps/veolia_idf/veolia-idf-domoticz.py --run
+
+  veolia-debug-debian:
+    extends: veolia-idf-debian
+    command: ./apps/veolia_idf/veolia-idf-domoticz.py --run --debug --keep_csv
+
+
   # Base image using alpine
   veolia-idf-alpine:
     build:
