@@ -17,7 +17,7 @@
 
 Le dépôt [mdeweerd/veolia-idf](https://github.com/mdeweerd/veolia-idf)
 reorganise [sOnik42/veolia-idf](https://github.com/s0nik42/veolia-idf)
-commune une application
+comme une une application
 [AppDaemon](https://appdaemon.readthedocs.io/en/latest/INSTALL.html) sous
 Home Assistant.
 
@@ -32,7 +32,7 @@ ville en visitant
 [https://www.eau.veolia.fr/ 1](https://www.eau.veolia.fr/) > CONNECTEZ-VOUS
 . .
 
-## fichier de configuration (`config.json`)
+## Le fichier de configuration (`config.json`)
 
 Dans tous les cas il faut un fichier de configuration. Pour Home Assistant,
 le point de départ peut être `config.json.exemple.home-assistant` que vous
@@ -56,9 +56,9 @@ Exemple:
 
 1. [Ajouter le AddON/Module complémentaire « Home Assistant Community Add-on: AppDaemon »](https://appdaemon.readthedocs.io/en/latest/INSTALL.html)
    selon votre système - sur votre instance HAOS
-   VOTREINSTANCE/hassio/addon/a0d7b954_appdaemon/info , puis « Install »
-2. Pour HAOS (et peut-être d’autres), configurer AppDaemon au moins avec
-   ces paquets (configuration au format yaml pour HAOS):
+   `VOTREINSTANCE/hassio/addon/a0d7b954_appdaemon/info` , puis « Install »
+2. Pour HAOS (et peut-être d’autres), configurer `AppDaemon` au moins avec
+   ces paquets (configuration au format `yaml` pour HAOS):
 
 ```yaml
 init_commands: []
@@ -88,8 +88,7 @@ system_packages:
 
 ## Ajouter `veolia-idf` à l'AppDaemon avec HACS
 
-Suppose que HACS est déjà actif et configuré pour AppDaemon qui est
-également actif.
+Cett procédure suppose que HACS est déjà actif et configuré pour `AppDaemon`.  Ains que `AppDaemon` soit activé.
 
 1. Ajouter
    [GitHub - mdeweerd/veolia-idf: Charge l'historique de votre consommation Veolia Ile de France dans Domoticz 1](https://github.com/mdeweerd/veolia-idf)
@@ -97,8 +96,8 @@ Suppose que HACS est déjà actif et configuré pour AppDaemon qui est
 
 ![](images/a8cd409a572e71923abfbddd7ce258d9_ba08277acc474c958.png)
 
-Note : après l’ajout le popup reset affiché, mais on trouve le nouveau
-module à la fin de la liste:
+Note : après l’ajout, le popup reste affiché.  Le nouveau
+module est disponible à la fin de la liste:
 
 ![](images/dc09292018ba0ade52d7b2fb32660ea8_f324426e8a86413bb.png)
 
@@ -112,9 +111,9 @@ Les scripts sont ainsi disponibles pour AppDaemon.
 ### <a id="configuration-4"></a>[](#configuration-4)Configuration
 
 Reste encore la configuration de `veolia_idf` sous AppDaemon. Plus haut la
-création du fichier `config.json` a été expliqué. Vous devez le déposer sur
+création du fichier `config.json` a été expliquée. Vous devez le déposer sur
 votre instance Home Assistant, de préférence dans un sous-répertoire de
-`../config`.
+`.../config`.
 
 Dans l'exemple ci-dessous il est supposé que ce fichier `config.json` est
 disponible au chemin `/config/veolia-idf/config.json`.
@@ -123,9 +122,18 @@ Cette configuration indique aussi que la trace `veolia.log` sera déposé
 sous `/config`. Le fichier `/config/veolia.log` pourra aider à identifier
 des causes de dysfonctionnement.
 
-Voici un exemple de ce qu'il faut ajouter à
-`/config/appdaemon/apps/apps.yaml` qui montre aussi comment spécifier le
-chemin vers le script `veolia-idf-domoticz.py` explicitement.
+Voici un exemple d'une configuration minimale à ajouter à
+`/config/appdaemon/apps/apps.yaml`:
+
+```yaml
+veolia_idf:
+  module: veolia_idf
+  class: VeoliaIDF
+  config_file: /config/config.json
+```
+
+L'exemple suivant montre l'ensemble des arguments disponibles, dont la précision du 
+chemin vers le script `veolia-idf-domoticz.py`.
 
 ```yaml
 veolia_idf:
@@ -137,15 +145,6 @@ veolia_idf:
   config_file: /config/veolia-idf/config.json
   # optional (Default: "<REALMODULESCRIPTPATH>/veolia-idf-domoticz.py")
   script: /config/veolia-idf/veolia-idf-domoticz.py
-```
-
-La configuration minimum étant plutôt ceci (sans fichier de trace):
-
-```yaml
-veolia_idf:
-  module: veolia_idf
-  class: VeoliaIDF
-  config_file: /config/config.json
 ```
 
 ## Débogue
@@ -187,8 +186,8 @@ alias: Veolia
 description: ''
 trigger:
   - platform: time_pattern
-    minutes: '7'
     hours: '1'
+    minutes: '7'
 condition: []
 action:
   - event: call_veolia
@@ -198,16 +197,16 @@ mode: single
 
 Cela récupère la consommation à 1h07.
 
-Il semblerait que les données sont des fois un peu "farfelus", c'est en
-"observation" pour le moment pour tenter d'identifier un contournement. Un
-contournement c'est de réaliser l'appel à partir de 1h du matin seulement
-et avant minuit.
+Il semblerait que les données restitués par Veolia sont des fois un peu "farfelus".
+La meilleure méthode connue pour éviter cela est de contournement c'est de réaliser l'appel à partir de 1h du matin seulement et avant minuit.
 
-Exemple d'une récupération pour une journée partielle:
+Mettez SVP une heure différente de 1h07 dans votre configuration afin de répartir les appels auprès de Veolia.  Vous pouvez sûrement accepter de récuperer l'information un peu plus tard que cela vu qu'elle est de tout façon déjà décalé de qqs jousr.
+
+Voici un exemple d'une récupération pour une journée partielle:
 
 ![](images/614596f505fc2e78afd9412095fbf4f9_aa9a6a06cf5346f38.png)
 
-Exemple de données "farfelus" (les 5400L de conso journalière sont
+Et voici un exemple de données "farfelus" (les 5400L de conso journalière sont
 inexactes).
 
 ![](images/508e23eab45baf399b63b24d2742a106_64908a39c13e437d9.png)
