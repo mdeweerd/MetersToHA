@@ -1,17 +1,10 @@
-## Start from the official Ubuntu image
-FROM ubuntu:21.04
+## Start from the official Debian image
+FROM debian:bullseye
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
 ## Set environment variables
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-
-# Not on 22.04:        firefox-geckodriver
-
-
-# Next lines would upgrade image - skipping
-#    && apt-get upgrade -y \
-#    && apt-get dist-upgrade -y \
 
 RUN export DEBIAN_FRONTEND="noninteractive" \
     && apt-get update --fix-missing \
