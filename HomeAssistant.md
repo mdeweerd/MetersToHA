@@ -89,8 +89,8 @@ system_packages:
 
 ## Ajouter `veolia-idf` à l'AppDaemon avec HACS
 
-Cett procédure suppose que HACS est déjà actif et configuré pour
-`AppDaemon`. Ains que `AppDaemon` soit activé.
+Cette procédure suppose que HACS est déjà actif et configuré pour
+`AppDaemon`. Ainsi que `AppDaemon` soit activé.
 
 1. Ajouter
    [GitHub - mdeweerd/veolia-idf: Charge l'historique de votre consommation Veolia Ile de France dans Domoticz 1](https://github.com/mdeweerd/veolia-idf)
