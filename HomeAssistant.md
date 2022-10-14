@@ -57,7 +57,7 @@ Exemple:
 
 1. [Ajouter le AddON/Module complémentaire « Home Assistant Community Add-on: AppDaemon »](https://appdaemon.readthedocs.io/en/latest/INSTALL.html)
    selon votre système, ou
-   [suivez ces instructions pour HAOS](https://my.home-assistant.io/redirect/supervisor_store/)
+   [suivez ces instructions pour HAOS](https://github.com/hassio-addons/addon-appdaemon/blob/main/appdaemon/DOCS.md#installation)
    ou aller directement vers le lien (en remplaçant 'VOTREINSTANCE'):
    `VOTREINSTANCE/hassio/addon/a0d7b954_appdaemon/info` , puis « Install »
 2. Pour HAOS (et peut-être d’autres), configurer `AppDaemon` au moins avec
