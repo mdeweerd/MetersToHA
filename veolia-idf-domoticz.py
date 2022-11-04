@@ -19,30 +19,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-VERSION = "v1.3"
 ################################################################################
 # SCRIPT DEPENDENCIES
 ################################################################################
+import sys
+import os
+import signal
+import time
+import csv
+import json
+import logging
+import argparse
+import base64
+import re
+import subprocess
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from urllib.parse import urlencode
+from shutil import which
 
+VERSION = "v1.3"
 
 try:
-    import argparse
-    import base64
-    import csv
-    import json
-    import logging
-    import os
-    import re
+    # Only add packages that are not built-in here
     import requests
-    import signal
-    import subprocess
-    import sys
-    import time
-    from datetime import datetime
-    from logging.handlers import RotatingFileHandler
-    from shutil import which
-    from urllib.parse import urlencode
-
     import urllib3
     from colorama import Fore, Style
     from pyvirtualdisplay import Display, xauth
@@ -81,7 +81,7 @@ class Output:
         if self.__debug is False:
             # Check if we can create logfile
             try:
-                open(logfile, "a+").close()
+                open(logfile, "a+", encoding="utf_8").close()
             except Exception as e:
                 raise RuntimeError('"%s" %s' % (logfile, e,))
 
@@ -139,14 +139,14 @@ class Configuration:
         self.__debug = debug
 
         # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print
+        self.print = super_print if super_print else self.print   # type:ignore[assignment]
 
     def load_configuration_file(self, configuration_file):
         self.print(
             "Loading configuration file : " + configuration_file, end=""
         )  #############################################################
         try:
-            with open(configuration_file) as conf_file:
+            with open(configuration_file, encoding="utf_8") as conf_file:
                 content = json.load(conf_file)
         except json.JSONDecodeError as e:
             raise RuntimeError("json format error : " + str(e))
@@ -157,12 +157,12 @@ class Configuration:
             return content
 
 
-    def print(self, string="", st=None, end=None):  # pylint: disable=no-self-use
+    def print(self, string="", st=None, end=None):
         st = "[" + st + "] " if st else ""
         if end is None:
             print(st + string)
         else:
-            print(st + string + " ", end="", flush="True")
+            print(st + string + " ", end="", flush="True")  # type:ignore[call-overload]
 
 
 ################################################################################
@@ -176,7 +176,7 @@ class VeoliaCrawler:
         self.__debug = debug
 
         # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print
+        self.print = super_print if super_print else self.print  # type:ignore[has-type]
 
         self.__display = None
         self.__browser = None  # type: webdriver.Firefox
@@ -434,7 +434,7 @@ class VeoliaCrawler:
             )
         else:
             try:
-                open(self.__full_path_download_file, "a+").close()
+                open(self.__full_path_download_file, "a+", encoding="utf_8").close()
             except Exception as e:
                 raise RuntimeError(
                     '"%s" %s' % (self.__full_path_download_file, e,)
@@ -502,7 +502,7 @@ class VeoliaCrawler:
 
         try:
             major, minor = map(
-                int, re.search(r"(\d+).(\d+)", str(output)).groups()
+                int, re.search(r"(\d+).(\d+)", str(output)).groups()  # type:ignore[union-attr]
             )
         except Exception:
             raise
@@ -517,7 +517,7 @@ class VeoliaCrawler:
         if self.__browser:
             try:
                 self.__browser.quit()
-            except Exception as e:
+            except Exception as _e:
                 os.kill(self.__browser.service.process.pid, signal.SIGTERM)
                 self.print(
                     "selenium didn't properly close the process, so we kill firefox manually (pid="
@@ -573,7 +573,7 @@ class VeoliaCrawler:
 
         self.print(st="ok")
 
-    def click_in_view(
+    def click_in_view(  # pylint: disable=R0913
         self, method, key, click_message=None, wait_message=None, delay=0
     ):
         """
@@ -799,7 +799,7 @@ class DomoticzInjector:
         self.__debug = debug
 
         # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print
+        self.print = super_print if super_print else self.print  # type:ignore[has-type]
 
         self.configuration = {
             # Mandatory config values
@@ -1053,7 +1053,7 @@ class DomoticzInjector:
 
     def update_device(self, csv_file):
         self.print("Parsing csv file")
-        with open(csv_file) as f:
+        with open(csv_file, encoding="utf_8") as f:
             # Remove first line
 
             # PArse each line of the file.
@@ -1197,7 +1197,7 @@ class HomeAssistantInjector(DomoticzInjector):
         # pylint: disable=too-many-locals
         self.print("Parsing csv file")
 
-        with open(csv_file) as f:
+        with open(csv_file, encoding="utf_8") as f:
             rows = list(csv.reader(f, delimiter=";"))
             # List has at least two rows, the exception handles it.
             row = rows[-1]
@@ -1230,7 +1230,7 @@ class HomeAssistantInjector(DomoticzInjector):
                     "attributes": {
                         "date_time": date_time,
                         "unit_of_measurement": "L",
-                        # "device_class": "water",  # When this becomes available in HA
+                        "device_class": "water",
                         "state_class": "total_increasing",
                     },
                 }
@@ -1243,7 +1243,7 @@ class HomeAssistantInjector(DomoticzInjector):
                     "attributes": {
                         "date_time": date_time,
                         "unit_of_measurement": "L",
-                        # "device_class": "water",  # When this becomes available in HA
+                        "device_class": "water",
                         "state_class": "measurement",
                     },
                 }
@@ -1420,8 +1420,8 @@ if __name__ == "__main__":
         o.print(st="~~")
         try:
             veolia.init_browser_chrome()
-        except Exception as exc:
-            exit_on_error(veolia, server, str(exc), debug=args.debug)
+        except Exception as exc_inner:
+            exit_on_error(veolia, server, str(exc_inner), debug=args.debug)
 
     try:
         data_file = veolia.get_file()
@@ -1433,8 +1433,8 @@ if __name__ == "__main__":
                 st="ww",
             )
             data_file = veolia.get_file()
-        except Exception as exc:
-            exit_on_error(veolia, server, str(exc), debug=args.debug)
+        except Exception as exc_inner:
+            exit_on_error(veolia, server, str(exc_inner), debug=args.debug)
 
     try:
         server.update_device(data_file)
