@@ -40,7 +40,7 @@ repos:
       - id: check-case-conflict
       # - id: check-toml
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.27.1
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args:
@@ -48,14 +48,14 @@ repos:
           - -d
           - '{extends: relaxed, rules: {line-length: {max: 90}}}'
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.3
+    rev: v3.2.0
     hooks:
       - id: pyupgrade
         stages: [manual]  # Require to run this manually
         args:
           - --py37-plus
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.10.0
     hooks:
       - id: black
         stages: [manual]  # Require to run this manually
@@ -98,7 +98,7 @@ repos:
       - id: isort
         stages: [manual]  # Require to run this manually
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.1
+    rev: v2.2.2
     hooks:
       - id: codespell
         stages: [manual]  # Require to run this manually
@@ -117,7 +117,7 @@ repos:
           - --reports=no
         #exclude: ^$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.971
+    rev: v0.982
     hooks:
       - id: mypy
         args:
