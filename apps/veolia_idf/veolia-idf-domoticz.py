@@ -1065,7 +1065,7 @@ class DomoticzInjector:
                 conso = row[2]
                 method = row[3]  # "Mesuré" or "Estimé"
 
-                if method in ["Estimé"]:
+                if method in ("Estimé", ):
                     # Do not use estimated values which may result
                     # in a total that is not increasing
                     # (when the estimated value is smaller than the
