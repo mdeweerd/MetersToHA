@@ -1212,14 +1212,33 @@ class HomeAssistantInjector(DomoticzInjector):
             row = rows[-1]
             p_row = rows[-2]
 
+            method = row[3]  # "Mesuré" or "Estimé"
+            if method in ("Estimé", ):
+                self.print( "File contains estimated data in last line: %s" % (row,))
+                # Try previous row which may be a measurement
+                row = p_row
+                p_row = rows[-3]
+
             date = row[0][0:10]
             date_time = row[0]
             meter_total = row[1]
             meter_period_total = row[2]
+            method = row[3]  # "Mesuré" or "Estimé"
 
             p_date_time = p_row[0]
             p_meter_total = p_row[1]
             p_meter_period_total = p_row[2]
+
+            if method in ("Estimé", ):
+                self.print( "    Skip Method " + method)
+                # Do not use estimated values which may result
+                # in a total that is not increasing
+                # (when the estimated value is smaller than the
+                #  previous real value or higher than the next
+                #  real value)
+                raise RuntimeError(
+                    "File contains estimated data in last lines: %s" % (row,)
+                )
 
             # Check line integrity (Date starting with 2 (Year))
             if date[0] == "2":
