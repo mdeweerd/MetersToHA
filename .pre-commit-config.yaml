@@ -4,7 +4,7 @@ exclude: ^(\.[^/]*cache/.*)$
 repos:
   - repo: https://github.com/executablebooks/mdformat
     # Do this before other tools "fixing" the line endings
-    rev: 0.7.14
+    rev: 0.7.16
     hooks:
       - id: mdformat
         stages: [manual]  # Require to run this manually
@@ -16,7 +16,7 @@ repos:
         additional_dependencies:
           - mdformat-toc
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       - id: no-commit-to-branch
         args: [--branch, main]
@@ -37,7 +37,7 @@ repos:
       - id: check-case-conflict
       # - id: check-toml
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.26.3
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args:
@@ -45,14 +45,14 @@ repos:
           - -d
           - '{extends: relaxed, rules: {line-length: {max: 90}}}'
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.1
+    rev: v3.2.0
     hooks:
       - id: pyupgrade
         stages: [manual]  # Require to run this manually
         args:
           - --py37-plus
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.10.0
     hooks:
       - id: black
         stages: [manual]  # Require to run this manually
@@ -67,7 +67,7 @@ repos:
         args: [--skip, 'B110,B404,B603', --recursive, .]
 
   - repo: https://github.com/fsouza/autoflake8
-    rev: v0.3.2
+    rev: v0.4.0
     hooks:
       - id: autoflake8
         stages: [manual]  # Require to run this manually
@@ -77,7 +77,7 @@ repos:
           - --expand-star-imports
           - custom_components
   - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         stages: [manual]  # Require to run this manually
@@ -95,7 +95,7 @@ repos:
       - id: isort
         stages: [manual]  # Require to run this manually
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.1.0
+    rev: v2.2.2
     hooks:
       - id: codespell
         stages: [manual]  # Require to run this manually
@@ -104,7 +104,7 @@ repos:
           - --skip="./.*"
           - --quiet-level=2
   - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a4
+    rev: v3.0.0a5
     hooks:
       - id: pylint
         additional_dependencies:
@@ -114,7 +114,7 @@ repos:
           - --reports=no
         #exclude: ^$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.960
+    rev: v0.982
     hooks:
       - id: mypy
         args:
