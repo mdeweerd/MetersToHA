@@ -1063,6 +1063,15 @@ class DomoticzInjector:
                 date_time = row[0]
                 counter = row[1]
                 conso = row[2]
+                method = row[3]  # "Mesuré" or "Estimé"
+
+                if method in ["Estimé"]:
+                    # Do not use estimated values which may result
+                    # in a total that is not increasing
+                    # (when the estimated value is smaller than the
+                    #  previous real value or higher than the next
+                    #  real value)
+                    continue
 
                 # Check line integrity (Date starting by 2 or 1)
                 if date[0] == "2" or date[0] == "1":
