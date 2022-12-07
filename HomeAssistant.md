@@ -10,14 +10,14 @@
     - [Configuration](#configuration)
   - [Débogue](#d%C3%A9bogue)
     - [Lancer l’appel à Veolia](#lancer-l%E2%80%99appel-%C3%A0-veolia)
-    - [Aotomatisation Home Assistant](#aotomatisation-home-assistant)
+    - [Automatisation Home Assistant](#automatisation-home-assistant)
 
 <!-- mdformat-toc end -->
 
 ## Informations générales
 
 Le dépôt [mdeweerd/veolia-idf](https://github.com/mdeweerd/veolia-idf)
-reorganise [sOnik42/veolia-idf](https://github.com/s0nik42/veolia-idf)
+réorganise [sOnik42/veolia-idf](https://github.com/s0nik42/veolia-idf)
 comme une application
 [AppDaemon](https://appdaemon.readthedocs.io/en/latest/INSTALL.html) sous
 Home Assistant.
@@ -52,6 +52,13 @@ Exemple:
   "timeout": "30"
 }
 ```
+
+La valeur pour "ha_token" peut être obtenu dans
+[son profil Home Assistant](https://my.home-assistant.io/redirect/profile/).
+Cette fonctionnalité est disponible tout en bas de la page en question ou
+il faut cliquer "Créer un jeton":
+
+![](images/ha_token.png)
 
 ## Installation AppDaemon
 
@@ -180,7 +187,7 @@ Comme par exemple:
 2022-06-01 18:31:56,019 : -- : Remove downloaded file historique_jours_litres.csv Finished on success
 ```
 
-### Aotomatisation Home Assistant
+### Automatisation Home Assistant
 
 Pour réaliser la tache de récupération une fois par jour, vous pouvez
 ajouter un automatisme à votre configuration Home Assistant comme ceci:
@@ -201,15 +208,15 @@ mode: single
 
 Cela récupère la consommation à 1h07.
 
-Il semblerait que les données restitués par Veolia sont des fois un peu
+Il semblerait que les données restituées par Veolia sont des fois un peu
 "farfelus". La meilleure méthode connue pour éviter cela est de
 contournement c'est de réaliser l'appel à partir de 1h du matin seulement
 et avant minuit.
 
 Mettez SVP une heure différente de 1h07 dans votre configuration afin de
 répartir les appels auprès de Veolia. Vous pouvez sûrement accepter de
-récuperer l'information un peu plus tard que cela vu qu'elle est de tout
-façon déjà décalé de qqs jousr.
+récupérer l'information un peu plus tard que cela vu qu'elle est de tout
+façon déjà décalé de qqs jours.
 
 Voici un exemple d'une récupération pour une journée partielle:
 
