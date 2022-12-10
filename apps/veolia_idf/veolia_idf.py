@@ -26,7 +26,7 @@ class VeoliaIDF(hass.Hass):
 
     @ad.app_lock
     def call_veolia_idf(self, *args, **kwargs):  # pylint: disable=unused-argument
-        self.log("Start VEOLIA", level="ERROR")  # pylint: disable=no-member
+        self.log("Start VEOLIA-IDF", level="INFO")  # pylint: disable=no-member
         try:
             if "script" in self.args:  # pylint: disable=no-member
                 script = self.args["script"]  # pylint: disable=no-member
@@ -69,7 +69,7 @@ class VeoliaIDF(hass.Hass):
                 err = open(self.args["errfile"], "w", encoding="utf_8")  # pylint: disable=no-member
                 closeerr = True
 
-            self.log(f"Execute {script_args!r}", level="ERROR")   # pylint: disable=no-member
+            self.log(f"Execute {script_args!r}", level="INFO")   # pylint: disable=no-member
             s.call(script_args, stdout=out, stderr=err)
 
             # Close files as needed
@@ -80,4 +80,4 @@ class VeoliaIDF(hass.Hass):
         except Exception as e:
             self.log(f"{e!r}", level="ERROR")  # pylint: disable=no-member
         finally:
-            self.log("Done veolia", level="ERROR")  # pylint: disable=no-member
+            self.log("Done veolia", level="INFO")  # pylint: disable=no-member
