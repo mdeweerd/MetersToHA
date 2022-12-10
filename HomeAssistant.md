@@ -156,7 +156,14 @@ veolia_idf:
   config_file: /config/veolia-idf/config.json
   # optional (Default: "<REALMODULESCRIPTPATH>/veolia-idf-domoticz.py")
   script: /config/veolia-idf/veolia-idf-domoticz.py
+  # optional (Default: false) - add --keep_csv option
+  keep_csv: true
+  # optional (Default: false) - add --debug option
+  debug: true
 ```
+
+L'option `debug` peut être intéressant lors de la mise en place en cas de
+diffucultés.
 
 ## Débogue
 
