@@ -159,11 +159,11 @@ veolia_idf:
   # optional (Default: false) - add --keep_csv option
   keep_csv: true
   # optional (Default: false) - add --debug option
-  debug: true
+  debug_veolia: true
 ```
 
-L'option `debug` peut être intéressant lors de la mise en place en cas de
-diffucultés.
+L'option `debug_veolia` peut être intéressant lors de la mise en place en
+cas de diffucultés.
 
 ## Débogue
 

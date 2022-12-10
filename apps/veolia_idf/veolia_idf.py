@@ -39,7 +39,7 @@ class VeoliaIDF(hass.Hass):
             script_args.append(str(log_folder))
         if "keep_csv" in self.args and self.args["keep_csv"]:  # pylint: disable=no-member
             script_args.append("--keep_csv")
-        if "debug" in self.args and self.args["debug"]:  # pylint: disable=no-member
+        if "debug_veolia" in self.args and self.args["debug_veolia"]:  # pylint: disable=no-member
             script_args.append("--debug")
 
         s.call(script_args)
