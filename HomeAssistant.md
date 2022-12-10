@@ -158,8 +158,16 @@ veolia_idf:
   script: /config/veolia-idf/veolia-idf-domoticz.py
   # optional (Default: false) - add --keep_csv option
   keep_csv: true
+  # optional (Default: false) - add --debug option - you should also set DISPLAY
+  debug_veolia: true
+  # optional (Default: None) - Set DISPLAY for GUI interface (when debug is true)
+  DISPLAY: "192.1.0.52:0"
   # optional (Default: false) - add --debug option
   debug_veolia: true
+  # optional (Default: None) - Set file for stdout of script call
+  outfile: /config/appdaemon/apps/veolia_script.log
+  # optional (Default: None) - Set file for stderr of script call
+  errfile: /config/appdaemon/apps/veolia_script_err.log
 ```
 
 L'option `debug_veolia` peut être intéressant lors de la mise en place en
@@ -170,6 +178,16 @@ cas de diffucultés.
 Pour info, il y a une interface web spécifique à AppDaemon :
 [http://votreinstance:5050](http://votreinstance:5050/) qui donne entre
 outre accès à qqs traces et l’historique des appels de scripts.
+
+Sur la page \[http://votreinstance:5050/aui/index.html#/logs\] on peut
+trouver par exemple des traces. Exemple avec une erreur:
+
+```plaintext
+2022-12-10 13:29:13.182428 ERROR veolia_idf: Done veolia
+2022-12-10 13:29:13.157362 ERROR veolia_idf: NameError("name 'sys' is not defined")
+2022-12-10 13:29:13.140371 ERROR veolia_idf: Start VEOLIA
+2022-12-10 13:29:09.467062 INFO AppDaemon: Initializing app veolia_idf using class VeoliaIDF from module veolia_idf
+```
 
 ### Lancer l’appel à Veolia
 
