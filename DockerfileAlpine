@@ -1,5 +1,5 @@
 ## Start from the official Alpine image
-FROM alpine:3.16
+FROM alpine:3.17
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
@@ -21,6 +21,7 @@ RUN apk add \
         py3-openssl \
         py3-pysocks \
         py3-wsproto \
+        py3-requests \
         py3-sniffio \
         py3-async_generator \
         py3-sortedcontainers \
@@ -34,4 +35,5 @@ RUN apk add \
         'PyVirtualDisplay>=0.2.4' \
         'requests>=2.23.0'
 
+RUN addgroup -g 1000 docker &&  adduser -D -u 1000 -G docker docker && apk add alpine-conf && setup-keymap fr fr
 

@@ -79,7 +79,7 @@ Modifier le contenu du fichier avec vos valeurs. les champs obligatoires sont :
 
 ## Home Assistant
 
-Voir [le forum HACF](https://forum.hacf.fr/t/veolia-idf-sedif-consommation-eau-potable-suivi-consommation/11492) pour les instructions. 
+Voir [le forum HACF](https://forum.hacf.fr/t/veolia-idf-sedif-consommation-eau-potable-suivi-consommation/11492) pour les instructions.
 
 ## Paramétrer votre système pour le mode débogue (optionnel, mais recommandé)
 
@@ -121,7 +121,7 @@ Afficher toutes les options disponibles :
 ```
 
 ## Automatisation :
-Une fois que la première exécution a terminé correctement, je vous recommande de planifier les exécutions une fois par jour.  
+Une fois que la première exécution a terminé correctement, je vous recommande de planifier les exécutions une fois par jour.
 
 Pour cela, ajoutez la ligne suivante à votre planificateur de tâches :
 ```shell

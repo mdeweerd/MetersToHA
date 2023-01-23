@@ -1,3 +1,19 @@
 config.json
 *.log
 error.png
+.config
+*.swp
+
+# Local config/data files
+config.json
+historique_gazpar.json*
+historique_jours_litres.json*
+*.zip
+demo
+support
+
+# Local script
+do[A-Z]*
+run[A-Z]*
+# Local temporary file
+?
