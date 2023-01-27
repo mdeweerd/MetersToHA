@@ -1,13 +1,15 @@
 # Meters To Home Automation (anciennement veolia-idf).
 
-Ce script automatise le transfert de l'information de consommation d'eau et de gaz
-vers des systèmes domotiques tels que Home Assistant et Domoticz actuellement.
+Ce script automatise le transfert de l'information de consommation d'eau et
+de gaz vers des systèmes domotiques tels que Home Assistant et Domoticz
+actuellement.
 
-Ceci est la documentation spécifique pour Home Assistant avec AppDaemon et HACS.
+Ceci est la documentation spécifique pour Home Assistant avec AppDaemon et
+HACS.
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=4 --minlevel=1 -->
 
-- [Documentation spécifique pour Home Assistant avec AppDaemon et HACS](#documentation-sp%C3%A9cifique-pour-home-assistant-avec-appdaemon-et-hacs)
+- [Meters To Home Automation (anciennement veolia-idf).](#meters-to-home-automation-anciennement-veolia-idf)
   - [Informations générales](#informations-g%C3%A9n%C3%A9rales)
   - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
   - [Installation AppDaemon](#installation-appdaemon)
@@ -166,9 +168,7 @@ veolia_idf:
   # optional (Default: false) - add --debug option - you should also set DISPLAY
   debug_veolia: true
   # optional (Default: None) - Set DISPLAY for GUI interface (when debug is true)
-  DISPLAY: "192.1.0.52:0"
-  # optional (Default: false) - add --debug option
-  debug_veolia: true
+  DISPLAY: 192.1.0.52:0
   # optional (Default: None) - Set file for stdout of script call
   outfile: /config/appdaemon/apps/veolia_script.log
   # optional (Default: None) - Set file for stderr of script call

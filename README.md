@@ -1,5 +1,8 @@
-# veolia-idf
-Ce script automatise le chargement de l'historique de votre consommation d'eau récupéré sur le site de Veolia Ile-de-France dans les solutions domotiques :
+# Meters To Home Automation (était: veolia-idf)
+
+Ce script automatise le transfert de l'information de consommation d'eau et de gaz
+depuis Veolia-IDF ou GRDF vers un des solutions domotiques :
+
  - [Domoticz](https://domoticz.com/)
  - [Home Assistant](https://www.home-assistant.io/)
 
