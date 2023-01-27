@@ -2,6 +2,10 @@
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=4 --minlevel=1 -->
 
+Note: avec l'ajout de la récupération des données de gaz,
+cette application sera renommé en "Meters To Home Automation".
+La mise au point est en cours.
+
 - [Documentation spécifique pour Home Assistant avec AppDaemon et HACS](#documentation-sp%C3%A9cifique-pour-home-assistant-avec-appdaemon-et-hacs)
   - [Informations générales](#informations-g%C3%A9n%C3%A9rales)
   - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
