@@ -1,10 +1,11 @@
-# Documentation spécifique pour Home Assistant avec AppDaemon et HACS
+# Meters To Home Automation (anciennement veolia-idf).
+
+Ce script automatise le transfert de l'information de consommation d'eau et de gaz
+vers des systèmes domotiques tels que Home Assistant et Domoticz actuellement.
+
+Ceci est la documentation spécifique pour Home Assistant avec AppDaemon et HACS.
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=4 --minlevel=1 -->
-
-Note: avec l'ajout de la récupération des données de gaz,
-cette application sera renommé en "Meters To Home Automation".
-La mise au point est en cours.
 
 - [Documentation spécifique pour Home Assistant avec AppDaemon et HACS](#documentation-sp%C3%A9cifique-pour-home-assistant-avec-appdaemon-et-hacs)
   - [Informations générales](#informations-g%C3%A9n%C3%A9rales)
