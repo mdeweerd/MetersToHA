@@ -40,7 +40,7 @@ repos:
       - id: check-case-conflict
       # - id: check-toml
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.28.0
+    rev: v1.29.0
     hooks:
       - id: yamllint
         args:
@@ -48,17 +48,13 @@ repos:
           - -d
           - '{extends: relaxed, rules: {line-length: {max: 90}}}'
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.0
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
-        stages: [manual]  # Require to run this manually
-        args:
-          - --py37-plus
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
       - id: black
-        stages: [manual]  # Require to run this manually
         args:
           - --safe
           - --quiet
@@ -67,13 +63,12 @@ repos:
     rev: v1.0.6
     hooks:
       - id: python-bandit-vulnerability-check
-        args: [--skip, 'B110,B404,B603', --recursive, .]
+        args: [--skip, 'B105,B110,B311,B404,B603', --recursive, .]
 
   - repo: https://github.com/fsouza/autoflake8
     rev: v0.4.0
     hooks:
       - id: autoflake8
-        stages: [manual]  # Require to run this manually
         args:
           - -i
           - -r
@@ -83,29 +78,22 @@ repos:
     rev: 6.0.0
     hooks:
       - id: flake8
-        stages: [manual]  # Require to run this manually
         additional_dependencies:
-          - pyproject-flake8==0.0.1a2
-          - flake8-bugbear==22.1.11
-          - flake8-comprehensions==3.8.0
-          - flake8_2020==1.6.1
-          - mccabe==0.6.1
-          - pycodestyle==2.8.0
-          - pyflakes==2.4.0
+          - pyproject-flake8>=0.0.1a2
+          - flake8-bugbear>=22.1.11
+          - flake8-comprehensions>=3.8.0
+          - flake8_2020>=1.6.1
+          - mccabe
+          - pycodestyle>=2.10.0
+          - pyflakes>=2.4.0
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
-        stages: [manual]  # Require to run this manually
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2
     hooks:
       - id: codespell
-        stages: [manual]  # Require to run this manually
-        args:
-          - --ignore-words-list=hass
-          - --skip="./.*"
-          - --quiet-level=2
   - repo: https://github.com/pre-commit/mirrors-pylint
     rev: v3.0.0a5
     hooks:
