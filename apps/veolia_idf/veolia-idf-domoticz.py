@@ -19,26 +19,107 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-################################################################################
+###############################################################################
 # SCRIPT DEPENDENCIES
-################################################################################
-import sys
-import os
-import signal
-import time
-import csv
-import json
-import logging
+###############################################################################
+from __future__ import annotations
+
 import argparse
 import base64
+import csv
+import datetime as dt
+import json
+import logging
+import os
+import random
 import re
+import signal
 import subprocess
-from datetime import datetime
+import sys
+import time
+import traceback
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
-from urllib.parse import urlencode
 from shutil import which
+from typing import Any
+from urllib.parse import urlencode, urlparse
 
-VERSION = "v1.3"
+VERSION = "v2.0"
+
+HA_API_SENSOR_FORMAT = "/api/states/%s"
+PARAM_2CAPTCHA_TOKEN = "2captcha_token"
+PARAM_OPTIONAL_VALUE = (
+    "Optional"  # Used internally to indicate optional dummy value
+)
+PARAM_USER_NONE_VALUE = (
+    "None"  # Used by the user to indicate an absent configuration
+)
+PARAM_DOWNLOAD_FOLDER = "download_folder"
+PARAM_TIMEOUT = "timeout"
+PARAM_VEOLIA_LOGIN = "veolia_login"
+PARAM_VEOLIA_PASSWORD = "veolia_password"
+PARAM_VEOLIA_CONTRACT = "veolia_contract"
+PARAM_GRDF_LOGIN = "grdf_login"
+PARAM_GRDF_PASSWORD = "grdf_password"
+PARAM_GRDF_PCE = "grdf_pce"
+PARAM_GECKODRIVER = "geckodriver"
+PARAM_FIREFOX = "firefox"
+PARAM_CHROMIUM = "chromium"
+PARAM_CHROMEDRIVER = "chromedriver"
+PARAM_LOGS_FOLDER = "logs_folder"
+PARAM_SCREENSHOT = "screenshot"
+
+PARAM_SERVER_TYPE = "type"
+PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
+PARAM_DOMOTICZ_SERVER = "domoticz_server"
+PARAM_DOMOTICZ_LOGIN = "domoticz_login"
+PARAM_DOMOTICZ_PASSWORD = "domoticz_password"
+
+PARAM_HA_SERVER = "ha_server"
+PARAM_HA_TOKEN = "ha_token"
+
+REPO_BASE = "s0nik42/veolia-idf"
+
+SCRIPT_2CAPTCHA = r"""
+//
+window.findRecaptchaClients=function() {
+// eslint-disable-next-line camelcase
+if (typeof (___grecaptcha_cfg) !== 'undefined') {
+// eslint-disable-next-line camelcase, no-undef
+return Object.entries(___grecaptcha_cfg.clients).map(([cid, client]) => {
+const data = { id: cid, version: cid >= 10000 ? 'V3' : 'V2' };
+const objects = Object.entries(client).filter(([_, value])
+    => value && typeof value === 'object');
+objects.forEach(([toplevelKey, toplevel]) => {
+const found = Object.entries(toplevel).find(([_, value]) => (
+value && typeof value === 'object' && 'sitekey' in value && 'size' in value
+));
+if (typeof toplevel === 'object' && toplevel instanceof HTMLElement
+    && toplevel['tagName'] === 'DIV'){
+data.pageurl = toplevel.baseURI;
+}
+if (found) {
+const [sublevelKey, sublevel] = found;
+data.sitekey = sublevel.sitekey;
+const callbackKey = data.version === 'V2' ? 'callback' : 'promise-callback';
+const callback = sublevel[callbackKey];
+if (!callback) {
+data.callback = null;
+data.function = null;
+} else {
+data.function = callback;
+const keys = [cid, toplevelKey, sublevelKey, callbackKey].map((key)
+    => `['${key}']`).join('');
+data.callback = `___grecaptcha_cfg.clients${keys}`;
+}
+}
+});
+return data;
+});
+}
+return [];
+}
+"""
 
 try:
     # Only add packages that are not built-in here
@@ -52,38 +133,128 @@ try:
     from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
-except ImportError as exc:
+except ImportError as excImport:
     print(
-        "Error: failed to import python required module : " + str(exc),
+        f"Error: failed to import required Python module : {excImport}",
         file=sys.stderr,
     )
     sys.exit(2)
 
-################################################################################
+
+class Worker:
+    install_dir = os.path.dirname(os.path.realpath(__file__))
+    configuration: dict[str, Any] = {}
+    files_to_cleanup: list[str] = []
+    _debug = False
+    WORKER_DESC = "Worker"
+
+    def __init__(self, config_dict=None, super_print=None, debug=False):
+        self._debug = debug
+
+        # Supersede local print function if provided as an argument
+        self.mylog = super_print if super_print else self.default_mylog
+
+        if config_dict is not None:
+            self.mylog(f"Start Loading {self.WORKER_DESC} configuration")
+            try:
+                self._load_configuration_items(config_dict)
+                self.mylog(
+                    f"End loading {self.WORKER_DESC} configuration", end=""
+                )
+            except Exception:
+                raise
+            else:
+                self.mylog(st="OK")
+
+    def _load_configuration_items(self, config_dict: dict[str, Any]):
+        """
+        Load configuration items as defined in self.configuration
+        from provided parameters.
+        """
+        for param in list((self.configuration).keys()):
+            if param not in config_dict:
+                if self.configuration[param] == PARAM_OPTIONAL_VALUE:
+                    self.configuration[param] = None
+                elif self.configuration[param] is not None:
+                    self.mylog(
+                        f'"{param}" not found in config file,'
+                        " using default value",
+                        "WW",
+                    )
+                else:
+                    self.mylog(f'    "{param}"', end="")
+                    raise RuntimeError(
+                        f"param {param} is missing in configuration file"
+                    )
+            else:
+                self.configuration[param] = config_dict[param]
+
+            # Sanity check, parameter cleanup, report
+            val = self.configuration[param]
+            val_str = str(self.configuration[param])
+
+            if (
+                re.search(r"folder$", param, re.IGNORECASE)
+                and val_str[-1] != os.path.sep
+            ):
+                val_str += os.path.sep
+                self.configuration[param] = val_str
+
+            if val is not None and re.search(
+                r"(token|password)", param, re.IGNORECASE
+            ):
+                self.mylog(
+                    f'    "{param}" = "{"*" * len(val_str)}"',
+                    end="",
+                )
+            else:
+                self.mylog(
+                    f'    "{param}" = "{val_str}"',
+                    end="",
+                )
+
+            self.mylog(st="OK")
+        # print("%r->%r"%(config_dict,self.configuration))
+
+    def default_mylog(self, string="", st=None, end=None):
+        st = f"[{st}] " if st else ""
+        if end is None:
+            print(f"{st}{string}")
+        else:
+            print(
+                f"{st} {string} ", end="", flush="True"
+            )  # type:ignore[call-overload]
+
+    def cleanup(self, keep_output=False):
+        pass
+
+
+###############################################################################
 # Output Class in charge of managing all script output to file or console
-################################################################################
-class Output:
-    def __init__(self, logs_folder=None, debug=False):
-        self.__debug = debug
+###############################################################################
+class Output(Worker):
+    def __init__(self, config_dict, debug=False):
+        super().__init__(super_print=self.__print_to_console, debug=debug)
+
         self.__logger = logging.getLogger()
         self.__print_buffer = ""
         logs_folder = (
             os.path.dirname(os.path.realpath(__file__))
-            if logs_folder is None
-            else logs_folder
+            if config_dict[PARAM_LOGS_FOLDER] is None
+            else self.install_dir
         )
-        logfile = logs_folder + "/veolia.log"
+        if logs_folder[-1] != os.path.sep:
+            logs_folder += os.path.sep
 
-        # By default log to console
-        self.print = self.__print_to_console
+        logfile = logs_folder + "service.log"
 
         # In standard mode log to a file
-        if self.__debug is False:
+        if self._debug is False:
             # Check if we can create logfile
             try:
                 open(logfile, "a+", encoding="utf_8").close()
             except Exception as e:
-                raise RuntimeError('"%s" %s' % (logfile, e,))
+                raise RuntimeError(f'"{logfile}" {e}')
 
             # Set the logfile format
             file_handler = RotatingFileHandler(logfile, "a", 1000000, 1)
@@ -91,7 +262,7 @@ class Output:
             file_handler.setFormatter(formatter)
             self.__logger.setLevel(logging.INFO)
             self.__logger.addHandler(file_handler)
-            self.print = self.__print_to_logfile
+            self.mylog = self.__print_to_logfile
 
     def __print_to_console(self, string="", st=None, end=None):
         if st:
@@ -123,28 +294,26 @@ class Output:
                 "%s : %s %s",
                 st.upper().lstrip(),
                 self.__print_buffer.lstrip().rstrip(),
-                string.lstrip().rstrip()
+                string.lstrip().rstrip(),
             )
             self.__print_buffer = ""
 
 
 def document_initialised(driver):
+    """
+    Execute JavaScript in browser to confirm page is loaded.
+    """
     return driver.execute_script("return true;")
 
-################################################################################
+
+###############################################################################
 # Configuration Class toparse and load config.json
-################################################################################
-class Configuration:
-    def __init__(self, super_print=None, debug=False):
-        self.__debug = debug
-
-        # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print   # type:ignore[assignment]
-
+###############################################################################
+class Configuration(Worker):
     def load_configuration_file(self, configuration_file):
-        self.print(
+        self.mylog(
             "Loading configuration file : " + configuration_file, end=""
-        )  #############################################################
+        )
         try:
             with open(configuration_file, encoding="utf_8") as conf_file:
                 content = json.load(conf_file)
@@ -153,133 +322,92 @@ class Configuration:
         except Exception:
             raise
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
             return content
 
 
-    def print(self, string="", st=None, end=None):
-        st = "[" + st + "] " if st else ""
-        if end is None:
-            print(st + string)
-        else:
-            print(st + string + " ", end="", flush="True")  # type:ignore[call-overload]
-
-
-################################################################################
-# Object that retrieve the historical data from Veolia website
-################################################################################
-class VeoliaCrawler:
+###############################################################################
+# Object that retrieves the historical data from Service website(s)
+###############################################################################
+class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
-    download_filename = "historique_jours_litres.csv"
+    download_veolia_filename = "historique_jours_litres.csv"
+    site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
+    # site_grdf_url = "ttps://login.monespace.grdf.fr/mire/connexion"
+    download_grdf_filename = "historique_gazpar.json"
 
-    def __init__(self, config_dict, super_print=None, debug=False):
-        self.__debug = debug
+    def __init__(
+        self, config_dict, super_print=None, debug=False, local_config=False
+    ):
+        super().__init__(super_print=super_print, debug=debug)
 
-        # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print  # type:ignore[has-type]
+        self.__local_config = local_config
 
         self.__display = None
         self.__browser = None  # type: webdriver.Firefox
         self.__wait = None  # type: WebDriverWait
-        install_dir = os.path.dirname(os.path.realpath(__file__))
         self.configuration = {
-            # Mandatory config values
-            "veolia_login": None,
-            "veolia_password": None,
-            "veolia_contract": None,
-            # Optional config values
-            "geckodriver": which("geckodriver")
+            # Config values (veolia)
+            PARAM_VEOLIA_LOGIN: PARAM_OPTIONAL_VALUE,
+            PARAM_VEOLIA_PASSWORD: PARAM_OPTIONAL_VALUE,
+            PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
+            # Config values (gazpar)
+            PARAM_GRDF_LOGIN: PARAM_OPTIONAL_VALUE,
+            PARAM_GRDF_PASSWORD: PARAM_OPTIONAL_VALUE,
+            PARAM_GRDF_PCE: PARAM_OPTIONAL_VALUE,
+            # Browser/Scraping config values
+            PARAM_SCREENSHOT: False,
+            PARAM_GECKODRIVER: which("geckodriver")
             if which("geckodriver")
-            else install_dir + "/geckodriver",
-            "firefox": which("firefox")
+            else self.install_dir + "/geckodriver",
+            PARAM_FIREFOX: which("firefox")
             if which("firefox")
-            else install_dir + "/firefox",
-            "chromium": which("chromium")
+            else self.install_dir + "/firefox",
+            PARAM_CHROMIUM: which("chromium")
             if which("chromium")
-            else which("chromium-browser") if which("chromium-browser")
-            else install_dir + "/chromium",
-            "chromedriver": which("chromedriver")
+            else which("chromium-browser")
+            if which("chromium-browser")
+            else self.install_dir + "/chromium",
+            PARAM_CHROMEDRIVER: which("chromedriver")
             if which("chromedriver")
-            else install_dir + "/chromedriver",
-            "timeout": "30",
-            "download_folder": install_dir + os.path.sep,
-            "logs_folder": install_dir + os.path.sep,
+            else self.install_dir + "/chromedriver",
+            PARAM_TIMEOUT: "30",
+            PARAM_DOWNLOAD_FOLDER: self.install_dir,
+            PARAM_LOGS_FOLDER: self.install_dir,
+            PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
         }
 
-        self.print("Start loading veolia configuration")
+        self.mylog("Start loading configuration")
         try:
-            self._load_configururation_items(config_dict)
-            self.print("End loading veolia configuration", end="")
+            self._load_configuration_items(config_dict)
+            self.mylog("End loading configuration", end="")
         except Exception:
             raise
         else:
-            self.print(st="ok")
+            self.mylog(st="OK")
 
-        self.__full_path_download_file = (
-            str(self.configuration["download_folder"]) + self.download_filename
+        self.__full_path_download_veolia_idf_file = (
+            str(self.configuration[PARAM_DOWNLOAD_FOLDER])
+            + self.download_veolia_filename
+        )
+        self.__full_path_download_grdf_file = (
+            str(self.configuration[PARAM_DOWNLOAD_FOLDER])
+            + self.download_grdf_filename
         )
 
-
-    # Load configuration items
-    def _load_configururation_items(self, config_dict):
-        for param in list((self.configuration).keys()):
-            if param not in config_dict:
-                if self.configuration[param] is not None:
-                    self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + str(self.configuration[param])
-                        + '"',
-                        end="",
-                    )
-                    self.print(
-                        "param is not found in config file, using default value",
-                        "WW",
-                    )
-                else:
-                    self.print('    "' + param + '"', end="")
-                    raise RuntimeError(
-                        "param is missing in configuration file"
-                    )
-            else:
-                if (
-                    param in ("download_folder", "logs_folder",)
-                ) and config_dict[param][-1] != os.path.sep:
-                    self.configuration[param] = (
-                        str(config_dict[param]) + os.path.sep
-                    )
-                else:
-                    self.configuration[param] = config_dict[param]
-
-                if param == "veolia_password":
-                    self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + "*" * len(str(self.configuration[param]))
-                        + '"',
-                        end="",
-                    )
-                else:
-                    self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + str(self.configuration[param])
-                        + '"',
-                        end="",
-                    )
-
-                self.print(st="OK")
+    def init(self):
+        try:
+            self.init_firefox()
+        except (Exception, xauth.NotFoundError):
+            self.mylog(st="~~")
+            # Firefox did not load, try Chromium
+            self.init_chromium()
 
     # INIT DISPLAY & BROWSER
-    def init_browser_firefox(self):
-        self.print(
-            "Start virtual display", end=""
-        )  #############################################################
+    def init_firefox(self):
+        self.mylog("Start virtual display", end="")
         # veolia website needs at least 1600x1200 to render all components
-        if self.__debug:
+        if self._debug:
             self.__display = Display(visible=1, size=(1600, 1200))
         else:
             self.__display = Display(visible=0, size=(1600, 1200))
@@ -287,81 +415,85 @@ class VeoliaCrawler:
             self.__display.start()
         except Exception as e:
             raise RuntimeError(
-                str(e)
-                + "if you launch the script through a ssh connection with '--debug' ensure X11 forwarding is activated"
+                f"{e} if you launch the script through a ssh connection"
+                " with '--debug' ensure X11 forwarding is activated"
             )
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
 
-        self.print(
-            "Setup Firefox profile", end=""
-        )  #############################################################
+        self.mylog("Setup Firefox profile", end="")
         try:
             # Enable Download
             opts = webdriver.FirefoxOptions()
-            fp = webdriver.FirefoxProfile()
-            opts.profile = fp
-            fp.set_preference(
-                "browser.download.dir", self.configuration["download_folder"]
+            opts.set_preference(
+                "browser.download.dir",
+                self.configuration[PARAM_DOWNLOAD_FOLDER],
             )
-            fp.set_preference("browser.download.folderList", 2)
-            fp.set_preference(
+            opts.set_preference("browser.download.folderList", 2)
+            opts.set_preference(
                 "browser.helperApps.neverAsk.saveToDisk", "text/csv"
             )
-            fp.set_preference(
+            opts.set_preference(
                 "browser.download.manager.showWhenStarting", False
             )
-            fp.set_preference(
+            opts.set_preference(
                 "browser.helperApps.neverAsk.openFile", "text/csv"
             )
-            fp.set_preference("browser.helperApps.alwaysAsk.force", False)
+            opts.set_preference("browser.helperApps.alwaysAsk.force", False)
 
             # Set firefox binary to use
-            opts.binary_location = FirefoxBinary(str(self.configuration["firefox"]))
+            opts.binary_location = FirefoxBinary(
+                str(self.configuration[PARAM_FIREFOX])
+            )
 
-            service = FirefoxService(self.configuration["geckodriver"])
-            if not hasattr(service, 'process'):
+            ff_service = FirefoxService(
+                executable_path=self.configuration[PARAM_GECKODRIVER],
+                log_path=str(self.configuration[PARAM_LOGS_FOLDER])
+                + "/geckodriver.log",
+            )
+            if not hasattr(ff_service, "process"):
                 # Webdriver may complain about missing process.
-                service.process = None
+                ff_service.process = None
 
             # Enable the browser
             try:
                 self.__browser = webdriver.Firefox(
                     options=opts,
-                    service_log_path=str(self.configuration["logs_folder"])
-                    + "/geckodriver.log",
-                    service=service,
+                    service=ff_service,
                 )
+            except FileNotFoundError:
+                raise
             except Exception as e:
                 raise RuntimeError(
-                    str(e)
-                    + "if you launch the script through a ssh connection with '--debug' ensure X11 forwarding is activated, and you have a working X environment. debug mode start Firefox and show all clicks over the website"
+                    f"{e} If you launch the script through a ssh connection"
+                    " with '--debug' ensure X11 forwarding is activated,"
+                    " and that you have a working X environment."
+                    " debug mode starts Firefox on X Display "
+                    " and shows dynamic evolution of the website"
                 )
         except Exception:
             raise
         else:
-            self.print(st="ok")
+            self.mylog(st="OK")
 
-        self.print(
-            "Start Firefox", end=""
-        )  #############################################################
+        self.mylog("Start Firefox", end="")
         try:
             # self.__browser.maximize_window()
-            # replacing maximize_window by set_window_size to get the window full screen
+            # Replaced maximize_window by set_window_size
+            # to get the window full screen
             self.__browser.set_window_size(1600, 1200)
-            timeout = int(self.configuration["timeout"])  # type: ignore[arg-type]
-            self.__wait = WebDriverWait(
-                self.__browser, timeout=timeout
-            )
+            timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
+            self.__wait = WebDriverWait(self.__browser, timeout=timeout)
         except Exception:
             raise
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
 
-    def init_browser_chrome(self):
+    def init_chromium(self):
         # Set Chrome options
         options = webdriver.ChromeOptions()
-        options.add_argument("--no-sandbox")
+        if os.geteuid() == 0:
+            options.add_argument("--no-sandbox")
         options.add_argument("--disable-modal-animations")
         options.add_argument("--disable-login-animations")
         options.add_argument("--disable-renderer-backgrounding")
@@ -369,24 +501,50 @@ class VeoliaCrawler:
         options.add_argument("--disable-backgrounding-occluded-wndows")
         options.add_argument("--disable-translate")
         options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-notifications")
+        options.add_argument("--disable-infobars")
+        options.add_argument("--disable-dev-shm-usage")
+
+        local_dir = str(self.configuration[PARAM_DOWNLOAD_FOLDER])
+
+        # options.add_argument(f"--crash-dumps-dir={local_dir}/tmp")
+        # options.add_argument("--remote-debugging-port=9222")
+
+        # pylint: disable=condition-evals-to-constant
+        if self.__local_config:  # Use fixed, reused datadir
+            # datadir = os.path.expanduser("~/.config/google-chrome")
+            datadir = os.path.expanduser(f"{local_dir}/.config/google-chrome")
+            os.makedirs(datadir, exist_ok=True)
+            options.add_argument(f"--user-data-dir={datadir}")
+            self.mylog(f"Use {datadir} for Google Chrome user data")
+
+        # options.add_argument('--user-data-dir=~/.config/google-chrome')
+        options.add_argument("--mute-audio")
+        # if self._debug:
+        #     Does not work well with veolia due to multiple "same" elements
+        #     options.add_argument("--auto-open-devtools-for-tabs")
         options.add_experimental_option(
             "prefs",
             {
+                "credentials_enable_service": False,
                 "download.default_directory": self.configuration[
-                    "download_folder"
+                    PARAM_DOWNLOAD_FOLDER
                 ],
                 "profile.default_content_settings.popups": 0,
+                "profile.password_manager_enabled": False,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 "extensions_to_open": "text/csv",
                 "safebrowsing.enabled": True,
             },
         )
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"]
+        )
 
-        self.print(
-            "Start virtual display (chromium)", end=""
-        )  #############################################################
-        if self.__debug:
+        self.mylog("Start virtual display (chromium)", end="")
+        if self._debug:
             self.__display = Display(visible=1, size=(1280, 1024))
         else:
             options.add_argument("--headless")
@@ -401,163 +559,155 @@ class VeoliaCrawler:
         except Exception:
             raise
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
 
-        self.print(
-            "Start the browser", end=""
-        )  #############################################################
+        self.mylog("Start the browser", end="")
         try:
+            chromeService = webdriver.chromium.service.ChromiumService(
+                executable_path=self.configuration[PARAM_CHROMEDRIVER],
+                log_path=str(self.configuration[PARAM_LOGS_FOLDER])
+                + "/chromedriver.log",
+            )
             self.__browser = webdriver.Chrome(
-                executable_path=self.configuration["chromedriver"],
+                service=chromeService,
                 options=options,
             )
             self.__browser.maximize_window()
-            timeout = int(self.configuration["timeout"])  # type: ignore[arg-type]
-            self.__wait = WebDriverWait(
-                self.__browser, timeout
-            )
+            timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
+            self.__wait = WebDriverWait(self.__browser, timeout)
         except Exception:
             raise
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
 
-    def sanity_check(self, debug=False):  # pylint: disable=unused-argument
+    def sanity_check(self):
 
-        self.print(
-            "Check download location integrity", end=""
-        )  #############################################################
-        if os.path.exists(self.__full_path_download_file):
-            self.print(
-                self.__full_path_download_file
-                + " already exists, will be removed",
-                "WW",
-            )
+        v_file = self.__full_path_download_veolia_idf_file
+        self.mylog("Check download location integrity", end="")
+        if os.path.exists(v_file):
+            self.mylog(f"{v_file} already exists, will be removed", "WW")
         else:
             try:
-                open(self.__full_path_download_file, "a+", encoding="utf_8").close()
+                open(v_file, "a+", encoding="utf_8").close()
             except Exception as e:
-                raise RuntimeError(
-                    '"%s" %s' % (self.__full_path_download_file, e,)
-                )
+                raise RuntimeError(f'"{v_file}" {e}')
             else:
-                self.print(st="ok")
+                self.mylog(st="OK")
 
-        #############################################################
         try:
-            self.print( "Remove temporary download file", end="")
-            os.remove(self.__full_path_download_file)
+            self.mylog("Remove temporary download file", end="")
+            os.remove(v_file)
         except Exception:
             raise
         else:
-            self.print(st="ok")
+            self.mylog(st="OK")
 
-        self.print(
-            'Check availability of "geckodriver"+"firefox" or "chromedriver"+"chromium"', end=""
-
-        )  #############################################################
-        if ( os.access(str(self.configuration["geckodriver"]), os.X_OK) and
-           os.access(str(self.configuration["firefox"]), os.X_OK)):
-            self.print(st="ok")
-            self.print(
-                "Check firefox browser version", end=""
-            )  #############################################################
+        self.mylog(
+            'Check availability of "geckodriver"+"firefox"'
+            ' or "chromedriver"+"chromium"',
+            end="",
+        )
+        if os.access(
+            str(self.configuration[PARAM_GECKODRIVER]), os.X_OK
+        ) and os.access(str(self.configuration[PARAM_FIREFOX]), os.X_OK):
+            self.mylog(st="OK")
+            self.mylog("Check firefox browser version", end="")
             try:
                 major, minor = self.__get_firefox_version()
             except Exception:
                 raise
             else:
                 if (major, minor) < (60, 9):
-                    self.print(
-                        "Firefox version ("
-                        + str(major)
-                        + "."
-                        + str(minor)
-                        + " is too old (< 60.9) script may fail",
+                    self.mylog(
+                        f"Firefox version ({major}.{minor})"
+                        " is too old (< 60.9) script may fail",
                         st="WW",
                     )
                 else:
-                    self.print(st="ok")
-        elif (os.access(str(self.configuration["chromedriver"]), os.X_OK) and
-             os.access(str(self.configuration["chromium"]), os.X_OK)):
-            self.print(st="ok")
+                    self.mylog(st="OK")
+        elif os.access(
+            str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK
+        ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
+            self.mylog(st="OK")
         else:
             raise OSError(
-                '"%s"/"%s" or "%s"/"%s": no valid pair of executables found' % (
-                  self.configuration["geckodriver"],
-                  self.configuration["firefox"],
-                  self.configuration["chromedriver"],
-                  self.configuration["chromium"],
+                '"%s"/"%s" or "%s"/"%s": no valid pair of executables found'
+                % (
+                    self.configuration[PARAM_GECKODRIVER],
+                    self.configuration[PARAM_FIREFOX],
+                    self.configuration[PARAM_CHROMEDRIVER],
+                    self.configuration[PARAM_CHROMIUM],
                 )
             )
-
-
 
     def __get_firefox_version(self):
         try:
             output = subprocess.check_output(
-                [str(self.configuration["firefox"]), "--version"]
+                [str(self.configuration[PARAM_FIREFOX]), "--version"]
             )
         except Exception:
             raise
 
         try:
             major, minor = map(
-                int, re.search(r"(\d+).(\d+)", str(output)).groups()  # type:ignore[union-attr]
+                int,
+                re.search(
+                    r"(\d+).(\d+)", str(output)
+                ).groups(),  # type:ignore[union-attr]
             )
         except Exception:
             raise
 
         return major, minor
 
-
-    def clean_up(self, debug=False, keep_csv=False):
-        self.print(
-            "Close Browser", end=""
-        )  #############################################################
+    def cleanup(self, keep_output=False):
+        self.mylog("Close Browser", end="")
         if self.__browser:
+            pid = self.__browser.service.process.pid
             try:
                 self.__browser.quit()
-            except Exception as _e:
-                os.kill(self.__browser.service.process.pid, signal.SIGTERM)
-                self.print(
-                    "selenium didn't properly close the process, so we kill firefox manually (pid="
-                    + str(self.__browser.service.process.pid)
-                    + ")",
-                    "WW",
-                )
-            else:
-                self.print(st="OK")
+            finally:
+                # try to kill anyway,
+                #  if kill fails, it was likely closed clean.
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                    self.mylog(
+                        "Selenium didn't properly close the process, "
+                        f"so we kill the browser manually (pid={pid})",
+                        "WW",
+                    )
+                except:  # noqa: B001,E722
+                    self.mylog(st="OK")
         else:
-            self.print(st="OK")
+            self.mylog(st="OK")
 
-        self.print(
-            "Close Display", end=""
-        )  #############################################################
+        self.mylog("Close Display", end="")
         if self.__display:
             try:
                 self.__display.stop()
-            except:
+            except:  # noqa: B001,E722
                 raise
             else:
-                self.print(st="ok")
+                self.mylog(st="OK")
 
-        # Remove downloaded file
-        try:
-            if not debug and not keep_csv and os.path.exists(self.__full_path_download_file):
-                #############################################################
-                # Remove file
-                self.print( "Remove downloaded file " + self.download_filename, end="")
-                os.remove(self.__full_path_download_file)
-            else:
-                self.print(st="ok")
-        except Exception as e:
-            self.print(str(e), st="EE")
+        # Remove downloaded files
+        for fn in self.files_to_cleanup:
+            try:
+                if not self._debug and not keep_output and os.path.exists(fn):
+
+                    # Remove file
+                    self.mylog(f"Remove downloaded file {fn}", end="")
+                    os.remove(fn)
+                else:
+                    self.mylog(st="OK")
+            except Exception as e:
+                self.mylog(str(e), st="EE")
 
     def wait_until_disappeared(self, method, key, wait_message=None):
         """Wait until element is gone"""
         if wait_message is None:
-            wait_message = "Wait for missing %s" % (key,)
-        self.print(wait_message, end="")
+            wait_message = f"Wait for missing {key}"
+        self.mylog(wait_message, end="")
 
         ep = EC.visibility_of_element_located(
             (
@@ -566,12 +716,12 @@ class VeoliaCrawler:
             )
         )
 
-        timeout_message = "Failed, page timeout (timeout=%s)" % (
-            str(self.configuration["timeout"]),
+        timeout_message = "Failed, page timeout (timeout={})".format(
+            str(self.configuration[PARAM_TIMEOUT]),
         )
         self.__wait.until_not(ep, message=timeout_message)
 
-        self.print(st="ok")
+        self.mylog(st="OK")
 
     def click_in_view(  # pylint: disable=R0913
         self, method, key, click_message=None, wait_message=None, delay=0
@@ -591,19 +741,19 @@ class VeoliaCrawler:
         )
 
         if wait_message is None:
-            wait_message = "Wait for Button %s" % (key,)
-        self.print(wait_message, end="")
+            wait_message = f"Wait for Button {key}"
+        self.mylog(wait_message, end="")
 
-        timeout_message = "Failed, page timeout (timeout=%s)" % (
-            str(self.configuration["timeout"]),
+        timeout_message = "Failed, page timeout (timeout={})".format(
+            str(self.configuration[PARAM_TIMEOUT]),
         )
         el = self.__wait.until(ep, message=timeout_message)
 
-        self.print(st="ok")
+        self.mylog(st="OK")
 
         if delay != 0.0:
-            self.print("Wait before clicking (%.1fs)" % (delay,), end="")
-            self.print(st="~~")
+            self.mylog(f"Wait before clicking ({delay:.1f}s)", end="")
+            self.mylog(st="~~")
             time.sleep(delay)
 
         # Bring the element into view
@@ -611,64 +761,227 @@ class VeoliaCrawler:
 
         # Click
         if click_message is None:
-            click_message = "Click on %s" % (key,)
-        self.print(click_message, end="")
+            click_message = f"Click on {key}"
+        self.mylog(click_message, end="")
 
         try:
             el.click()
         except Exception:
             raise
         else:
-            self.print(st="ok")
+            self.mylog(st="OK")
 
-    def get_file(self):
+    def get_screenshot(self, basename: str):
+        """
+        Get screenshot and save to file in logs_folder
+        """
 
-        ###### Wait for Connexion #####
-        self.print("Connexion au site Veolia Eau Ile de France", end="")
+        fn_img = "{}{}".format(self.configuration[PARAM_LOGS_FOLDER], basename)
+        # Screenshots are only for debug, so errors are not blocking.
+        try:
+            self.mylog(f"Get & Save '{fn_img}'", end="--")
+            # img = self.__display.waitgrab()
+            self.__browser.get_screenshot_as_file(fn_img)
+        except Exception as e:
+            self.mylog(
+                f"Exception while getting screenshot {fn_img}: {e}", end=""
+            )
+
+    def resolve_captcha2(self) -> str | None:
+        # pylint: disable=too-many-locals
+
+        key = self.configuration[PARAM_2CAPTCHA_TOKEN]
+        if key is None or key == "":
+            self.mylog(
+                "Can not resolve using 2Captcha,"
+                " missing {PARAM_2CAPTCHA_TOKEN}",
+                st="WW",
+            )
+            return None
+
+        if False:
+            captcha_results = "XXXXMARIOXXXXMARIO"
+            SELECT_SCRIPT_TEMPLATE = """
+               document.querySelector('[name="g-recaptcha-response"]').innerText='{}'
+            """
+            select_script = SELECT_SCRIPT_TEMPLATE.format(captcha_results)
+            # print(f"select_script}\n")
+            self.__browser.execute_script(select_script)
+            time.sleep(5000)
+
+        if False:
+            self.__browser.switch_to.frame(2)
+            # r"recaptcha-verify-button" is not the correct button
+            #  to click after validation!
+            button = self.__browser.find_element(
+                By.ID, r"recaptcha-verify-button"
+            )
+            self.__browser.switch_to.default_content()
+
+        # Method 1
+        GET_KEY = r"""
+            return (new URLSearchParams(
+              document.querySelector("iframe[title=\'reCAPTCHA\']")
+                .getAttribute("src")))
+            .get("k")
+            """
+        # Method 2
+        GET_KEY = (
+            SCRIPT_2CAPTCHA + r"return (findRecaptchaClients())[0].sitekey;"
+        )
+        site_key = self.__browser.execute_script(GET_KEY)
+        page_url = str(self.__browser.current_url)
+        parsed = urlparse(page_url)
+        print(f"{parsed!r}\n")
+        append_port = ""
+        if ":" not in parsed.netloc:
+            append_port = ":443" if parsed.scheme == "https" else ":80"
+        new_url = parsed._replace(
+            netloc=parsed.netloc + append_port,
+            path="",
+            params="",
+            query="",
+            fragment="",
+        )
+        short_url = new_url.geturl()
+
+        print(f"{short_url}\n")
+        page_url = short_url
+
+        method = "userrecaptcha"
+        # submit request
+        url = (
+            "https://2captcha.com/in.php"
+            f"?key={key}&method={method}"
+            f"&googlekey={site_key}&pageurl={page_url}"
+        )
+
+        print(f"2CAPTCHA REQUEST:{url}\n")
+
+        response = requests.get(url)
+        if response.text[0:2] != "OK":
+            self.mylog(
+                f"2Captcha Service error: Error code {response.text}",
+                st="WW",
+            )
+            return None
+
+        self.mylog(f"2Captcha Service response {response.text}", st="~~")
+
+        captcha_id = response.text[3:]
+        # Polling for response
+        token_url = (
+            f"https://2captcha.com/res.php"
+            f"?key={key}&action=get&id={captcha_id}"
+        )
+
+        max_loops = 12
+        captcha_results = None
+        while max_loops > 0:
+            max_loops -= 1
+            self.mylog("Sleeping for 10 seconds to wait for 2Captcha", st="~~")
+            time.sleep(10)
+            response = requests.get(token_url)
+
+            self.mylog(f"2Captcha Service response {response.text}", st="~~")
+            if response.text[0:2] == "OK":
+                captcha_results = response.text[3:]
+                break
+
+        if captcha_results is not None:
+            FILL_CAPTCHA_TEMPLATE = r"""
+                document.querySelector('[name="g-recaptcha-response"]')
+                   .innerText='{}';
+            """
+            select_script = FILL_CAPTCHA_TEMPLATE.format(captcha_results)
+            VALIDATE_JS = """
+                return (findRecaptchaClients())[0]
+                  .function('{captcha_results}');
+            """
+
+            select_script += VALIDATE_JS
+
+            print(select_script)
+            self.__browser.execute_script(select_script)
+
+            if False:
+                self.__browser.switch_to.frame(2)
+                button = self.__browser.find_element(
+                    By.ID, r"recaptcha-verify-button"
+                )
+                # print(f"button:{button!r}\n")
+                button.click()
+
+            time.sleep(240)  # For inspection
+            time.sleep(5000)
+            # sys.exit()
+            return captcha_results
+
+        # time.sleep(120)  # For inspection
+        return None
+
+    def get_veolia_idf_file(self):
+        """
+        Get Veolia IDF water consumption 'interactively'
+        """
+
+        # Wait for Connexion #####
+        self.mylog("Connexion au site Veolia Eau Ile de France", end="")
 
         self.__browser.get(self.__class__.site_url)
-        self.print(st="ok")
+        self.__wait.until(document_initialised)
 
-        ###### Wait for Password #####
-        self.print("Waiting for Password", end="")
+        self.mylog(st="OK")
 
-        ep = EC.presence_of_element_located(
-            (By.CSS_SELECTOR, 'input[type="password"]')
+        # Wait for Password ######
+        # More than one email element on the page,
+        # visibility depends on screen size.
+        self.mylog("Waiting for Password", end="")
+
+        ep = EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, r'input[type="password"]')
         )
         el_password = self.__wait.until(
             ep,
             message="failed, page timeout (timeout="
-            + str(self.configuration["timeout"])
+            + str(self.configuration[PARAM_TIMEOUT])
             + ")",
         )
-        self.print(st="ok")
+        # Get first (and normally only) visible element
+        el_password = el_password[0]
+        self.mylog(st="OK")
 
-        ###### Wait for Email #####
-        self.print("Waiting for Email", end="")
-        self.__wait.until(document_initialised)
-        ep = EC.presence_of_element_located(
+        # Wait for Email ########
+        # More than one email element on the page,
+        # visibility depends on screen size.
+        self.mylog("Waiting for Email", end="")
+        ep = EC.visibility_of_any_elements_located(
             (By.XPATH, r"//input[@inputmode='email']")
         )
         el_email = self.__wait.until(
             ep,
             message="failed, page timeout (timeout="
-            + str(self.configuration["timeout"])
+            + str(self.configuration[PARAM_TIMEOUT])
             + ")",
         )
-        self.print(st="ok")
+        # Get first (and normally only) visible element
+        el_email = el_email[0]
+        self.mylog(st="OK")
 
-        ###### Type Email #####
-        self.print("Type Email", end="")
+        print("{!r}".format(self.configuration))
+        # Type Email ###########
+        self.mylog("Type Email", end="")
         el_email.clear()
-        el_email.send_keys(self.configuration["veolia_login"])
-        self.print(st="ok")
+        el_email.send_keys(self.configuration[PARAM_VEOLIA_LOGIN])
+        self.mylog(st="OK")
 
-        ###### Type Password #####
-        self.print("Type Password", end="")
-        el_password.send_keys(self.configuration["veolia_password"])
-        self.print(st="ok")
+        # Type Password ########
+        self.mylog("Type Password", end="")
+        el_password.clear()
+        el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+        self.mylog(st="OK")
 
-        ###### Click Submit #####
+        # Click Submit #########
         self.click_in_view(
             By.CLASS_NAME,
             "submit-button",
@@ -677,56 +990,59 @@ class VeoliaCrawler:
             delay=1,
         )
 
-        time.sleep(10)
+        time.sleep(0.5)  # Small wait after submit
+        self.__wait.until(document_initialised)
 
-        ###### Wait until spinner is gone #####
+        # time.sleep(10)
+
+        # Wait until spinner is gone #####
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
 
-        ### COMPORTEMENT DIFFERENT S'IL S AGIT D'UN MULTU CONTRATS
-        ### OU D'UN CONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
+        # Different handling dependent on multiple or single contract
 
-        self.print("Wait for MENU contrats or historique", end="")
+        self.mylog("Wait for MENU contrats or historique", end="")
         ep = EC.visibility_of_element_located(
             (
                 By.XPATH,
-                "//span[contains(text(), 'CONTRATS') or contains(text(), 'HISTORIQUE')]",
+                r"//span[contains(text(), 'CONTRATS')"
+                r" or contains(text(), 'HISTORIQUE')]",
             )
         )
         el = self.__wait.until(
             ep,
             message="failed, page timeout (timeout="
-            + str(self.configuration["timeout"])
+            + str(self.configuration[PARAM_TIMEOUT])
             + ")",
         )
-        self.print(st="ok")
+        self.mylog(st="OK")
 
         time.sleep(2)
 
         menu_type = str(el.get_attribute("innerHTML"))
 
-        ###### Click on Menu #####
-        self.print("Click on menu : " + menu_type, end="")
+        # Click on Menu #####
+        self.mylog(f"Click on menu : {menu_type}", end="")
 
         el.click()
 
-        self.print(st="ok")
+        self.mylog(st="OK")
 
         # GESTION DU PARCOURS MULTICONTRATS
         if menu_type == "CONTRATS":
             time.sleep(2)
+            contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
             self.click_in_view(
                 By.LINK_TEXT,
-                str(self.configuration["veolia_contract"]),
-                wait_message="Select contract : %s"
-                % (str(self.configuration["veolia_contract"]),),
+                contract_id,
+                wait_message=f"Select contract : {contract_id}",
                 click_message="Click on contract",
                 delay=0,
             )
 
         time.sleep(2)
 
-        ###### Click Historique #####
+        # Click Historique #####
         self.click_in_view(
             By.LINK_TEXT,
             "Historique",
@@ -737,10 +1053,10 @@ class VeoliaCrawler:
 
         time.sleep(10)
 
-        ###### Click Litres #####
+        # Click Litres #####
         self.click_in_view(
             By.XPATH,
-            "//span[contains(text(), 'Litres')]/parent::node()",
+            r"//span[contains(text(), 'Litres')]/parent::node()",
             wait_message="Wait for button Litres",
             click_message="Click on button Litres",
             delay=2,
@@ -748,94 +1064,263 @@ class VeoliaCrawler:
 
         time.sleep(2)
 
-        ###### Click Jours #####
+        # Click Jours #####
         self.click_in_view(
             By.XPATH,
-            "//span[contains(text(), 'Jours')]/parent::node()",
+            r"//span[contains(text(), 'Jours')]/parent::node()",
             wait_message="Wait for button Jours",
             click_message="Click on button Jours",
             delay=2,
         )
 
-        ###### Click Telechargement #####
+        # Click Telechargement #####
         self.click_in_view(
             By.XPATH,
-            '//button[contains(text(),"charger la p")]',
+            r'//button[contains(text(),"charger la p")]',
             wait_message="Wait for button Telechargement",
             click_message="Click on button Telechargement",
             delay=10,
         )
 
-        self.print(
-            "Wait for end of download to " + self.__full_path_download_file,
+        v_file = self.__full_path_download_veolia_idf_file
+        self.mylog(
+            f"Wait for end of download to {v_file}",
             end="",
-        )  #############################################################
-        t = int(str(self.configuration["timeout"]))
-        while t > 0 and not os.path.exists(self.__full_path_download_file):
+        )
+        t = int(str(self.configuration[PARAM_TIMEOUT]))
+        while t > 0 and not os.path.exists(v_file):
             time.sleep(1)
             t -= 1
-        if os.path.exists(self.__full_path_download_file):
-            self.print(st="ok")
+        if os.path.exists(v_file):
+            self.mylog(st="OK")
         else:
-            try:
-                error_img = "%serror.png" % (
-                    self.configuration["logs_folder"],
-                )
-                self.print("Get & Save '%s'" % (error_img,), end="")
-                # img = self.__display.waitgrab()
-                self.__browser.get_screenshot_as_file(error_img)
-            except Exception as e:
-                self.print("Exception while getting image: %s" % (e,), end="")
+            self.get_screenshot("error.png")
             raise RuntimeError("File download timeout")
 
-        return self.__full_path_download_file
+        self.files_to_cleanup.append(v_file)
+        return v_file
+
+    def get_gazpar_file(self):
+        """
+        Get consumption from GRDF for GazPar meter
+        """
+        g_file = self.__full_path_download_grdf_file
+        skipDownload = False
+        # Uncomment next line when debugging the decoding/adding to the DB
+        # skipDownload = self._debug and os.path.isfile(g_file)
+
+        if not skipDownload:  # pylint: disable=condition-evals-to-constant
+            self.__browser.get(self.site_grdf_url)
+            self.__wait.until(document_initialised)
+
+            time.sleep(3)
+
+            isLoggedIn = False
+            try:
+                # If date_debut is present, likely already logged in
+                date_debut_el = self.__browser.find_element(
+                    By.ID, "date-debut"
+                )
+                if date_debut_el is not None:
+                    isLoggedIn = True
+            except Exception:
+                isLoggedIn = False
+
+            if not isLoggedIn:
+                # Check if there is a Cookies Concent popup deny button #####
+                deny_btn = None
+                try:
+                    deny_btn = self.__browser.find_element(
+                        By.ID, "btn_option_deny_banner"
+                    )
+                except Exception:
+                    pass
+
+                if deny_btn is not None:
+                    self.click_in_view(
+                        By.ID,
+                        "btn_option_deny_banner",
+                        wait_message="Waiting for cookie popup",
+                        click_message="Click on deny",
+                        delay=0,  # random.uniform(1, 2),
+                    )
+
+                # Wait for Connexion #####
+                self.mylog("Connexion au site GRDF", end="")
+
+                self.__browser.get(self.__class__.site_grdf_url)
+                self.mylog(st="OK")
+
+                # Wait for Password #####
+                self.mylog("Waiting for Password", end="")
+
+                ep = EC.presence_of_element_located((By.ID, "pass"))
+                el_password = self.__wait.until(
+                    ep,
+                    message="failed, page timeout (timeout="
+                    + str(self.configuration[PARAM_TIMEOUT])
+                    + ")",
+                )
+                self.mylog(st="OK")
+
+                # Wait for Email #####
+                self.mylog("Waiting for Email", end="")
+                ep = EC.presence_of_element_located((By.ID, "mail"))
+                el_email = self.__wait.until(
+                    ep,
+                    message="failed, page timeout (timeout="
+                    + str(self.configuration[PARAM_TIMEOUT])
+                    + ")",
+                )
+                self.mylog(st="OK")
+
+                # Type Email #####
+                self.mylog("Type Email", end="")
+                el_email.clear()
+                el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
+                self.mylog(st="OK")
+
+                # Type Password #####
+                self.mylog("Type Password", end="")
+                el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
+                self.mylog(st="OK")
+
+                # Some delay before clicking captcha
+                # time.sleep(random.uniform(31.5, 33))
+                # time.sleep(random.uniform(1.25, 3))
+
+                # Give the user some time to resolve the captcha
+                # FEAT: Wait until it disappears, use 2captcha if configured
+
+                if self.configuration[PARAM_2CAPTCHA_TOKEN] is not None:
+                    self.resolve_captcha2()
+                    # Some time for captcha to remove.
+                    time.sleep(2)
+                else:
+                    time.sleep(0.33)
+
+                    # Not sure that click is needed for 2captcha
+                    clickRecaptcha = True
+                    if clickRecaptcha:
+                        self.__browser.switch_to.frame(0)
+                        re_btn = self.__browser.find_element(
+                            By.CLASS_NAME, "recaptcha-checkbox-border"
+                        )
+                        re_btn.click()
+                        self.__browser.switch_to.default_content()
+
+                    if self._debug:
+                        # Let the user some time to resolve the captcha
+                        time.sleep(30)
+                    else:
+                        # Not in debug mode, only wait for captcha
+                        time.sleep(2)
+
+                self.__browser.switch_to.default_content()
+
+                if self.configuration[PARAM_SCREENSHOT]:
+                    self.get_screenshot("screen_before_connection.png")
+
+                self.click_in_view(
+                    By.XPATH,
+                    r"//input[@value='Connexion']",
+                    # wait_message="",
+                    click_message="Click on connexion",
+                    delay=random.uniform(1, 2),
+                )
+                time.sleep(5)
+
+            # Get data from GRDF ############
+
+            data_url = (
+                # "view-source:"
+                r"https://monespace.grdf.fr/api"
+                r"/e-conso/pce/consommation/informatives"
+                r"?dateDebut={}&dateFin={}&pceList[]={}"
+            ).format(
+                (dt.datetime.now() - dt.timedelta(days=7)).strftime(
+                    "%Y-%m-%d"
+                ),
+                dt.datetime.now().strftime("%Y-%m-%d"),
+                self.configuration[PARAM_GRDF_PCE],
+            )
+
+            self.__browser.get(data_url)
+
+            # result = self.__browser.page_source
+            content = self.__browser.find_element(By.TAG_NAME, "pre").text
+            # result = json.loads(content)
+            # r=self.__browser.requests[-1:][0]
+            # self.__browser(self.__browser.wait_for_request(r.path))
+            # print(f"Url {data_url} -> R:{result!r}\n")
+
+        if not skipDownload:  # pylint: disable=condition-evals-to-constant
+            self.files_to_cleanup.append(g_file)
+            with open(g_file, "w", encoding="utf_8") as grdf_file:
+                # json.dump(result, grdf_file)
+                grdf_file.write(content)
+
+        return g_file
 
 
-################################################################################
+class Injector(Worker):
+    WORKER_DESC = "Injector"
+
+    def __init__(self, config_dict=None, super_print=None, debug=False):
+        super().__init__(
+            config_dict=config_dict, super_print=super_print, debug=debug
+        )
+
+        self._http = urllib3.PoolManager(
+            retries=1, timeout=int(str(self.configuration[PARAM_TIMEOUT]))
+        )
+
+    def sanity_check(self):
+        pass
+
+    def update_veolia_device(self, csv_file):
+        raise NotImplementedError(f"{self.WORKER_DESC}/Veolia")
+
+    def update_grdf_device(self, json_file):
+        raise NotImplementedError(f"{self.WORKER_DESC}/GRDF")
+
+
+###############################################################################
 # Object injects historical data into domoticz
-################################################################################
-class DomoticzInjector:
-    def __init__(self, config_dict, super_print, debug=False):
-        self.__debug = debug
+###############################################################################
+class DomoticzInjector(Injector):
+    WORKER_DESC = "Domoticz"
 
-        # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print  # type:ignore[has-type]
+    def __init__(self, config_dict, super_print, debug=False):
 
         self.configuration = {
             # Mandatory config values
-            "domoticz_idx": None,
-            "domoticz_server": None,
+            PARAM_DOMOTICZ_VEOLIA_IDX: None,
+            PARAM_DOMOTICZ_SERVER: None,
+            # Needed for veolia only
+            PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
             # Optional config values
-            "domoticz_login": "",
-            "domoticz_password": "",
-            "timeout": "30",
-            "download_folder": os.path.dirname(os.path.realpath(__file__))
-            + os.path.sep,
+            PARAM_DOMOTICZ_LOGIN: "",
+            PARAM_DOMOTICZ_PASSWORD: "",
+            PARAM_TIMEOUT: "30",
+            PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
         }
-        self.print("Start Loading Domoticz configuration")
-        try:
-            self._load_configururation_items(config_dict)
-            self.print("End loading domoticz configuration", end="")
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
 
-        self.__http = urllib3.PoolManager(
-            retries=1, timeout=int(str(self.configuration["timeout"]))
+        super().__init__(
+            config_dict=config_dict, super_print=super_print, debug=debug
         )
 
     def open_url(self, uri, data=None):  # pylint: disable=unused-argument
         # Generate URL
-        url_test = str(self.configuration["domoticz_server"]) + uri
+        url_test = str(self.configuration[PARAM_DOMOTICZ_SERVER]) + uri
 
         # Add Authentication Items if needed
-        if self.configuration["domoticz_login"] != "":
+        if self.configuration[PARAM_DOMOTICZ_LOGIN] != "":
             b64domoticz_login = base64.b64encode(
-                str(self.configuration["domoticz_login"]).encode()
+                str(self.configuration[PARAM_DOMOTICZ_LOGIN]).encode()
             )
             b64domoticz_password = base64.b64encode(
-                str(self.configuration["domoticz_password"]).encode()
+                str(self.configuration[PARAM_DOMOTICZ_PASSWORD]).encode()
             )
             url_test = (
                 url_test
@@ -846,10 +1331,10 @@ class DomoticzInjector:
             )
 
         try:
-            response = self.__http.request("GET", url_test)
+            response = self._http.request("GET", url_test)
         except urllib3.exceptions.MaxRetryError as e:
             # HANDLE CONNECTIVITY ERROR
-            raise RuntimeError("url=" + url_test + " : " + str(e))
+            raise RuntimeError(f"url={url_test} : {e}")
 
         # HANDLE SERVER ERROR CODE
         if not response.status == 200:
@@ -866,95 +1351,36 @@ class DomoticzInjector:
             j = json.loads(response.data.decode("utf-8"))
         except Exception as e:
             # Handle JSON ERROR
-            raise RuntimeError("unable to parse the JSON : " + str(e))
+            raise RuntimeError(f"Unable to parse the JSON : {e}")
 
         if j["status"].lower() != "ok":
             raise RuntimeError(
-                "url="
-                + url_test
-                + "\nrepsonse="
-                + str(response.status)
-                + "\ncontent="
-                + str(j)
+                f"url={url_test}\n"
+                f"response={response.status}\n"
+                f"content={j}"
             )
 
         return j
 
-    # Load configuration items
-    def _load_configururation_items(self, config_dict):
-        for param in list((self.configuration).keys()):
-            if param not in config_dict:
-                if self.configuration[param] is not None:
-                    self.print(
-                        '    "%s" = "%s"' % (
-                            param,
-                            self.configuration[param],
-                        ),
-                        end="",
-                    )
-                    self.print(
-                        "param is not found in config file, using default value",
-                        "WW",
-                    )
-                else:
-                    self.print('    "' + param + '"', end="")
-                    raise RuntimeError(
-                        "param is missing in configuration file"
-                    )
-            else:
-                if (
-                    param == "download_folder"
-                    and str(config_dict[param])[-1] != os.path.sep
-                ):
-                    self.configuration[param] = (
-                        str(config_dict[param]) + os.path.sep
-                    )
-                else:
-                    self.configuration[param] = config_dict[param]
-
-                if re.match(r".*(token|password).*", param, re.IGNORECASE):
-                    self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + "*" * len(str(self.configuration[param]))
-                        + '"',
-                        end="",
-                    )
-                else:
-                    self.print(
-                        '    "'
-                        + param
-                        + '" = "'
-                        + str(self.configuration[param])
-                        + '"',
-                        end="",
-                    )
-
-                self.print(st="OK")
-
-    def sanity_check(self, debug=False):  # pylint: disable=unused-argument
-        self.print(
-            "Check domoticz connectivity", st="--", end=""
-        )  #############################################################
+    def sanity_check(self):
+        self.mylog("Check domoticz connectivity", st="--", end="")
         response = self.open_url("/json.htm?type=command&param=getversion")
         if response["status"].lower() == "ok":
-            self.print(st="ok")
+            self.mylog(st="OK")
 
-        self.print(
-            "Check domoticz Device", end=""
-        )  #############################################################
+        self.mylog("Check domoticz Device", end="")
         # generate 2 urls, one for historique, one for update
         response = self.open_url(
-            "/json.htm?type=devices&rid=" + str(self.configuration["domoticz_idx"])
+            "/json.htm?type=devices&rid="
+            + str(self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX])
         )
 
-        if not "result" in response:
+        if "result" not in response:
             raise RuntimeError(
                 "device "
-                + str(self.configuration["domoticz_idx"])
+                + str(self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX])
                 + " could not be found on domoticz server "
-                + str(self.configuration["domoticz_server"])
+                + str(self.configuration[PARAM_DOMOTICZ_SERVER])
             )
         else:
             properly_configured = True
@@ -965,84 +1391,91 @@ class DomoticzInjector:
             dev_SwitchTypeVal = response["result"][0]["SwitchTypeVal"]
             dev_Name = response["result"][0]["Name"]
 
-            self.print(st="ok")
+            self.mylog(st="OK")
 
             # Retrieve Device Name
-            self.print(
+            self.mylog(
                 '    Device Name            : "'
                 + dev_Name
                 + '" (idx='
-                + self.configuration["domoticz_idx"]
+                + self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX]
                 + ")",
                 end="",
-            )  #############################################################
-            self.print(st="ok")
+            )
+            self.mylog(st="OK")
 
             # Checking Device Type
-            self.print(
-                '    Device Type            : "' + dev_Type + '"', end=""
-            )  #############################################################
+            self.mylog(f'    Device Type            : "{dev_Type}"', end="")
             if dev_Type == "General":
-                self.print(st="ok")
+                self.mylog(st="OK")
             else:
-                self.print(
-                    'wrong sensor type. Go to Domoticz/Hardware - Create a pseudo-sensor type "Managed Counter"',
+                self.mylog(
+                    "wrong sensor type. Go to Domoticz/Hardware"
+                    ' - Create a pseudo-sensor type "Managed Counter"',
                     st="EE",
                 )
                 properly_configured = False
 
             # Checking device subtype
-            self.print(
-                '    Device SubType         : "' + dev_SubType + '"', end=""
-            )  #############################################################
+            self.mylog(f'    Device SubType         : "{dev_SubType}"', end="")
             if dev_SubType == "Managed Counter":
-                self.print(st="ok")
+                self.mylog(st="OK")
             else:
-                self.print(
-                    'wrong sensor type. Go to Domoticz/Hardware - Create a pseudo-sensor type "Managed Counter"',
-                    st="ee",
+                self.mylog(
+                    "wrong sensor type. Go to Domoticz/Hardware"
+                    ' - Create a pseudo-sensor type "Managed Counter"',
+                    st="EE",
                 )
                 properly_configured = False
 
             # Checking for SwitchType
-            self.print(
-                '    Device SwitchType      : "' + str(dev_SwitchTypeVal),
+            self.mylog(
+                f'    Device SwitchType      : "{dev_SwitchTypeVal}"',
                 end="",
-            )  #############################################################
+            )
             if dev_SwitchTypeVal == 2:
-                self.print(st="ok")
+                self.mylog(st="OK")
             else:
-                self.print(
-                    "wrong switch type. Go to Domoticz - Select your counter - click edit - change type to water",
-                    st="ee",
+                self.mylog(
+                    "wrong switch type. Go to Domoticz"
+                    " - Select your counter"
+                    " - click edit"
+                    " - change type to water",
+                    st="EE",
                 )
                 properly_configured = False
 
             # Checking for Counter Divider
-            self.print(
-                '    Device Counter Divided : "' + str(dev_AddjValue2) + '"',
+            self.mylog(
+                f'    Device Counter Divided : "{dev_AddjValue2}"',
                 end="",
-            )  #############################################################
+            )
             if dev_AddjValue2 == 1000:
-                self.print(st="ok")
+                self.mylog(st="OK")
             else:
-                self.print(
-                    'wrong counter divided. Go to Domoticz - Select your counter - click edit - set "Counter Divided" to 1000',
-                    st="ee",
+                self.mylog(
+                    "wrong counter divided. Go to Domoticz"
+                    " - Select your counter"
+                    " - click edit"
+                    ' - set "Counter Divided" to 1000',
+                    st="EE",
                 )
                 properly_configured = False
 
             # Checking Meter Offset
-            self.print(
-                '    Device Meter Offset    : "' + str(dev_AddjValue) + '"',
+            self.mylog(
+                f'    Device Meter Offset    : "{dev_AddjValue}"',
                 end="",
-            )  #############################################################
+            )
             if dev_AddjValue == 0:
-                self.print(st="ok")
+                self.mylog(st="OK")
             else:
-                self.print(
-                    'wrong value for meter offset. Go to Domoticz - Select your counter - click edit - set "Meter Offset" to 0',
-                    st="ee",
+                self.mylog(
+                    "wrong value for meter offset. Go to Domoticz"
+                    " - Select your counter"
+                    " - click edit"
+                    ' - set "Meter Offset" to 0',
+                    st="EE",
                 )
                 properly_configured = False
 
@@ -1051,12 +1484,12 @@ class DomoticzInjector:
                     "Set your device correctly and run the script again"
                 )
 
-    def update_device(self, csv_file):
-        self.print("Parsing csv file")
+    def update_veolia_device(self, csv_file):
+        self.mylog("Parsing veolia csv file")
         with open(csv_file, encoding="utf_8") as f:
             # Remove first line
 
-            # PArse each line of the file.
+            # Parse each line of the file.
 
             for row in list(csv.reader(f, delimiter=";")):
                 date = row[0][0:10]
@@ -1065,7 +1498,7 @@ class DomoticzInjector:
                 conso = row[2]
                 method = row[3]  # "Mesuré" or "Estimé"
 
-                if method in ("Estimé", ):
+                if method in ("Estimé",):
                     # Do not use estimated values which may result
                     # in a total that is not increasing
                     # (when the estimated value is smaller than the
@@ -1085,80 +1518,74 @@ class DomoticzInjector:
                             + str(row)
                         )
 
-                    # Generate 2 URLs, one for historique, one for update
+                    # Generate 3 URLs: historical, daily, current
                     url_args = {
                         "type": "command",
                         "param": "udevice",
-                        "idx": self.configuration["domoticz_idx"],
-                        "svalue": counter + ";" + conso + ";" + date,
+                        "idx": self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX],
+                        "svalue": f"{counter};{conso};{date}",
                     }
                     url_historique = "/json.htm?" + urlencode(url_args)
 
-                    url_args["svalue"] = counter + ";" + conso + ";" + date_time
+                    # Daily
+                    url_args["svalue"] = f"{counter};{conso};{date_time}"
                     url_daily = "/json.htm?" + urlencode(url_args)
 
+                    # Current
                     url_args["svalue"] = conso
                     url_current = "/json.htm?" + urlencode(url_args)
 
-                    self.print(
-                        "    update value for " + date, end=""
-                    )  #############################################################
+                    # Send historical data.
+                    self.mylog(f"    update value for {date}", end="")
                     self.open_url(url_historique)
-                    self.print(st="ok")
+                    self.mylog(st="OK")
 
         # Update Dashboard
         if url_current:
-            self.print(
-                "    update current value", end=""
-            )  #############################################################
+            self.mylog("    update current value", end="")
             self.open_url(url_current)
-            self.print(st="ok")
+            self.mylog(st="OK")
 
         if url_daily:
-            self.print(
-                "    update daily value", end=""
-            )  #############################################################
+            self.mylog("    update daily value", end="")
             self.open_url(url_daily)
-            self.print(st="ok")
+            self.mylog(st="OK")
 
+    def update_grdf_device(self, json_file):
+        pass
 
-    def clean_up(self, debug=False):
+    def cleanup(self, keep_output=False):
         pass
 
 
-class HomeAssistantInjector(DomoticzInjector):
-    def __init__(self, config_dict, super_print, debug=False):
-        # pylint: disable=super-init-not-called
-        self.__debug = debug
+class HomeAssistantInjector(Injector):
+    WORKER_DESC = "Home Assistant"
 
-        # Supersede local print function if provided as an argument
-        self.print = super_print if super_print else self.print
+    def __init__(self, config_dict, super_print, debug=False):
 
         self.configuration = {
             # Mandatory config values
-            "ha_server": None,
-            "ha_token": None,
-            "veolia_contract": None,
+            PARAM_HA_SERVER: None,
+            PARAM_HA_TOKEN: None,
+            # Needed for veolia only
+            PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
             # Optional config values
-            "timeout": "30",
-            "download_folder": os.path.dirname(os.path.realpath(__file__))
-            + os.path.sep,
+            PARAM_TIMEOUT: "30",
+            PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
         }
-        self.print("Start Loading Home Assistant configuration")
-        try:
-            self._load_configururation_items(config_dict)
-            self.print("End loading Home Assistant configuration", end="")
-        except Exception:
-            raise
-        else:
-            self.print(st="ok")
+        super().__init__(config_dict, super_print=super_print, debug=debug)
 
     def open_url(self, uri, data=None):
+        """
+        GET or POST (if data) request from Home Assistant API.
+        """
         # Generate URL
-        api_url = self.configuration["ha_server"] + uri
+        api_url = self.configuration[PARAM_HA_SERVER] + uri
 
         headers = {
-            "Authorization": "Bearer %s" % (self.configuration['ha_token'],),
+            "Authorization": "Bearer {}".format(
+                self.configuration[PARAM_HA_TOKEN]
+            ),
             "Content-Type": "application/json",
         }
 
@@ -1169,7 +1596,7 @@ class HomeAssistantInjector(DomoticzInjector):
                 response = requests.post(api_url, headers=headers, json=data)
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
-            raise RuntimeError("url=%s : %s" % (api_url, e,))
+            raise RuntimeError(f"url={api_url} : {e}")
 
         # HANDLE SERVER ERROR CODE
         if response.status_code not in (200, 201):
@@ -1186,25 +1613,32 @@ class HomeAssistantInjector(DomoticzInjector):
             j = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             # Handle JSON ERROR
-            raise RuntimeError("Unable to parse JSON : %s" % (e,))
+            raise RuntimeError(f"Unable to parse JSON : {e}")
 
         return j
 
-    def sanity_check(self, debug=False):
-        self.print("Check Home Assistant connectivity", st="--", end="")
+    def sanity_check(self):
+        self.mylog("Check Home Assistant connectivity", st="--", end="")
         response = self.open_url("/api/")
         if response["message"] == "API running.":
-            self.print(st="ok")
+            self.mylog(st="OK")
         else:
-            self.print(st="EE")
-            if not "result" in response:
+            self.mylog(st="EE")
+            if "result" not in response:
                 raise RuntimeError(
-                    "No valid response '%s' from %s" % (response['message'], self.configuration["ha_server"],)
+                    "No valid response '%s' from %s"
+                    % (
+                        response["message"],
+                        self.configuration[PARAM_HA_SERVER],
+                    )
                 )
 
-    def update_device(self, csv_file):
+    def update_veolia_device(self, csv_file):
+        """
+        Inject Veolia Data into Home Assistant.
+        """
         # pylint: disable=too-many-locals
-        self.print("Parsing csv file")
+        self.mylog("Parsing csv file")
 
         with open(csv_file, encoding="utf_8") as f:
             rows = list(csv.reader(f, delimiter=";"))
@@ -1213,8 +1647,8 @@ class HomeAssistantInjector(DomoticzInjector):
             p_row = rows[-2]
 
             method = row[3]  # "Mesuré" or "Estimé"
-            if method in ("Estimé", ):
-                self.print( "File contains estimated data in last line: %s" % (row,))
+            if method in ("Estimé",):
+                self.mylog(f"File contains estimated data in last line: {row}")
                 # Try previous row which may be a measurement
                 row = p_row
                 p_row = rows[-3]
@@ -1229,15 +1663,15 @@ class HomeAssistantInjector(DomoticzInjector):
             p_meter_total = p_row[1]
             p_meter_period_total = p_row[2]
 
-            if method in ("Estimé", ):
-                self.print( "    Skip Method " + method)
+            if method in ("Estimé",):
+                self.mylog("    Skip Method " + method)
                 # Do not use estimated values which may result
                 # in a total that is not increasing
                 # (when the estimated value is smaller than the
                 #  previous real value or higher than the next
                 #  real value)
                 raise RuntimeError(
-                    "File contains estimated data in last lines: %s" % (row,)
+                    f"File contains estimated data in last lines: {row!r}"
                 )
 
             # Check line integrity (Date starting with 2 (Year))
@@ -1247,12 +1681,19 @@ class HomeAssistantInjector(DomoticzInjector):
                 d2 = datetime.now()
                 if abs((d2 - d1).days) > 30:
                     raise RuntimeError(
-                        "File contains too old data (monthly?!?): %s" % (row,)
+                        f"File contains too old data (monthly?!?): {row!r}"
                     )
-                self.print("    previous value  %s: %sL - %sL"
-                           % (p_date_time, p_meter_total, p_meter_period_total), end="")
-                self.print("    update value is %s: %sL - %sL"
-                           % (date_time, meter_total, meter_period_total), end="")
+                self.mylog(
+                    f"    previous value  {p_date_time}: "
+                    f"{p_meter_total}L - {p_meter_period_total}L",
+                    end="",
+                )
+                self.mylog(
+                    f"    update value is {date_time}: "
+                    f"{meter_total}L - {meter_period_total}L",
+                    end="",
+                )
+
                 data = {
                     "state": meter_total,
                     "attributes": {
@@ -1263,7 +1704,8 @@ class HomeAssistantInjector(DomoticzInjector):
                     },
                 }
                 self.open_url(
-                    "/api/states/sensor.veolia_%s_total" % (self.configuration['veolia_contract'],),
+                    "/api/states/sensor.veolia_%s_total"
+                    % (self.configuration[PARAM_VEOLIA_CONTRACT],),
                     data,
                 )
                 data = {
@@ -1276,47 +1718,249 @@ class HomeAssistantInjector(DomoticzInjector):
                     },
                 }
                 self.open_url(
-                    "/api/states/sensor.veolia_%s_period_total" % (self.configuration['veolia_contract'],),
+                    "/api/states/sensor.veolia_%s_period_total"
+                    % (self.configuration[PARAM_VEOLIA_CONTRACT],),
                     data,
                 )
-                self.print(st="ok")
+                self.mylog(st="OK")
 
-    def clean_up(self, debug=False):
+    def update_grdf_device(self, json_file):
+        """
+        Inject Gazpar Data from GRDF into Home Assistant.
+        """
+        # pylint: disable=too-many-locals
+        self.mylog("Parsing JSON file")
+
+        with open(json_file, encoding="utf_8") as f:
+            data = json.load(f)
+
+        pce = list(data.keys())[0]
+
+        # M3 TOTAL
+        sensor_name_generic_m3 = "sensor.gas_consumption_m3"
+        sensor_name_pce_m3 = f"sensor.grdf_{pce}_m3"
+        # KWH TOTAL
+        sensor_name_generic_kwh = "sensor.gas_consumption_kwh"
+        sensor_name_pce_kwh = f"sensor.grdf_{pce}_kwh"
+        # DAILY SENSORS
+        sensor_name_daily_generic_kwh = "sensor.gas_daily_kwh"
+        sensor_name_daily_pce_kwh = f"sensor.grdf_{pce}_daily_kwh"
+
+        # Get last known data now
+        #  - should load this before loading JSON to get maximum range of data.
+        response = self.open_url(
+            HA_API_SENSOR_FORMAT % (sensor_name_generic_kwh,)
+        )
+
+        # Response looks like:
+        # {'entity_id': 'sensor.gas_consumption_kwh', 'state': '28657',
+        #  'attributes': {
+        #    'state_class': 'total_increasing',
+        #    'unit_of_measurement': 'kWh',
+        #    'device_class': 'energy', 'friendly_name': 'gas_consumption_kwh'},
+        #  'last_changed': '2023-01-18T16:58:35.199786+00:00',
+        #  'last_updated': '2023-01-18T16:58:35.199786+00:00',
+        #  'context': {'id': '01GQ2X2VS69EDZMJ4RZ2T8E774',
+        #              'parent_id': None, 'user_id': None}
+        # }
+        #
+        # print(f"{response!r}")
+        current_total_kWh: float = 0
+        previous_date = datetime.now(timezone.utc) - dt.timedelta(days=1)
+        previous_m3 = None
+        previous_kWh = None
+        if isinstance(response, dict) and "state" in response:
+            previous_kWh = response["state"]
+            current_total_kWh = float(previous_kWh)
+            attributes = response["attributes"]
+            if "date_time" in attributes:
+                previous_date_str = attributes["date_time"]
+            elif "last_changed" in response:
+                previous_date_str = response["last_changed"]
+            elif "last_updated" in response:
+                previous_date_str = response["last_updated"]
+            else:
+                previous_date_str = None
+            if previous_date_str is not None:
+                previous_date = dt.datetime.fromisoformat(previous_date_str)
+
+            if "meter_m3" in attributes:
+                previous_m3 = float(attributes["meter_m3"])
+
+        if previous_m3 is None:
+            response = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,)
+            )
+
+            if isinstance(response, dict) and "state" in response:
+                previous_m3 = response["state"]
+
+        self.mylog(
+            f"Previous {previous_m3}m3 {previous_kWh}kWh {previous_date}"
+        )
+
+        date_time = None
+        for row in data[pce]["releves"]:
+            row_date = row["dateFinReleve"]
+            row_date_time = dt.datetime.fromisoformat(row_date)
+            row_data_qual = row[
+                "qualificationReleve"
+            ]  # "Informative Journalier"
+            row_meter_kWh_day = row["energieConsomme"]
+
+            if row_data_qual != "Mesuré":
+                self.mylog(f"    Skip Quality {row_data_qual}")
+                continue
+
+            if row_date_time > previous_date:
+                # Sum daily kWh consumption
+                # FEAT: May need to do more complex calculation
+                # to cope with kWh rounding
+                current_total_kWh += row_meter_kWh_day
+                self.mylog(
+                    f"New Total {current_total_kWh}kWh (+{row_meter_kWh_day})"
+                )
+
+            if (date_time is not None) and (row_date_time < date_time):
+                # Use the most recent data.
+                continue
+
+            if abs((row_date_time - datetime.now(timezone.utc)).days) > 30:
+                raise RuntimeError(
+                    f"File contains too old data (monthly?!?): {row}"
+                )
+
+            # Acceptable data
+            date_time = row_date_time
+            # date_type = row["indexFin"]  # "Informative Journalier"
+
+            meter_m3_total = row["indexFin"]
+            meter_kWh_day = row["energieConsomme"]
+
+        # Has data (latest data)
+        if date_time is not None:
+            self.mylog(
+                f"    update value is {date_time.isoformat()}:"
+                f" {meter_m3_total} m³ - {meter_kWh_day} kWh",
+                end="",
+            )
+
+            # M3 METER TOTAL
+            data = {
+                "state": meter_m3_total,
+                "attributes": {
+                    "date_time": date_time.isoformat(),
+                    "unit_of_measurement": "m³",
+                    "device_class": "gas",
+                    "state_class": "total_increasing",
+                },
+            }
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,), data
+            )
+            self.mylog(f"{r!r}")
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_pce_m3,), data
+            )
+            self.mylog(f"{r!r}")
+
+            # kWh Daily
+            data = {
+                "state": meter_kWh_day,
+                "attributes": {
+                    "date_time": date_time.isoformat(),
+                    "unit_of_measurement": "kWh",
+                    "device_class": "energy",
+                    "state_class": "measurement",
+                },
+            }
+
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_daily_generic_kwh,), data
+            )
+            self.mylog(f"{r!r}")
+
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_daily_pce_kwh,), data
+            )
+            self.mylog(f"{r!r}")
+
+            # Total kWh
+            data = {
+                "state": current_total_kWh,
+                "attributes": {
+                    "date_time": date_time.isoformat(),
+                    "unit_of_measurement": "kWh",
+                    "device_class": "energy",
+                    "state_class": "total_increasing",
+                },
+            }
+
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_generic_kwh,), data
+            )
+            self.mylog(f"{r!r}")
+            r = self.open_url(
+                HA_API_SENSOR_FORMAT % (sensor_name_pce_kwh,), data
+            )
+            self.mylog(f"{r!r}")
+
+            self.mylog(st="OK")
+
+    def cleanup(self, keep_output=False):
         pass
 
 
-def exit_on_error(veolia_obj=None, domoticz=None, string="", debug=False):
-    try:
-        o
-    except:
+def exit_on_error(
+    workers: list[Worker] | None = None,
+    string="",
+    debug=False,
+    o: Output | None = None,
+):
+    if o is None:
         print(string)
     else:
-        o.print(string, st="EE")
+        o.mylog(string, st="EE")
 
-    if veolia_obj is not None:
-        veolia_obj.clean_up(debug)
-    if domoticz:
-        domoticz.clean_up(debug)
-    try:
-        o
-    except:
-        print("Ended with error%s" % ("" if debug else " : // re-run the program with '--debug' option",))
+    if workers is not None:
+        for w in workers:
+            if w is not None:
+                w.cleanup(debug)
+
+    if o is None:
+        print(
+            "Ended with error%s"
+            % (
+                ""
+                if debug
+                else " : // re-run the program with '--debug' option",
+            )
+        )
     else:
-        o.print(
-            "Ended with error%s" % ("" if debug else " : // re-run the program with '--debug' option",),
+        o.mylog(
+            "Ended with error%s"
+            % (
+                ""
+                if debug
+                else " : // re-run the program with '--debug' option",
+            ),
             st="EE",
         )
+    print(traceback.format_exc())
+    # raise Exception
     sys.exit(2)
 
 
-def check_new_script_version():
-    o.print("Check script version is up to date", end="")
+def check_new_script_version(o):
+    # FEAT: Check only if not running in HAOS (AppDaemon) instance
+    #       Maybe with env variable?
+    o.mylog("Check script version is up to date", end="")
     try:
         http = urllib3.PoolManager()
         user_agent = {"user-agent": "veolia-idf - " + VERSION}
         r = http.request(
             "GET",
-            "https://api.github.com/repos/s0nik42/veolia-idf/releases/latest",
+            f"https://api.github.com/repos/{REPO_BASE}/releases/latest",
             headers=user_agent,
         )
         j = json.loads(r.data.decode("utf-8"))
@@ -1324,29 +1968,47 @@ def check_new_script_version():
         raise
     else:
         if j["tag_name"] > VERSION:
-            o.print(
-                'New version "'
-                + j["name"]
-                + '"('
-                + j["tag_name"]
-                + ") available. Check : https://github.com/s0nik42/veolia-idf/releases/latest",
+            o.mylog(
+                f'New version "{j["name"]}"({j["tag_name"]}) available.'
+                f"Check : https://github.com/{REPO_BASE}/releases/latest",
                 st="ww",
             )
         else:
-            o.print(st="ok")
+            o.mylog(st="OK")
 
 
-if __name__ == "__main__":
+def doWork():
+    # pylint:disable=too-many-locals
     # Default config value
     script_dir = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
     default_logfolder = script_dir
-    default_configuration_file = script_dir + "/config.json"
+    default_configuration_file = script_dir + "config.json"
+    workers: list[Worker] = []
 
     # COMMAND LINE OPTIONS
     parser = argparse.ArgumentParser(
-        description="Load water consumption from veolia Ile de France into domoticz"
+        description=(
+            "Load water or gas meter data into Home Automation System\n"
+            "Sources: Veolia Ile de France, GRDF\n"
+            "Home Automation:  Domiticz or Home Assistant"
+        )
     )
     parser.add_argument("--version", action="version", version=VERSION)
+    parser.add_argument(
+        "--version-check",
+        action="store_true",
+        help="Perform a version check @github",
+    )
+    parser.add_argument(
+        "--veolia",
+        action="store_true",
+        help="Query Veolia IDF",
+    )
+    parser.add_argument(
+        "--grdf",
+        action="store_true",
+        help="Query GRDF",
+    )
     parser.add_argument(
         "-d",
         "--debug",
@@ -1354,9 +2016,19 @@ if __name__ == "__main__":
         help="active graphical debug mode (only for troubleshooting)",
     )
     parser.add_argument(
+        "--screenshot",
+        action="store_true",
+        help="Take screenshot(s) (for troubleshooting)",
+    )
+    parser.add_argument(
+        "--local-config",
+        action="store_true",
+        help="Local configuration directory for browser",
+    )
+    parser.add_argument(
         "-l",
         "--logs-folder",
-        help="specify the logs location folder (" + default_logfolder + ")",
+        help=f"specify the logs location folder ({default_logfolder})",
         default=default_logfolder,
         nargs=1,
     )
@@ -1377,98 +2049,161 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "-k",
         "--keep_csv",
         action="store_true",
-        help="Keep the downloaded CSV file",
+        help="Keep the downloaded CSV file (Deprecated, use --keep-output)",
         required=False,
     )
+    parser.add_argument(
+        "-k",
+        "--keep-output",
+        action="store_true",
+        help="Keep the downloaded files",
+        required=False,
+    )
+
     args = parser.parse_args()
+
+    # Deprecated keep_csv, but still use its value
+    args.keep_output = args.keep_output or args.keep_csv
+    if args.logs_folder is not None:
+        args.logs_folder = str(args.logs_folder).strip("[]'")
 
     # Init output
     try:
-        o = Output(
-            logs_folder=str(args.logs_folder).strip("[]'"), debug=args.debug
-        )
+        d = {PARAM_LOGS_FOLDER: args.logs_folder}
+        o = Output(d, debug=args.debug)
     except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug)
+        exit_on_error(string=f"Init output - {exc}", debug=args.debug)
 
     # Print debug message
     if args.debug:
-        o.print("DEBUG MODE ACTIVATED", end="")
-        o.print("only use '--debug' for troubleshooting", st="WW")
+        o.mylog("DEBUG MODE ACTIVATED", end="")
+        o.mylog("only use '--debug' for troubleshooting", st="WW")
 
     # New version checking
-    try:
-        check_new_script_version()
-    except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug)
+    if args.version_check:
+        try:
+            check_new_script_version(o)
+        except Exception as exc:
+            exit_on_error(string=str(exc), debug=args.debug, o=o)
 
     # Load configuration
     try:
-        c = Configuration(debug=args.debug, super_print=o.print)
+        c = Configuration(debug=args.debug, super_print=o.mylog)
         configuration_json = c.load_configuration_file(
             str(args.config).strip("[]'")
         )
-        configuration_json["logs_folder"] = str(args.logs_folder).strip("[]'")
+        configuration_json[PARAM_LOGS_FOLDER] = str(args.logs_folder).strip(
+            "[]'"
+        )
     except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug)
+        exit_on_error(string=str(exc), debug=args.debug, o=o)
+
+    # When neither veolia nor grdf is set,
+    #  get all those that are in the configuration
+    isGetAvailable = not (args.veolia or args.grdf)
+
+    if isGetAvailable:
+        if configuration_json.get(PARAM_VEOLIA_CONTRACT) is not None:
+            args.veolia = True
+        if configuration_json.get(PARAM_GRDF_PCE) is not None:
+            args.grdf = True
+
+    if not (args.grdf or args.veolia):
+        exit_on_error(
+            string="Must select/configure at least one contract",
+            debug=args.debug,
+        )
+
+    configuration_json.update({"screenshot": args.screenshot})
 
     # Create objects
     try:
-        veolia = VeoliaCrawler(
-            configuration_json, super_print=o.print, debug=args.debug
+        crawler = ServiceCrawler(
+            configuration_json,
+            super_print=o.mylog,
+            debug=args.debug,
+            local_config=args.local_config,
         )
-        server_type = configuration_json.get("type",None)
+        workers.append(crawler)
+        server_type = configuration_json.get(PARAM_SERVER_TYPE, None)
+        injector: Injector
         if server_type not in ["ha"]:
-            server = DomoticzInjector(
-                configuration_json, super_print=o.print, debug=args.debug
+            injector = DomoticzInjector(
+                configuration_json, super_print=o.mylog, debug=args.debug
             )
+            workers.append(injector)
         elif server_type == "ha":
-            server = HomeAssistantInjector(
-                configuration_json, super_print=o.print, debug=args.debug
+            injector = HomeAssistantInjector(
+                configuration_json, super_print=o.mylog, debug=args.debug
             )
+            workers.append(injector)
     except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug)
+        exit_on_error(string=str(exc), debug=args.debug, o=o)
 
     # Check requirements
     try:
-        veolia.sanity_check(args.debug)
-    except Exception as exc:
-        exit_on_error(veolia, server, str(exc), debug=args.debug)
+        crawler.sanity_check()
+        injector.sanity_check()
+        crawler.init()
 
-    try:
-        server.sanity_check(args.debug)
     except Exception as exc:
-        exit_on_error(veolia, server, str(exc), debug=args.debug)
+        exit_on_error(workers, str(exc), debug=args.debug, o=o)
 
-    try:
-        veolia.init_browser_firefox()
-    except (Exception, xauth.NotFoundError) as exc:
-        o.print(st="~~")
+    # Do actual work
+
+    if args.grdf:
+        args.veolia = False  # Only GRDF for testing at this time, TODO: remove
+
         try:
-            veolia.init_browser_chrome()
-        except Exception as exc_inner:
-            exit_on_error(veolia, server, str(exc_inner), debug=args.debug)
+            # Get data
+            try:
+                gazpar_file = crawler.get_gazpar_file()
+            except Exception as exc_get:
+                # Retry once on failure to manage stalement
+                # exception that occurs sometimes
+                o.mylog(traceback.format_exc(), st="WW")
+                o.mylog(
+                    "Encountered error "
+                    + str(exc_get).rstrip()
+                    + "// -> Retrying once",
+                    st="ww",
+                )
+                gazpar_file = crawler.get_gazpar_file()
 
-    try:
-        data_file = veolia.get_file()
-    except Exception as exc:
-        # Retry once on failure to manage stalement exception that occur sometimes
+            # Inject data
+            injector.update_grdf_device(gazpar_file)
+
+        except Exception as exc:
+            exit_on_error(workers, str(exc), debug=args.debug, o=o)
+
+    if args.veolia:
         try:
-            o.print(
-                "Encountered error" + str(exc).rstrip() + "// -> Retrying once",
-                st="ww",
-            )
-            data_file = veolia.get_file()
-        except Exception as exc_inner:
-            exit_on_error(veolia, server, str(exc_inner), debug=args.debug)
+            try:
+                veolia_idf_file = crawler.get_veolia_idf_file()
+            except Exception as exc_get:
+                # Retry once on failure to manage
+                # stalement exception that occurs sometimes
+                o.mylog(
+                    "Encountered error"
+                    + str(exc_get).rstrip()
+                    + "// -> Retrying once",
+                    st="ww",
+                )
+                veolia_idf_file = crawler.get_veolia_idf_file()
 
-    try:
-        server.update_device(data_file)
-    except Exception as exc:
-        exit_on_error(veolia, server, str(exc), debug=args.debug)
+            injector.update_veolia_device(veolia_idf_file)
+        except Exception as exc:
+            exit_on_error(workers, str(exc), debug=args.debug, o=o)
 
-    veolia.clean_up(debug=args.debug, keep_csv=args.keep_csv)
-    o.print("Finished on success")
+    o.mylog("Finished on success, cleaning up")
+
+    for w in workers:
+        w.cleanup(keep_output=args.keep_output)
+
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    doWork()

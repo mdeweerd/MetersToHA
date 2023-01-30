@@ -1,13 +1,26 @@
-## Start from the official Debian image
-FROM debian:bullseye
+## Start from the official Ubuntu image
+FROM ubuntu:22.04
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
 ## Set environment variables
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
+# Not on 22.04:        firefox-geckodriver, need ppa
+
+
+# Next lines would upgrade image - skipping
+#    && apt-get upgrade -y \
+#    && apt-get dist-upgrade -y \
+
 RUN export DEBIAN_FRONTEND="noninteractive" \
     && apt-get update --fix-missing \
+    && apt-get install -y \
+        software-properties-common \
+    && apt remove -y --purge \
+        firefox* \
+    && add-apt-repository ppa:mozillateam/firefox-next \
+    && echo > /etc/apt/preferences.d/firefox "Package: firefox*\nPin: origin ppa.launchpadcontent.net\nPin-Priority: 600" \
     && apt-get install -y \
         firefox \
         firefox-geckodriver \
@@ -22,10 +35,11 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
+RUN addgroup -gid 1000 docker &&  adduser -disabled-password -u 1000 -gid 1000 docker
 
 # Install packages to Python3
 # RUN pip3 install --upgrade pip \
-#     && pip3 install \
+#    && pip3 install \
 #        "urllib3>=1.24.2" \
 #        "colorama>=0.3.7" \
 #        "selenium>=3.14.1" \
