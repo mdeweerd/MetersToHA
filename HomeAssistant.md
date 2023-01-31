@@ -1,8 +1,6 @@
 # Meters To Home Automation (anciennement veolia-idf).
 
-Ce script automatise le transfert de l'information de consommation d'eau et
-de gaz vers des systèmes domotiques tels que Home Assistant et Domoticz
-actuellement.
+Ce script automatise le transfert de l'information de consommation d'eau vers des systèmes domotiques tels que Home Assistant et Domoticz.
 
 Ceci est la documentation spécifique pour Home Assistant avec AppDaemon et
 HACS.
