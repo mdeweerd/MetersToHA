@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
 @author: s0nik42
+@author: https://github.com/mdeweerd
 """
-# veolia-idf
-# Copyright (C) 2019 Julien NOEL
+# Meters To Home Automation
+#
+# Forked from https://github.com/s0nik42/veolia-idf to:
+#  - Change directory structure;
+#  - Add more Meters (starting with GazPar).
+#
+# Copyright (C) 2019-2022 Julien NOEL
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +23,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 #
 ###############################################################################
 # SCRIPT DEPENDENCIES
@@ -48,6 +53,11 @@ VERSION = "v2.0"
 
 HA_API_SENSOR_FORMAT = "/api/states/%s"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
+PARAM_CAPMONSTER_TOKEN = "capmonster_token"
+CAPTCHA_TOKENS = (
+    PARAM_CAPMONSTER_TOKEN,
+    PARAM_2CAPTCHA_TOKEN,
+)
 PARAM_OPTIONAL_VALUE = (
     "Optional"  # Used internally to indicate optional dummy value
 )
@@ -80,6 +90,7 @@ PARAM_HA_TOKEN = "ha_token"
 
 REPO_BASE = "s0nik42/veolia-idf"
 
+# Script provided by 2captcha to identify captcha information on the page
 SCRIPT_2CAPTCHA = r"""
 //
 window.findRecaptchaClients=function() {
@@ -88,8 +99,8 @@ if (typeof (___grecaptcha_cfg) !== 'undefined') {
 // eslint-disable-next-line camelcase, no-undef
 return Object.entries(___grecaptcha_cfg.clients).map(([cid, client]) => {
 const data = { id: cid, version: cid >= 10000 ? 'V3' : 'V2' };
-const objects = Object.entries(client).filter(([_, value])
-    => value && typeof value === 'object');
+const objects = Object.entries(client).filter(([_, value]) =>
+    value && typeof value === 'object');
 objects.forEach(([toplevelKey, toplevel]) => {
 const found = Object.entries(toplevel).find(([_, value]) => (
 value && typeof value === 'object' && 'sitekey' in value && 'size' in value
@@ -108,8 +119,8 @@ data.callback = null;
 data.function = null;
 } else {
 data.function = callback;
-const keys = [cid, toplevelKey, sublevelKey, callbackKey].map((key)
-    => `['${key}']`).join('');
+const keys = [cid, toplevelKey, sublevelKey, callbackKey].map((key) =>
+    `['${key}']`).join('');
 data.callback = `___grecaptcha_cfg.clients${keys}`;
 }
 }
@@ -307,18 +318,18 @@ def document_initialised(driver):
 
 
 ###############################################################################
-# Configuration Class toparse and load config.json
+# Configuration Class to parse and load config.json
 ###############################################################################
 class Configuration(Worker):
     def load_configuration_file(self, configuration_file):
         self.mylog(
-            "Loading configuration file : " + configuration_file, end=""
+            f"Loading configuration file : {configuration_file}", end=""
         )
         try:
             with open(configuration_file, encoding="utf_8") as conf_file:
                 content = json.load(conf_file)
         except json.JSONDecodeError as e:
-            raise RuntimeError("json format error : " + str(e))
+            raise RuntimeError(f"json format error : {e}")
         except Exception:
             raise
         else:
@@ -375,6 +386,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_DOWNLOAD_FOLDER: self.install_dir,
             PARAM_LOGS_FOLDER: self.install_dir,
             PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
+            PARAM_CAPMONSTER_TOKEN: PARAM_OPTIONAL_VALUE,
         }
 
         self.mylog("Start loading configuration")
@@ -449,7 +461,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             ff_service = FirefoxService(
                 executable_path=self.configuration[PARAM_GECKODRIVER],
                 log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                + "/geckodriver.log",
+                + "geckodriver.log",
             )
             if not hasattr(ff_service, "process"):
                 # Webdriver may complain about missing process.
@@ -513,7 +525,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # pylint: disable=condition-evals-to-constant
         if self.__local_config:  # Use fixed, reused datadir
             # datadir = os.path.expanduser("~/.config/google-chrome")
-            datadir = os.path.expanduser(f"{local_dir}/.config/google-chrome")
+            datadir = os.path.expanduser(f"{local_dir}.config/google-chrome")
             os.makedirs(datadir, exist_ok=True)
             options.add_argument(f"--user-data-dir={datadir}")
             self.mylog(f"Use {datadir} for Google Chrome user data")
@@ -566,7 +578,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             chromeService = webdriver.chromium.service.ChromiumService(
                 executable_path=self.configuration[PARAM_CHROMEDRIVER],
                 log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                + "/chromedriver.log",
+                + "chromedriver.log",
             )
             self.__browser = webdriver.Chrome(
                 service=chromeService,
@@ -788,12 +800,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
 
     def resolve_captcha2(self) -> str | None:
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-return-statements
 
-        key = self.configuration[PARAM_2CAPTCHA_TOKEN]
-        if key is None or key == "":
+        method = None
+        for m in CAPTCHA_TOKENS:
+            key = self.configuration[m]
+            if key is not None and key != "":
+                method = m
+                break
+
+        if method is None:
             self.mylog(
-                "Can not resolve using 2Captcha,"
+                "Can not resolve using captcha service"
                 " missing {PARAM_2CAPTCHA_TOKEN}",
                 st="WW",
             )
@@ -818,21 +836,21 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             self.__browser.switch_to.default_content()
 
-        # Method 1
+        # Method 1 to find key
         GET_KEY = r"""
             return (new URLSearchParams(
               document.querySelector("iframe[title=\'reCAPTCHA\']")
                 .getAttribute("src")))
             .get("k")
             """
-        # Method 2
+        # Method 2 to fine key
         GET_KEY = (
             SCRIPT_2CAPTCHA + r"return (findRecaptchaClients())[0].sitekey;"
         )
         site_key = self.__browser.execute_script(GET_KEY)
         page_url = str(self.__browser.current_url)
         parsed = urlparse(page_url)
-        print(f"{parsed!r}\n")
+        # print(f"{parsed!r}\n")
         append_port = ""
         if ":" not in parsed.netloc:
             append_port = ":443" if parsed.scheme == "https" else ":80"
@@ -845,48 +863,127 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
         short_url = new_url.geturl()
 
-        print(f"{short_url}\n")
+        # print(f"{short_url}\n")
         page_url = short_url
 
-        method = "userrecaptcha"
-        # submit request
-        url = (
-            "https://2captcha.com/in.php"
-            f"?key={key}&method={method}"
-            f"&googlekey={site_key}&pageurl={page_url}"
-        )
-
-        print(f"2CAPTCHA REQUEST:{url}\n")
-
-        response = requests.get(url)
-        if response.text[0:2] != "OK":
-            self.mylog(
-                f"2Captcha Service error: Error code {response.text}",
-                st="WW",
+        if method == PARAM_2CAPTCHA_TOKEN:
+            captchamethod = "userrecaptcha"
+            # submit request
+            url = (
+                "https://2captcha.com/in.php"
+                f"?key={key}&method={captchamethod}"
+                f"&googlekey={site_key}&pageurl={page_url}"
             )
-            return None
-
-        self.mylog(f"2Captcha Service response {response.text}", st="~~")
-
-        captcha_id = response.text[3:]
-        # Polling for response
-        token_url = (
-            f"https://2captcha.com/res.php"
-            f"?key={key}&action=get&id={captcha_id}"
-        )
-
-        max_loops = 12
-        captcha_results = None
-        while max_loops > 0:
-            max_loops -= 1
-            self.mylog("Sleeping for 10 seconds to wait for 2Captcha", st="~~")
-            time.sleep(10)
-            response = requests.get(token_url)
+            # print(f"2CAPTCHA REQUEST:{url}\n")
+            response = requests.get(url)
+            if response.text[0:2] != "OK":
+                self.mylog(
+                    f"2Captcha Service error: Error code {response.text}",
+                    st="WW",
+                )
+                return None
 
             self.mylog(f"2Captcha Service response {response.text}", st="~~")
-            if response.text[0:2] == "OK":
-                captcha_results = response.text[3:]
-                break
+
+            captcha_id = response.text[3:]
+            # Polling for response
+            token_url = (
+                f"https://2captcha.com/res.php"
+                f"?key={key}&action=get&id={captcha_id}"
+            )
+
+            max_loops = 12
+            captcha_results = None
+            while max_loops > 0:
+                max_loops -= 1
+                self.mylog(
+                    "Sleeping for 10 seconds to wait for 2Captcha", st="~~"
+                )
+                time.sleep(10)
+                response = requests.get(token_url)
+
+                self.mylog(
+                    f"2Captcha Service response {response.text}", st="~~"
+                )
+                if response.text[0:2] == "OK":
+                    captcha_results = response.text[3:]
+                    break
+        elif method == PARAM_CAPMONSTER_TOKEN:
+            headers = {"Accept-Encoding": "application/json"}
+            api_data = {
+                "clientKey": key,
+                "task": {
+                    "type": "NoCaptchaTaskProxyless",
+                    "websiteURL": page_url,
+                    "websiteKey": site_key,
+                    # "recaptchaDataSV": data_s_value, # "data-s" attribute
+                    # "userAgent": ....
+                    # "cookies": ....
+                },
+                # "softId":
+            }
+            api_url = "https://api.capmonster.cloud/createTask"
+            response = requests.post(api_url, headers=headers, json=api_data)
+            if response.status_code != 200:
+                self.mylog(
+                    f"capmonster status {response.status_code}"
+                    f"{response.text}",
+                    st="EE",
+                )
+                return None
+            resp_data = response.json()
+            if resp_data["error_id"] != 0:
+                self.mylog(
+                    f"capmonster error {resp_data['error_id']}:"
+                    f"{resp_data['errorDescription']}",
+                    st="EE",
+                )
+                return None
+            taskId = resp_data["taskId"]
+
+            # Polling for response
+            token_url = "https://api.capmonster.cloud/getTaskResult"
+            token_data = {
+                "clientKey": key,
+                "taskId": taskId,
+            }
+
+            max_loops = 12
+            captcha_results = None
+            while max_loops > 0:
+                max_loops -= 1
+                self.mylog(
+                    "Sleeping for 10 seconds to wait for 2Captcha", st="~~"
+                )
+                time.sleep(10)
+                response = requests.post(
+                    token_url, headers=headers, json=token_data
+                )
+
+                self.mylog(
+                    f"capmonster Service response {response.text}", st="~~"
+                )
+                resp_data = response.json()
+                if response.status_code != 200:
+                    self.mylog(
+                        f"capmonster status {response.status_code}"
+                        f"{response.text}",
+                        st="EE",
+                    )
+                    # Try again - we've successfully requested a task
+                    continue
+                if resp_data["error_id"] != 0:
+                    self.mylog(
+                        f"capmonster error {resp_data['error_id']}:"
+                        f"{resp_data['errorDescription']}",
+                        st="EE",
+                    )
+                    return None
+                if resp_data["status"] == "ready":
+                    captcha_results = resp_data["solution"][
+                        "gRecaptchaResponse"
+                    ]
+                    break
 
         if captcha_results is not None:
             FILL_CAPTCHA_TEMPLATE = r"""
@@ -912,8 +1009,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # print(f"button:{button!r}\n")
                 button.click()
 
-            time.sleep(240)  # For inspection
-            time.sleep(5000)
             # sys.exit()
             return captcha_results
 
@@ -1192,16 +1287,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # Give the user some time to resolve the captcha
                 # FEAT: Wait until it disappears, use 2captcha if configured
 
-                if self.configuration[PARAM_2CAPTCHA_TOKEN] is not None:
-                    self.resolve_captcha2()
+                self.mylog("Proceed with captcha resolution", end="~~")
+                if self.resolve_captcha2() is not None:
                     # Some time for captcha to remove.
+                    self.mylog("Automatic resultution succeeded", end="~~")
                     time.sleep(2)
                 else:
+                    # Manual
                     time.sleep(0.33)
 
                     # Not sure that click is needed for 2captcha
                     clickRecaptcha = True
                     if clickRecaptcha:
+                        self.mylog("Clicking on the captcha button", end="~~")
                         self.__browser.switch_to.frame(0)
                         re_btn = self.__browser.find_element(
                             By.CLASS_NAME, "recaptcha-checkbox-border"
@@ -1211,8 +1309,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
                     if self._debug:
                         # Let the user some time to resolve the captcha
+                        self.mylog("Waiting 30 seconds for the user", end="~~")
                         time.sleep(30)
                     else:
+                        self.mylog(
+                            "No debug interface, proceed (delay 2s)", end="~~"
+                        )
                         # Not in debug mode, only wait for captcha
                         time.sleep(2)
 
@@ -1957,7 +2059,7 @@ def check_new_script_version(o):
     o.mylog("Check script version is up to date", end="")
     try:
         http = urllib3.PoolManager()
-        user_agent = {"user-agent": "veolia-idf - " + VERSION}
+        user_agent = {"user-agent": "meters_to_ha - " + VERSION}
         r = http.request(
             "GET",
             f"https://api.github.com/repos/{REPO_BASE}/releases/latest",

@@ -1,9 +1,28 @@
 {
-    "veolia_login": "monadresse@email.fr",
-    "veolia_password": "GretaThunberg",
-    "veolia_contract": "MONNUMEROCONTRTAT",
-    "ha_server": "http://SERVER:PORT",
-    "ha_token": "MONTOKEN - voir https://my.home-assistant.io/redirect/profile/ - Jetons d'accès de longue durée",
-    "type": "ha",
-    "timeout": "30" 
+  "####":"#################################################",
+  "info":"Ne garder que les clefs/valuers utiles pour vous",
+
+  "### 1":"Pour les données Véolia IDF:",
+  "veolia_login": "monadresse@email.fr",
+  "veolia_password": "GretaThunberg",
+  "veolia_contract": "MONNUMEROCONTRTAT",
+
+  "### 2":"Pour les données GRDF:",
+  "grdf_login": "MON_LOGIN_GRDF@mon.domaine",
+  "grdf_password": "XXXXXXXXXXXX",
+  "grdf_pce": "21546000000000",
+
+  "### 3":"Pour la domotique Home Assistant",
+  "ha_server": "http://SERVER:PORT",
+  "ha_token": "MONTOKEN - voir https://my.home-assistant.io/redirect/profile/ - Jetons d'accès de longue durée",
+
+  "### 4":"Pour la résolution de captcha (GRDF)",
+  "2captcha_token": "XXXXXXXXXXX",
+  "capmonster_token": "XXXXXXXXXXX",
+
+  "### 5":"Pour le choix du type de serveur (Domoticz par défait), 'ha' pour Home Assistant",
+  "type": "ha",
+
+  "### 6":"Valeur d'expiration pour certaines requêtes",
+  "timeout": "30"
 }

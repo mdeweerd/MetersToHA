@@ -12,7 +12,7 @@ repos:
         language: python
         types: [markdown]
         args: [--wrap, '75', --number]
-        files: ^HomeAssistant.md$
+        # files: ^HomeAssistant.md$
         additional_dependencies:
           - mdformat-toc
           - mdformat-beautysh
@@ -94,6 +94,7 @@ repos:
     rev: v2.2.2
     hooks:
       - id: codespell
+        exclude: (\.md|apps.yaml)$
   - repo: https://github.com/pre-commit/mirrors-pylint
     rev: v3.0.0a5
     hooks:

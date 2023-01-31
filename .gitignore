@@ -5,9 +5,9 @@ error.png
 *.swp
 
 # Local config/data files
-config.json
-historique_gazpar.json*
-historique_jours_litres.json*
+**/config.json
+**/historique_gazpar.json*
+**/historique_jours_litres.csv*
 *.zip
 demo
 support

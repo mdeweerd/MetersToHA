@@ -1,10 +1,35 @@
 {
-    "veolia_login": "monadresse@email.fr",
-    "veolia_password": "GretaThunberg",
-    "veolia_contract": "MONNUMEROCONTRTAT",
-    "domoticz_server": "http://IP:PORT",
-    "domoticz_idx": "42",
-    "domoticz_login": "",
-    "domoticz_password": "",
-    "timeout": "30" 
+  "####":"#################################################",
+  "info":"Ne garder que les clefs/valuers utiles pour vous",
+
+  "### 1":"Pour les données Véolia IDF:",
+  "veolia_login": "MON_LOGIN_VEOLIA@mon.domaine",
+  "veolia_password": "MONPASSEVEOLIA",
+  "veolia_contract": "MONCONTRATVEOLIA",
+
+  "### 2":"Pour les données GRDF:",
+  "grdf_login": "MON_LOGIN_GRDF@mon.domaine",
+  "grdf_password": "XXXXXXXXXXXX",
+  "grdf_pce": "21546000000000",
+
+  "### 3":"Pour la domotique Home Assistant",
+  "ha_server": "https://MONINSTANCEHA",
+  "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
+
+  "### 4":"Pour la domotique Domoticz",
+  "domoticz_server": "http://IP:PORT",
+  "domoticz_idx": "42",
+  "domoticz_login": "",
+  "domoticz_password": "",
+
+
+  "### 5":"Pour la résolution de captcha (GRDF)",
+  "2captcha_token": "XXXXXXXXXXX",
+  "capmonster_token": "XXXXXXXXXXX",
+
+  "### 6":"Pour le choix du type de serveur (Domoticz par défait), 'ha' pour Home Assistant",
+  "type": "ha",
+
+  "### 7":"Valeur d'expiration pour certaines requêtes",
+  "timeout": "30"
 }

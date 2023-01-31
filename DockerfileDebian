@@ -27,7 +27,7 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup -g 1000 docker && adduser -D -u 1000 -G docker docker
+RUN addgroup -gid 1000 docker &&  adduser -disabled-password -u 1000 -gid 1000 docker
 
 # RUN pip3 install \
 #       '2captcha-python>=1.1.3'

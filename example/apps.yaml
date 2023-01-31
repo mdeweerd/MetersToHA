@@ -1,0 +1,31 @@
+---
+# Home Assistant - AppDaemon : configuration
+#
+# Exemple d'une configuration AppDaemon pour veolia et grdf
+# lancés séparément avec l'événement call_veolia et call_grdf.
+#
+veolia:
+  module: meters_to_ha_appdaemon
+  class: MetersToHA
+  event_name: call_veolia
+  extra_opts: [--screenshot,--veolia]
+  log_folder: /config
+  config_file: /config/veolia-idf/config.json
+  keep_output: true
+  #debug: true
+  #DISPLAY: "10.33.2.69:0"
+  outfile: /config/appdaemon/apps/testv2.log
+  errfile: /config/appdaemon/apps/testv2err.log
+grdf:
+  module: meters_to_ha_appdaemon
+  class: MetersToHA
+  event_name: call_grdf
+  extra_opts: [--screenshot,--grdf]
+  log_folder: /config
+  # optional (Default: "config.json" in directory of `veolia-idf-domoticz.py`)
+  config_file: /config/veolia-idf/config.json
+  keep_output: true
+  #debug: true
+  #DISPLAY: "10.33.2.69:0"
+  outfile: /config/appdaemon/apps/testgrdf.log
+  errfile: /config/appdaemon/apps/testgrdferr.log

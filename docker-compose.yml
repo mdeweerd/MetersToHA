@@ -1,9 +1,18 @@
 ---
 version: '3.5'
 
+
 services:
+  # . #     #
+  # . #     #  #####   #    #  #    #   #####  #    #
+  # . #     #  #    #  #    #  ##   #     #    #    #
+  # . #     #  #####   #    #  # #  #     #    #    #
+  # . #     #  #    #  #    #  #  # #     #    #    #
+  # . #     #  #    #  #    #  #   ##     #    #    #
+  # .  #####   #####    ####   #    #     #     ####
+
   # Base image using ubuntu
-  veolia-idf-ubuntu:
+  meters-to-ha-ubuntu:
     build:
       context: .
       args: [--rm]
@@ -13,20 +22,56 @@ services:
     environment:
       DISPLAY: host.docker.internal:0.0
       NO_AT_BRIDGE: 1
-    volumes:
-      - .:/workdir
+    volumes: [.:/workdir]
 
-  veolia-run-ubuntu:
-    extends: veolia-idf-ubuntu
-    command: ./veolia-idf-domoticz.py --run
+  meters-to-ha-run-ubuntu:
+    extends: meters-to-ha-ubuntu
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
+
+
+
+  # . ######
+  # . #     #  ######  #####      #      ##    #    #
+  # . #     #  #       #    #     #     #  #   ##   #
+  # . #     #  #####   #####      #    #    #  # #  #
+  # . #     #  #       #    #     #    ######  #  # #
+  # . #     #  #       #    #     #    #    #  #   ##
+  # . ######   ######  #####      #    #    #  #    #
+
+  # Base image using debian
+  meters-to-ha-debian:
+    build:
+      context: .
+      args: [--rm]
+      dockerfile: ./DockerfileDebian
+    # user: docker
+    working_dir: /workdir
+    environment:
+      DISPLAY: host.docker.internal:0.0
+      NO_AT_BRIDGE: 1
+    volumes: [.:/workdir]
+
+  meters-to-ha-run-debian:
+    extends: meters-to-ha-debian
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
+
+
+
+  # .    #
+  # .   # #    #       #####      #    #    #  ######
+  # .  #   #   #       #    #     #    ##   #  #
+  # . #     #  #       #    #     #    # #  #  #####
+  # . #######  #       #####      #    #  # #  #
+  # . #     #  #       #          #    #   ##  #
+  # . #     #  ######  #          #    #    #  ######
+  #
 
   # Base image using alpine
-  veolia-idf-alpine:
+  meters-to-ha-alpine:
     build:
       context: .
       args: [--rm]
       dockerfile: ./DockerfileAlpine
-      # dockerfile: ./DockerfileDebian
     # user: docker
     working_dir: /workdir
     environment:
@@ -37,30 +82,62 @@ services:
 
   # Run script in normal mode
   #
-  # Run this using `docker compose run --rm veolia-run` on the CLI
-  veolia-run:
-    extends: veolia-idf-alpine
-    command: ./veolia-idf-domoticz.py --run
+  # Run this using `docker compose run --rm meters-to-ha-run` on the CLI
+  meters-to-ha-run:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
 
-  # Run script in debug mode and keep the CSV
   #
-  # Run this using `docker compose run --rm veolia-run` on the CLI
-  veolia-debug:
-    extends: veolia-idf-alpine
-    command: ./veolia-idf-domoticz.py --run --debug --keep_csv
+  # Standard targets, no debug
+  #
+  meters-to-ha-veolia:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run -keep-output
 
-  veolia-debug-local:
-    extends: veolia-idf-alpine
-    command: ./veolia-idf-domoticz.py --run --debug --keep_csv --local-config
+  meters-to-ha-grdf:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py --grdf -c ./config.json --run -keep-output
 
-  veolia-debug-veolia:
-    extends: veolia-idf-alpine
-    command: python3 -m trace --ignore-dir=/usr/lib -t ./veolia-idf-domoticz.py --run --debug --keep_csv --veolia
+  #
+  # Debug targets (requires XServer)
+  #
+  
+  # Run script in debug mode and keep the recovered output (data) in a file
+  #
+  # Run this using `docker compose run --rm meters-to-ha-debug-veolia` on the CLI
+  meters-to-ha-debug-veolia:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --veolia --run --debug --keep-output
 
-  # Map Windows Debian XServer to Docker and use its XServer
-  #  Note: works first time, Windows'XServer seems to fail after that.
-  veolia-wind:
-    extends: veolia-debug-local
+  meters-to-ha-debug-grdf:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --grdf --run --debug --keep-output
+
+  meters-to-ha-debug-local:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --debug --keep-output --local-config
+
+  #
+  # Trace targets (requires XServer, outputs executed code lines)
+  #
+  #
+  meters-to-ha-trace-veolia:
+    extends: meters-to-ha-alpine
+    command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
+      -c ./config.json  --run --debug --keep-output --veolia
+
+  meters-to-ha-trace-grdf:
+    extends: meters-to-ha-alpine
+    command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
+      -c ./config.json  --run --debug --keep-output --grdf
+
+
+  #
+  # Debug target using WSL XServer
+  #  Note: Not very stable - works first time, Windows'XServer seems to fail after that.
+  #
+  meters-to-ha-wind:
+    extends: meters-to-ha-debug-local
     environment:
       DISPLAY: :0
     volumes:
