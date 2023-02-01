@@ -99,8 +99,7 @@ Ce script fonctionne pour:
   valable pour Veolia en IDF.\
   Vous pouvez trouver votre portail en
   fonction de la ville en visitant
-  [https://www.eau.veolia.fr/ 1](https://www.eau.veolia.fr/)>
-  CONNECTEZ-VOUS .
+  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS .
 - [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
 
 ## Le fichier de configuration (`config.json`)
