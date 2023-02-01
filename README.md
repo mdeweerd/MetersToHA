@@ -99,7 +99,7 @@ Ce script fonctionne pour:
   valable pour Veolia en IDF.\
   Vous pouvez trouver votre portail en
   fonction de la ville en visitant
-  [https://www.eau.veolia.fr/ 1](https://www.eau.veolia.fr/) >
+  [https://www.eau.veolia.fr/ 1](https://www.eau.veolia.fr/)>
   CONNECTEZ-VOUS .
 - [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
 
@@ -508,11 +508,11 @@ Prérequis :
 
 ### Création du "Virtual Sensor" sur Domoticz :
 
-- Créer un Matériel de Type "Dummy": Domoticz> Setup > Hardware > Dummy
+- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
 
 - Créer un "Virtual Sensor" de type : "Managed Counter"
 
-- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
+- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
 
   | >                   | Sensor pour conso eau |
   | ------------------- | --------------------- |
