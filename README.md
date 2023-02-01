@@ -143,7 +143,7 @@ Explication des champs:
 - `ha_server`: le domaine + le port accessibles depuis là ou le script
   tourne.\
   Cela peut être
-  [http://home-assistant.local:8123](http://home-assistant.local:8123) dans
+  [http://homeassistant.local:8123](http://homeassistant.local:8123) dans
   le cas ou vous n'avez pas touché la configuration réseau.
 - `ha_token`: voir ci-dessous, permets d'accéder à Home Assistant depuis le
   script.\
