@@ -258,12 +258,12 @@ Cette procédure suppose que HACS est déjà actif et configuré pour
    [GitHub - mdeweerd/MetersToHA](https://github.com/mdeweerd/MetersToHA)
    comme source de type AppDaemon:
 
-![](images/AjoutDepot.png)
+   ![](images/AjoutDepot.png)
 
-Note : après l’ajout, le popup reste affiché. Le nouveau module est
-disponible à la fin de la liste:
+   Note : après l’ajout, le popup reste affiché. Le nouveau module est
+   disponible à la fin de la liste:
 
-![](images/ListeDepot.png)
+   ![](images/ListeDepot.png)
 
 2. Ensuite « télécharger » ce dépôt avec HACS - chercher `meterstoha` parmi
    les « AppDaemons » et cliquez Télécharger ou Download:
