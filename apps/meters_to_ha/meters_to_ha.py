@@ -998,7 +998,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             select_script += VALIDATE_JS
 
-            print(select_script)
+            # print(select_script)
             self.__browser.execute_script(select_script)
 
             if False:
@@ -1063,7 +1063,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         el_email = el_email[0]
         self.mylog(st="OK")
 
-        print("{!r}".format(self.configuration))
         # Type Email ###########
         self.mylog("Type Email", end="")
         el_email.clear()
