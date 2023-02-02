@@ -9,7 +9,8 @@
 #  - Change directory structure;
 #  - Add more Meters (starting with GazPar).
 #
-# Copyright (C) 2019-2022 Julien NOEL
+# Copyright (C) 2019-2022 Julien NOEL (Veolia IDF, Domoticz Veolia IDF)
+# Copyright (C) 2022-2023 https://github.com/mdeweerd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,6 +88,8 @@ PARAM_DOMOTICZ_PASSWORD = "domoticz_password"
 
 PARAM_HA_SERVER = "ha_server"
 PARAM_HA_TOKEN = "ha_token"
+
+PARAM_INSECURE = "insecure"
 
 REPO_BASE = "s0nik42/veolia-idf"
 
@@ -1405,6 +1408,7 @@ class DomoticzInjector(Injector):
             PARAM_DOMOTICZ_PASSWORD: "",
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
+            PARAM_INSECURE: False,
         }
 
         super().__init__(
@@ -1432,7 +1436,11 @@ class DomoticzInjector(Injector):
             )
 
         try:
-            response = self._http.request("GET", url_test)
+            response = self._http.request(
+                "GET",
+                url_test,
+                verify=not (self.configuration[PARAM_INSECURE]),
+            )
         except urllib3.exceptions.MaxRetryError as e:
             # HANDLE CONNECTIVITY ERROR
             raise RuntimeError(f"url={url_test} : {e}")
@@ -1673,6 +1681,7 @@ class HomeAssistantInjector(Injector):
             # Optional config values
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
+            PARAM_INSECURE: False,
         }
         super().__init__(config_dict, super_print=super_print, debug=debug)
 
@@ -1692,9 +1701,18 @@ class HomeAssistantInjector(Injector):
 
         try:
             if data is None:
-                response = requests.get(api_url, headers=headers, verify=False)
+                response = requests.get(
+                    api_url,
+                    headers=headers,
+                    verify=not (self.configuration[PARAM_INSECURE]),
+                )
             else:
-                response = requests.post(api_url, headers=headers, json=data, verify=False)
+                response = requests.post(
+                    api_url,
+                    headers=headers,
+                    json=data,
+                    verify=not (self.configuration[PARAM_INSECURE]),
+                )
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
             raise RuntimeError(f"url={api_url} : {e}")
@@ -2160,6 +2178,13 @@ def doWork():
         "--keep-output",
         action="store_true",
         help="Keep the downloaded files",
+        required=False,
+    )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Ignore invalid and self-signed certificate checks"
+        " (ignore SSL issues)",
         required=False,
     )
 

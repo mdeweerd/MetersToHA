@@ -310,7 +310,10 @@ veolia_idf:
   #     Permets de définir plusieurs lancements distincts, par exemple
   #     pour consulter Veolia à une certaine heure, et GRDF à une autre heure.
   event_name: call_veolia
-  # optionnel - Par exemple --grdf pour ne faire que la requête auprès de grdf
+  # optionnel - Par exemple --grdf     pour ne faire que la requête auprès de GRDF
+  #                         --veolia   pour ne faire la requête qu'auprès de Veolia
+  #                         --insecure pour accepter les certificats SSL non vérifiés
+  #                                    (par exemple autosigné).
   extra_opts: [--veolia]
   # optionnel
   log_folder: /config
