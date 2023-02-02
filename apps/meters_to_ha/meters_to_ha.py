@@ -1693,9 +1693,9 @@ class HomeAssistantInjector(Injector):
 
         try:
             if data is None:
-                response = requests.get(api_url, headers=headers)
+                response = requests.get(api_url, headers=headers, verify=False)
             else:
-                response = requests.post(api_url, headers=headers, json=data)
+                response = requests.post(api_url, headers=headers, json=data, verify=False)
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
             raise RuntimeError(f"url={api_url} : {e}")
