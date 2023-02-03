@@ -34,6 +34,7 @@ import argparse
 import base64
 import csv
 import datetime as dt
+import inspect
 import json
 import logging
 import os
@@ -320,6 +321,15 @@ def document_initialised(driver):
     return driver.execute_script("return true;")
 
 
+def print_classes(modulename=__name__):
+    """
+    Help with introspection
+    """
+    for _name, obj in inspect.getmembers(sys.modules[modulename]):
+        if inspect.isclass(obj):
+            print(obj)
+
+
 ###############################################################################
 # Configuration Class to parse and load config.json
 ###############################################################################
@@ -349,6 +359,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
     # site_grdf_url = "ttps://login.monespace.grdf.fr/mire/connexion"
     download_grdf_filename = "historique_gazpar.json"
+    hasFirefox = False
+    hasChromium = False
 
     def __init__(
         self, config_dict, super_print=None, debug=False, local_config=False
@@ -412,11 +424,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def init(self):
         try:
-            self.init_firefox()
+            if self.hasFirefox:
+                Exception("Does not have firefox")
+                self.init_firefox()
+                return
         except (Exception, xauth.NotFoundError):
             self.mylog(st="~~")
+
+        if self.hasChromium:
             # Firefox did not load, try Chromium
             self.init_chromium()
+            return
+
+        raise Exception("No browser could be started with selenium")
 
     # INIT DISPLAY & BROWSER
     def init_firefox(self):
@@ -472,7 +492,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             # Enable the browser
             try:
-                self.__browser = webdriver.Firefox(
+                browser = webdriver.Firefox(
                     options=opts,
                     service=ff_service,
                 )
@@ -493,15 +513,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         self.mylog("Start Firefox", end="")
         try:
-            # self.__browser.maximize_window()
+            # browser.maximize_window()
             # Replaced maximize_window by set_window_size
             # to get the window full screen
-            self.__browser.set_window_size(1600, 1200)
+            browser.set_window_size(1600, 1200)
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
-            self.__wait = WebDriverWait(self.__browser, timeout=timeout)
+            self.__wait = WebDriverWait(browser, timeout=timeout)
         except Exception:
             raise
         else:
+            # Now we know the browser works...
+            self.__browser = browser
             self.mylog(st="OK")
 
     def init_chromium(self):
@@ -576,23 +598,39 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         else:
             self.mylog(st="OK")
 
+        # Discover classes provided
+        # print_classes("selenium.webdriver") ; sys.exit()
+        # print_classes("selenium.webdriver.chrome.service") ; sys.exit()
+
         self.mylog("Start the browser", end="")
         try:
-            chromeService = webdriver.chromium.service.ChromiumService(
-                executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                + "chromedriver.log",
-            )
-            self.__browser = webdriver.Chrome(
+            if "chromium" in inspect.getmembers(webdriver):
+                chromeService = webdriver.chromium.service.ChromiumService(
+                    executable_path=self.configuration[PARAM_CHROMEDRIVER],
+                    log_path=str(self.configuration[PARAM_LOGS_FOLDER])
+                    + "chromedriver.log",
+                )
+            else:
+                chromeService = webdriver.chrome.service.Service(
+                    executable_path=self.configuration[PARAM_CHROMEDRIVER],
+                    log_path=str(self.configuration[PARAM_LOGS_FOLDER])
+                    + "chromedriver.log",
+                )
+            browser = webdriver.Chrome(
                 service=chromeService,
                 options=options,
             )
-            self.__browser.maximize_window()
+            browser.maximize_window()
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
-            self.__wait = WebDriverWait(self.__browser, timeout)
+            self.__wait = WebDriverWait(browser, timeout)
+        except AttributeError:
+            self.mylog("chromium unknown in selenium webdriver", end="--")
+            raise
         except Exception:
             raise
         else:
+            # Now we know the browser works
+            self.__browser = browser
             self.mylog(st="OK")
 
     def sanity_check(self):
@@ -639,11 +677,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         st="WW",
                     )
                 else:
+                    self.hasFirefox = True
                     self.mylog(st="OK")
         elif os.access(
             str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK
         ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
             self.mylog(st="OK")
+            self.hasChromium = True
         else:
             raise OSError(
                 '"%s"/"%s" or "%s"/"%s": no valid pair of executables found'

@@ -28,6 +28,9 @@ services:
     extends: meters-to-ha-ubuntu
     command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
 
+  meters-to-ha-ubuntu-veolia:
+    extends: meters-to-ha-ubuntu
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output
 
 
   # . ######
@@ -54,6 +57,15 @@ services:
   meters-to-ha-run-debian:
     extends: meters-to-ha-debian
     command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
+
+  meters-to-ha-debian-veolia:
+    extends: meters-to-ha-debian
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output
+
+  meters-to-ha-debian-trace-veolia:
+    extends: meters-to-ha-debian
+    command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
+      -c ./config.json  --run --debug --keep-output --veolia
 
 
 
@@ -92,11 +104,11 @@ services:
   #
   meters-to-ha-veolia:
     extends: meters-to-ha-alpine
-    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run -keep-output
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output
 
   meters-to-ha-grdf:
     extends: meters-to-ha-alpine
-    command: ./apps/meters_to_ha/meters_to_ha.py --grdf -c ./config.json --run -keep-output
+    command: ./apps/meters_to_ha/meters_to_ha.py --grdf -c ./config.json --run --keep-output
 
   #
   # Debug targets (requires XServer)

@@ -14,6 +14,10 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 #    && apt-get dist-upgrade -y \
 
 RUN export DEBIAN_FRONTEND="noninteractive" \
+    && echo 'APT::Keep-Downloaded-Packages "false";' \
+      > /etc/apt/apt.conf.d/01disable-cache \
+    && echo 'DPkg::Post-Invoke {"/bin/rm -f /var/cache/apt/archives/*.deb || true";};' \
+      > /etc/apt/apt.conf.d/clean \
     && apt-get update --fix-missing \
     && apt-get install -y \
         software-properties-common \
