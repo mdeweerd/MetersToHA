@@ -611,6 +611,12 @@ Sous Windows vous pourrez utiliser l'outil "Planificateur de tâches".\
 Sous
 Linux, vous utiliserez cron (crontab).
 
+Pour mettre à jour une image docker, il faut recourir à 'build'. Exemple:
+
+```shell
+docker compose build meters-to-ha-veolia
+```
+
 ### Installation "direct"
 
 De façon générale, le "serveur" nécessite l'installation des logiciels et
