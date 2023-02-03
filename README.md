@@ -822,13 +822,18 @@ un serveur X attaché à un écran physique.
 
 ## Environnements testés:
 
-- Debian Buster - Chromium
-- Debian Bullseye - Chromium
-- Alpine 3.17 - Chromium
+Actuels (à travers Docker):
+
+- Debian Bullseye - Chromium - (Docker 1.2GB)
+- Alpine 3.17 - Chromium - (Docker 540MB)
+- Ubuntu 22.04 - Firefox - (Docker 1.2GB)
 - Home Assistant/AppDaemon - Alpine Linux v3.14 - Chromium
+
+Anciens (plus testés avec les versions récentes):
+
+- Debian Buster - Chromium
 - Ubuntu 20.04 - Firefox
 - Ubuntu 21.04 - Firefox
-- Ubuntu 22.04 - Firefox
 
 A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
 
