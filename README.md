@@ -27,6 +27,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
   - [:warning: Limitations](#warning-limitations)
   - [Informations générales](#informations-g%C3%A9n%C3%A9rales)
   - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
+  - [Les paramètres du script](#les-param%C3%A8tres-du-script)
   - [Home Assistant](#home-assistant)
     - [Configuration](#configuration)
     - [AppDaemon](#appdaemon)
@@ -162,8 +163,12 @@ Explication des champs:
   alternative s'appuyant (moins) sur l'humain.\
   Pour Veolia, vous n'avez
   pas besoin de ce service.
-- `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz (à terme
-  "mqtt", "file" par exemple).
+- `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
+  écrire vers un fichier ou "POST"er vers une URL (à terme "mqtt" par
+  exemple).
+- `url`: Si type est 'url', url de type
+  "file://chemin/vers/fichier/local.extension" ou
+  "https://domaine.url/pourPOST"
 - `timeout`: Le délai en secondes que le script attend pour certaines
   étapes.
 
@@ -181,6 +186,25 @@ ceci suffit:
   "timeout": "30"
 }
 ```
+
+## Les paramètres du script
+
+| option(s) | Description | ||| |-h, --help| Affiche l'aide| |-r,
+--run|Execute le script| |--version| Affiche la version du programme|
+|--version-check |Verifie s'il y a une nouvelle version du script
+(inactif)| |--veolia| Récupère les données de Veolia IDF| |--grdf| Récupère
+les données auprès de GRDF| |-d, --debug| Active l'interface graphique
+interactif (Serveur X nécessaire)| |--screenshot| Prend une ou plusieurs
+captures d'écran du navigateur (pour débogue)| |--local-config|Utilise un
+répértoire local pour la configuration navigateur| |-l `LOGS_FOLDER`,
+--logs-folder `LOGS_FOLDER`|Dossier pour les fichier des traces| |-c
+`CONFIG`, --config `CONFIG`|Fichier de configuration| |-k, --keep-output
+|Garde les fichiers récupérés| |--insecure|Ignore les erreurs de certificat
+du système domotique (utile pour les certificats SSL auto-signés)|
+|--server-type `SERVER_TYPE`|Type de destination 'url', 'ha', 'dom'. Si
+'url', le paramètre '--url' est nécessaire| |--url URL|Destination du
+fichier récupéré: Autre fichier (file://...) ou URL web pour une requête
+POST (http(s)://...)|
 
 ## Home Assistant
 

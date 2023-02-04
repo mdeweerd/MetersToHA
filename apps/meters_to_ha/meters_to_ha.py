@@ -92,6 +92,8 @@ PARAM_HA_TOKEN = "ha_token"
 
 PARAM_INSECURE = "insecure"
 
+PARAM_URL = "url"
+
 REPO_BASE = "s0nik42/veolia-idf"
 
 # Script provided by 2captcha to identify captcha information on the page
@@ -314,6 +316,9 @@ class Output(Worker):
             self.__print_buffer = ""
 
 
+# Utility classes
+
+
 def document_initialised(driver):
     """
     Execute JavaScript in browser to confirm page is loaded.
@@ -328,6 +333,21 @@ def print_classes(modulename=__name__):
     for _name, obj in inspect.getmembers(sys.modules[modulename]):
         if inspect.isclass(obj):
             print(obj)
+
+
+# Source: https://www.novixys.com/blog/python-check-file-can-read-write/
+def check_file_writable(fnm):
+    """
+    Check if we can write a file to the provided path (including the filename)
+    """
+    if os.path.exists(fnm):
+        if os.path.isfile(fnm):
+            return os.access(fnm, os.W_OK)
+        return False
+    pdir = os.path.dirname(fnm)
+    if not pdir:
+        pdir = "."
+    return os.access(pdir, os.W_OK)
 
 
 ###############################################################################
@@ -1447,7 +1467,6 @@ class DomoticzInjector(Injector):
             PARAM_DOMOTICZ_LOGIN: "",
             PARAM_DOMOTICZ_PASSWORD: "",
             PARAM_TIMEOUT: "30",
-            PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
             PARAM_INSECURE: False,
         }
 
@@ -1720,7 +1739,6 @@ class HomeAssistantInjector(Injector):
             PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
             # Optional config values
             PARAM_TIMEOUT: "30",
-            PARAM_DOWNLOAD_FOLDER: os.path.dirname(os.path.realpath(__file__)),
             PARAM_INSECURE: False,
         }
         super().__init__(config_dict, super_print=super_print, debug=debug)
@@ -2070,6 +2088,110 @@ class HomeAssistantInjector(Injector):
         pass
 
 
+class UrlInjector(Injector):
+    WORKER_DESC = "URL Destination"
+
+    def __init__(self, config_dict, super_print, debug=False):
+
+        self.configuration = {
+            # Mandatory config values
+            PARAM_URL: None,
+            # Needed for veolia only (to do: add to request as parameter)
+            PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
+            # Optional config values
+            PARAM_TIMEOUT: "30",
+            PARAM_INSECURE: False,
+        }
+        super().__init__(config_dict, super_print=super_print, debug=debug)
+
+    def open_url(self, api_url, data=None, content_type=None):
+        """
+        Write to file or POST request.
+        """
+        # Generate URL
+        api_url = self.configuration[PARAM_URL]
+
+        headers: dict[str, str] = {}
+
+        if content_type is not None:
+            headers["Content-Type"] = content_type
+
+        parsed_url = urlparse(api_url)
+
+        if parsed_url.scheme == "file":
+            try:
+                file_path = parsed_url.netloc + parsed_url.path
+                # Save data to file given by path
+                with open(file_path, "wb") as f:
+                    f.write(data)
+            except Exception as e:
+                raise RuntimeError(f"url={api_url} - {file_path} : {e}")
+
+        elif parsed_url.scheme in ("https", "http"):
+            try:
+                response = requests.post(
+                    api_url,
+                    headers=headers,
+                    data=data,
+                    verify=not (self.configuration[PARAM_INSECURE]),
+                )
+            except Exception as e:
+                # HANDLE CONNECTIVITY ERROR
+                raise RuntimeError(f"url={api_url} : {e}")
+
+            # HANDLE SERVER ERROR CODE
+            if response.status_code not in (200, 201):
+                raise RuntimeError(
+                    "url=%s - (code = %u)\ncontent=%r)"
+                    % (
+                        api_url,
+                        response.status_code,
+                        response.content,
+                    )
+                )
+
+    def sanity_check(self):
+        api_url = self.configuration[PARAM_URL]
+        parsed_url = urlparse(api_url)
+
+        self.mylog("Check Destination Url", st="--", end="")
+        if parsed_url.scheme == "file":
+            # Save data to file given by path
+            file_path = parsed_url.netloc + parsed_url.path
+            if check_file_writable(file_path):
+                self.mylog(st="OK")
+            else:
+                self.mylog(st="EE")
+                raise RuntimeError(
+                    f"Can not write to {file_path} (check path and rights)"
+                )
+        elif parsed_url.scheme in ("https", "http"):
+            # Note: Maybe check if url is accessible
+            pass
+        else:
+            raise RuntimeError(f"Unsupported URL scheme {parsed_url.scheme}")
+
+    def update_veolia_device(self, csv_file):
+
+        with open(csv_file, "rb") as f:
+            self.open_url(
+                self.configuration[PARAM_URL],
+                data=f.read(),
+                content_type="text/csv",
+            )
+
+    def update_grdf_device(self, json_file):
+        with open(json_file, "rb") as f:
+            self.open_url(
+                self.configuration[PARAM_URL],
+                data=f.read(),
+                content_type="application/json",
+            )
+
+    def cleanup(self, keep_output=False):
+        pass
+
+
 def exit_on_error(
     workers: list[Worker] | None = None,
     string="",
@@ -2150,7 +2272,8 @@ def doWork():
             "Load water or gas meter data into Home Automation System\n"
             "Sources: Veolia Ile de France, GRDF\n"
             "Home Automation:  Domiticz or Home Assistant"
-        )
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=VERSION)
     parser.add_argument(
@@ -2227,6 +2350,22 @@ def doWork():
         " (ignore SSL issues)",
         required=False,
     )
+    parser.add_argument(
+        "--server-type",
+        help="""
+            Type of destination
+            'dom'  Domoticz
+            'ha'   Home Assistant
+            'url'  Local file or http/https (content is posted)
+            """,
+        # formatter_class=argparse.RawTextHelpFormatter,
+        required=False,
+    )
+    parser.add_argument(
+        "--url",
+        help="Url when destination is 'url' (file://..., http(s)://...)",
+        required=False,
+    )
 
     args = parser.parse_args()
 
@@ -2282,7 +2421,13 @@ def doWork():
             debug=args.debug,
         )
 
-    configuration_json.update({"screenshot": args.screenshot})
+    # Add CLI arguments to the configuration (CLI has precedence)
+    configuration_json.update({PARAM_SCREENSHOT: args.screenshot})
+
+    if args.server_type is not None:
+        configuration_json.update({PARAM_SERVER_TYPE: args.server_type})
+    if args.url is not None:
+        configuration_json.update({PARAM_URL: args.url})
 
     # Create objects
     try:
@@ -2295,13 +2440,18 @@ def doWork():
         workers.append(crawler)
         server_type = configuration_json.get(PARAM_SERVER_TYPE, None)
         injector: Injector
-        if server_type not in ["ha"]:
-            injector = DomoticzInjector(
+        if server_type == "ha":
+            injector = HomeAssistantInjector(
                 configuration_json, super_print=o.mylog, debug=args.debug
             )
             workers.append(injector)
-        elif server_type == "ha":
-            injector = HomeAssistantInjector(
+        elif server_type == "url":
+            injector = UrlInjector(
+                configuration_json, super_print=o.mylog, debug=args.debug
+            )
+            workers.append(injector)
+        else:
+            injector = DomoticzInjector(
                 configuration_json, super_print=o.mylog, debug=args.debug
             )
             workers.append(injector)
@@ -2348,6 +2498,7 @@ def doWork():
         try:
             try:
                 veolia_idf_file = crawler.get_veolia_idf_file()
+                # veolia_idf_file = "./veolia_test_data.csv"
             except Exception as exc_get:
                 # Retry once on failure to manage
                 # stalement exception that occurs sometimes

@@ -106,6 +106,14 @@ services:
     extends: meters-to-ha-alpine
     command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output
 
+  meters-to-ha-veolia-file:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output --url=file://./veolia_data.csv --server-type=url
+
+  meters-to-ha-veolia-posturl:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output --url='https://webhook.site/79c1161f-85cf-4d07-9924-1b11cbec2b16' --server-type=url
+
   meters-to-ha-grdf:
     extends: meters-to-ha-alpine
     command: ./apps/meters_to_ha/meters_to_ha.py --grdf -c ./config.json --run --keep-output
