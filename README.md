@@ -189,24 +189,23 @@ ceci suffit:
 
 ## Les paramètres du script
 
-| option(s)                                                 | Description                                                                                                  |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| -h, --help                                                | Affiche l'aide                                                                                               |
-| -r, --run                                                 | Execute le script                                                                                            |
-| --version                                                 | Affiche la version du programme                                                                              |
-| --version-check                                           |                                                                                                              |
-| Verifie s'il y a une nouvelle version du script (inactif) |                                                                                                              |
-| --veolia                                                  | Récupère les données de Veolia IDF                                                                           |
-| --grdf                                                    | Récupère les données auprès de GRDF                                                                          |
-| -d, --debug                                               | Active l'interface graphique interactif (Serveur X nécessaire)                                               |
-| --screenshot                                              | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                         |
-| --local-config                                            | Utilise un répértoire local pour la configuration navigateur                                                 |
-| -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER`             | Dossier pour les fichier des traces                                                                          |
-| -c `CONFIG`, --config `CONFIG`                            | Fichier de configuration                                                                                     |
-| -k, --keep-output                                         | Garde les fichiers récupérés                                                                                 |
-| --insecure                                                | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)           |
-| --server-type `SERVER_TYPE`                               | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                        |
-| --url URL                                                 | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...) |
+| option(s)                                     | Description                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| -h, --help                                    | Affiche l'aide                                                                                               |
+| -r, --run                                     | Execute le script                                                                                            |
+| --version                                     | Affiche la version du programme                                                                              |
+| --version-check                               | Verifie s'il y a une nouvelle version du script (inactif)                                                    |
+| --veolia                                      | Récupère les données de Veolia IDF                                                                           |
+| --grdf                                        | Récupère les données auprès de GRDF                                                                          |
+| -d, --debug                                   | Active l'interface graphique interactif (Serveur X nécessaire)                                               |
+| --screenshot                                  | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                         |
+| --local-config                                | Utilise un répértoire local pour la configuration navigateur                                                 |
+| -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER` | Dossier pour les fichier des traces                                                                          |
+| -c `CONFIG`, --config `CONFIG`                | Fichier de configuration                                                                                     |
+| -k, --keep-output                             | Garde les fichiers récupérés                                                                                 |
+| --insecure                                    | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)           |
+| --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                        |
+| --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...) |
 
 ## Home Assistant
 
