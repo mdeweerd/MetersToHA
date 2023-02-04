@@ -189,22 +189,24 @@ ceci suffit:
 
 ## Les paramètres du script
 
-| option(s) | Description | ||| |-h, --help| Affiche l'aide| |-r,
---run|Execute le script| |--version| Affiche la version du programme|
-|--version-check |Verifie s'il y a une nouvelle version du script
-(inactif)| |--veolia| Récupère les données de Veolia IDF| |--grdf| Récupère
-les données auprès de GRDF| |-d, --debug| Active l'interface graphique
-interactif (Serveur X nécessaire)| |--screenshot| Prend une ou plusieurs
-captures d'écran du navigateur (pour débogue)| |--local-config|Utilise un
-répértoire local pour la configuration navigateur| |-l `LOGS_FOLDER`,
---logs-folder `LOGS_FOLDER`|Dossier pour les fichier des traces| |-c
-`CONFIG`, --config `CONFIG`|Fichier de configuration| |-k, --keep-output
-|Garde les fichiers récupérés| |--insecure|Ignore les erreurs de certificat
-du système domotique (utile pour les certificats SSL auto-signés)|
-|--server-type `SERVER_TYPE`|Type de destination 'url', 'ha', 'dom'. Si
-'url', le paramètre '--url' est nécessaire| |--url URL|Destination du
-fichier récupéré: Autre fichier (file://...) ou URL web pour une requête
-POST (http(s)://...)|
+| option(s)                                                 | Description                                                                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| -h, --help                                                | Affiche l'aide                                                                                               |
+| -r, --run                                                 | Execute le script                                                                                            |
+| --version                                                 | Affiche la version du programme                                                                              |
+| --version-check                                           |                                                                                                              |
+| Verifie s'il y a une nouvelle version du script (inactif) |                                                                                                              |
+| --veolia                                                  | Récupère les données de Veolia IDF                                                                           |
+| --grdf                                                    | Récupère les données auprès de GRDF                                                                          |
+| -d, --debug                                               | Active l'interface graphique interactif (Serveur X nécessaire)                                               |
+| --screenshot                                              | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                         |
+| --local-config                                            | Utilise un répértoire local pour la configuration navigateur                                                 |
+| -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER`             | Dossier pour les fichier des traces                                                                          |
+| -c `CONFIG`, --config `CONFIG`                            | Fichier de configuration                                                                                     |
+| -k, --keep-output                                         | Garde les fichiers récupérés                                                                                 |
+| --insecure                                                | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)           |
+| --server-type `SERVER_TYPE`                               | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                        |
+| --url URL                                                 | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...) |
 
 ## Home Assistant
 
@@ -507,6 +509,36 @@ Il mettre en place une automatisation par fournisseur (avec événements
 différents) si vous souhaitez des horaires différentes. Prenez en compte un
 délai de minimum 5 minutes entre les 2 événementsi (pour limiter les
 ressources utilisés sur votre système).
+
+Exemple pour GRDF ou l'on tente de récupérer les données jusqu'à deux fois,
+avec une condition qui vérifie que la dernière mise à jour était il y a
+plus de 17h.
+
+```yaml
+alias: Appel GRDF
+description: ''
+trigger:
+  - platform: time_pattern
+    hours: '21'
+    minutes: '1'
+    seconds: '0'
+  - platform: time_pattern
+    hours: '23'
+    minutes: '1'
+    seconds: '0'
+condition:
+  - condition: template
+    value_template: >-
+      {{
+      (as_timestamp(now())-as_timestamp(states.sensor.gas_consumption_kwh.last_updated))
+      > 17*3600 }}
+action:
+  - delay: '{{ range(0, 55*60+1) | random }}'
+    alias: Avec un délai variable pour ne pas charger le serveur tous en même temps.
+  - event: call_grdf
+    event_data: {}
+mode: single
+```
 
 ### Ajout des informations au tableau "Énergie"
 
