@@ -68,6 +68,8 @@ PARAM_USER_NONE_VALUE = (
 )
 PARAM_DOWNLOAD_FOLDER = "download_folder"
 PARAM_TIMEOUT = "timeout"
+PARAM_VEOLIA = "veolia"
+PARAM_GRDF = "grdf"
 PARAM_VEOLIA_LOGIN = "veolia_login"
 PARAM_VEOLIA_PASSWORD = "veolia_password"
 PARAM_VEOLIA_CONTRACT = "veolia_contract"
@@ -80,6 +82,8 @@ PARAM_CHROMIUM = "chromium"
 PARAM_CHROMEDRIVER = "chromedriver"
 PARAM_LOGS_FOLDER = "logs_folder"
 PARAM_SCREENSHOT = "screenshot"
+PARAM_SKIP_DOWNLOAD = "skip_download"
+PARAM_KEEP_OUTPUT = "keep_output"
 
 PARAM_SERVER_TYPE = "type"
 PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
@@ -394,15 +398,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.__wait = None  # type: WebDriverWait
         self.configuration = {
             # Config values (veolia)
+            PARAM_VEOLIA: False,
             PARAM_VEOLIA_LOGIN: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_PASSWORD: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
             # Config values (gazpar)
+            PARAM_GRDF: False,
             PARAM_GRDF_LOGIN: PARAM_OPTIONAL_VALUE,
             PARAM_GRDF_PASSWORD: PARAM_OPTIONAL_VALUE,
             PARAM_GRDF_PCE: PARAM_OPTIONAL_VALUE,
             # Browser/Scraping config values
             PARAM_SCREENSHOT: False,
+            PARAM_SKIP_DOWNLOAD: False,
+            PARAM_KEEP_OUTPUT: False,
             PARAM_GECKODRIVER: which("geckodriver")
             if which("geckodriver")
             else self.install_dir + "/geckodriver",
@@ -443,6 +451,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
 
     def init(self):
+        if self.configuration[PARAM_SKIP_DOWNLOAD]:
+            self.mylog("Skipping download, not initializing browser", st="--")
+            return
         try:
             if self.hasFirefox:
                 Exception("Does not have firefox")
@@ -660,26 +671,49 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
     def sanity_check(self):
+        checkBrowser = False  # True if we want to download something
+        if self.configuration[PARAM_VEOLIA]:
+            # Getting Veolia data
+            v_file = self.__full_path_download_veolia_idf_file
+            self.mylog("Check download location integrity", end="")
 
-        v_file = self.__full_path_download_veolia_idf_file
-        self.mylog("Check download location integrity", end="")
-        if os.path.exists(v_file):
-            self.mylog(f"{v_file} already exists, will be removed", "WW")
-        else:
+            if os.path.exists(v_file):
+                if self.configuration[PARAM_SKIP_DOWNLOAD]:
+                    self.mylog(
+                        f"'{v_file}' already exists, reused (--skip_download)",
+                        "--",
+                    )
+                    return
+
+                self.mylog(f"'{v_file}' already exists, will be removed", "WW")
+            else:
+                if self.configuration[PARAM_SKIP_DOWNLOAD]:
+                    self.mylog(f"Can't reuse missing '{v_file}'", "EE")
+                    raise RuntimeError(f"Can't reuse missing '{v_file}'")
+
+                try:
+                    open(v_file, "a+", encoding="utf_8").close()
+                except Exception as e:
+                    raise RuntimeError(f'"{v_file}" {e}')
+                else:
+                    checkBrowser = True
+                    self.mylog(st="OK")
+
             try:
-                open(v_file, "a+", encoding="utf_8").close()
-            except Exception as e:
-                raise RuntimeError(f'"{v_file}" {e}')
+                self.mylog("Remove temporary download file", end="")
+                os.remove(v_file)
+            except Exception:
+                raise
             else:
                 self.mylog(st="OK")
 
-        try:
-            self.mylog("Remove temporary download file", end="")
-            os.remove(v_file)
-        except Exception:
-            raise
-        else:
-            self.mylog(st="OK")
+        if self.configuration[PARAM_GRDF]:
+            if not self.configuration[PARAM_SKIP_DOWNLOAD]:
+                checkBrowser = True
+
+        if not checkBrowser:
+            # Not checking browser, we do not need it
+            return
 
         self.mylog(
             'Check availability of "geckodriver"+"firefox"'
@@ -763,7 +797,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
         self.mylog("Close Display", end="")
-        if self.__display:
+        if self.__display is not None:
             try:
                 self.__display.stop()
             except:  # noqa: B001,E722
@@ -1088,6 +1122,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         """
         Get Veolia IDF water consumption 'interactively'
         """
+        v_file = self.__full_path_download_veolia_idf_file
+
+        if self.configuration[PARAM_SKIP_DOWNLOAD]:
+            return v_file
 
         # Wait for Connexion #####
         self.mylog("Connexion au site Veolia Eau Ile de France", end="")
@@ -1245,7 +1283,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             delay=10,
         )
 
-        v_file = self.__full_path_download_veolia_idf_file
         self.mylog(
             f"Wait for end of download to {v_file}",
             end="",
@@ -1260,7 +1297,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.get_screenshot("error.png")
             raise RuntimeError("File download timeout")
 
-        self.files_to_cleanup.append(v_file)
+        if not self.configuration[PARAM_KEEP_OUTPUT]:
+            self.files_to_cleanup.append(v_file)
         return v_file
 
     def get_gazpar_file(self):
@@ -1268,137 +1306,134 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         Get consumption from GRDF for GazPar meter
         """
         g_file = self.__full_path_download_grdf_file
-        skipDownload = False
-        # Uncomment next line when debugging the decoding/adding to the DB
-        # skipDownload = self._debug and os.path.isfile(g_file)
 
-        if not skipDownload:  # pylint: disable=condition-evals-to-constant
-            self.__browser.get(self.site_grdf_url)
-            self.__wait.until(document_initialised)
+        if self.configuration[PARAM_SKIP_DOWNLOAD]:
+            return g_file
 
-            time.sleep(3)
+        self.__browser.get(self.site_grdf_url)
+        self.__wait.until(document_initialised)
 
+        time.sleep(3)
+
+        isLoggedIn = False
+        try:
+            # If date_debut is present, likely already logged in
+            date_debut_el = self.__browser.find_element(By.ID, "date-debut")
+            if date_debut_el is not None:
+                isLoggedIn = True
+        except Exception:
             isLoggedIn = False
+
+        if not isLoggedIn:
+            # Check if there is a Cookies Consent popup deny button #####
+            deny_btn = None
             try:
-                # If date_debut is present, likely already logged in
-                date_debut_el = self.__browser.find_element(
-                    By.ID, "date-debut"
+                deny_btn = self.__browser.find_element(
+                    By.ID, "btn_option_deny_banner"
                 )
-                if date_debut_el is not None:
-                    isLoggedIn = True
             except Exception:
-                isLoggedIn = False
+                pass
 
-            if not isLoggedIn:
-                # Check if there is a Cookies Concent popup deny button #####
-                deny_btn = None
-                try:
-                    deny_btn = self.__browser.find_element(
-                        By.ID, "btn_option_deny_banner"
-                    )
-                except Exception:
-                    pass
-
-                if deny_btn is not None:
-                    self.click_in_view(
-                        By.ID,
-                        "btn_option_deny_banner",
-                        wait_message="Waiting for cookie popup",
-                        click_message="Click on deny",
-                        delay=0,  # random.uniform(1, 2),
-                    )
-
-                # Wait for Connexion #####
-                self.mylog("Connexion au site GRDF", end="")
-
-                self.__browser.get(self.__class__.site_grdf_url)
-                self.mylog(st="OK")
-
-                # Wait for Password #####
-                self.mylog("Waiting for Password", end="")
-
-                ep = EC.presence_of_element_located((By.ID, "pass"))
-                el_password = self.__wait.until(
-                    ep,
-                    message="failed, page timeout (timeout="
-                    + str(self.configuration[PARAM_TIMEOUT])
-                    + ")",
-                )
-                self.mylog(st="OK")
-
-                # Wait for Email #####
-                self.mylog("Waiting for Email", end="")
-                ep = EC.presence_of_element_located((By.ID, "mail"))
-                el_email = self.__wait.until(
-                    ep,
-                    message="failed, page timeout (timeout="
-                    + str(self.configuration[PARAM_TIMEOUT])
-                    + ")",
-                )
-                self.mylog(st="OK")
-
-                # Type Email #####
-                self.mylog("Type Email", end="")
-                el_email.clear()
-                el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
-                self.mylog(st="OK")
-
-                # Type Password #####
-                self.mylog("Type Password", end="")
-                el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
-                self.mylog(st="OK")
-
-                # Some delay before clicking captcha
-                # time.sleep(random.uniform(31.5, 33))
-                # time.sleep(random.uniform(1.25, 3))
-
-                # Give the user some time to resolve the captcha
-                # FEAT: Wait until it disappears, use 2captcha if configured
-
-                self.mylog("Proceed with captcha resolution", end="~~")
-                if self.resolve_captcha2() is not None:
-                    # Some time for captcha to remove.
-                    self.mylog("Automatic resultution succeeded", end="~~")
-                    time.sleep(2)
-                else:
-                    # Manual
-                    time.sleep(0.33)
-
-                    # Not sure that click is needed for 2captcha
-                    clickRecaptcha = True
-                    if clickRecaptcha:
-                        self.mylog("Clicking on the captcha button", end="~~")
-                        self.__browser.switch_to.frame(0)
-                        re_btn = self.__browser.find_element(
-                            By.CLASS_NAME, "recaptcha-checkbox-border"
-                        )
-                        re_btn.click()
-                        self.__browser.switch_to.default_content()
-
-                    if self._debug:
-                        # Let the user some time to resolve the captcha
-                        self.mylog("Waiting 30 seconds for the user", end="~~")
-                        time.sleep(30)
-                    else:
-                        self.mylog(
-                            "No debug interface, proceed (delay 2s)", end="~~"
-                        )
-                        # Not in debug mode, only wait for captcha
-                        time.sleep(2)
-
-                self.__browser.switch_to.default_content()
-
-                if self.configuration[PARAM_SCREENSHOT]:
-                    self.get_screenshot("screen_before_connection.png")
-
+            if deny_btn is not None:
                 self.click_in_view(
-                    By.XPATH,
-                    r"//input[@value='Connexion']",
-                    # wait_message="",
-                    click_message="Click on connexion",
-                    delay=random.uniform(1, 2),
+                    By.ID,
+                    "btn_option_deny_banner",
+                    wait_message="Waiting for cookie popup",
+                    click_message="Click on deny",
+                    delay=0,  # random.uniform(1, 2),
                 )
-                time.sleep(5)
+
+            # Wait for Connexion #####
+            self.mylog("Connexion au site GRDF", end="")
+
+            self.__browser.get(self.__class__.site_grdf_url)
+            self.mylog(st="OK")
+
+            # Wait for Password #####
+            self.mylog("Waiting for Password", end="")
+
+            ep = EC.presence_of_element_located((By.ID, "pass"))
+            el_password = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            self.mylog(st="OK")
+
+            # Wait for Email #####
+            self.mylog("Waiting for Email", end="")
+            ep = EC.presence_of_element_located((By.ID, "mail"))
+            el_email = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            self.mylog(st="OK")
+
+            # Type Email #####
+            self.mylog("Type Email", end="")
+            el_email.clear()
+            el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
+            self.mylog(st="OK")
+
+            # Type Password #####
+            self.mylog("Type Password", end="")
+            el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
+            self.mylog(st="OK")
+
+            # Some delay before clicking captcha
+            # time.sleep(random.uniform(31.5, 33))
+            # time.sleep(random.uniform(1.25, 3))
+
+            # Give the user some time to resolve the captcha
+            # FEAT: Wait until it disappears, use 2captcha if configured
+
+            self.mylog("Proceed with captcha resolution", end="~~")
+            if self.resolve_captcha2() is not None:
+                # Some time for captcha to remove.
+                self.mylog("Automatic resultution succeeded", end="~~")
+                time.sleep(2)
+            else:
+                # Manual
+                time.sleep(0.33)
+
+                # Not sure that click is needed for 2captcha
+                clickRecaptcha = True
+                if clickRecaptcha:
+                    self.mylog("Clicking on the captcha button", end="~~")
+                    self.__browser.switch_to.frame(0)
+                    re_btn = self.__browser.find_element(
+                        By.CLASS_NAME, "recaptcha-checkbox-border"
+                    )
+                    re_btn.click()
+                    self.__browser.switch_to.default_content()
+
+                if self._debug:
+                    # Let the user some time to resolve the captcha
+                    self.mylog("Waiting 30 seconds for the user", end="~~")
+                    time.sleep(30)
+                else:
+                    self.mylog(
+                        "No debug interface, proceed (delay 2s)", end="~~"
+                    )
+                    # Not in debug mode, only wait for captcha
+                    time.sleep(2)
+
+            self.__browser.switch_to.default_content()
+
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("screen_before_connection.png")
+
+            self.click_in_view(
+                By.XPATH,
+                r"//input[@value='Connexion']",
+                # wait_message="",
+                click_message="Click on connexion",
+                delay=random.uniform(1, 2),
+            )
+            time.sleep(5)
 
             # Get data from GRDF ############
 
@@ -1424,11 +1459,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # self.__browser(self.__browser.wait_for_request(r.path))
             # print(f"Url {data_url} -> R:{result!r}\n")
 
-        if not skipDownload:  # pylint: disable=condition-evals-to-constant
+        if not self.configuration[PARAM_KEEP_OUTPUT]:
             self.files_to_cleanup.append(g_file)
-            with open(g_file, "w", encoding="utf_8") as grdf_file:
-                # json.dump(result, grdf_file)
-                grdf_file.write(content)
+
+        with open(g_file, "w", encoding="utf_8") as grdf_file:
+            # json.dump(result, grdf_file)
+            self.mylog("Writing {g_file}", end="~~")
+            grdf_file.write(content)
 
         return g_file
 
@@ -1977,10 +2014,10 @@ class HomeAssistantInjector(Injector):
             )
 
             if isinstance(response, dict) and "state" in response:
-                previous_m3 = response["state"]
+                previous_m3 = float(response["state"])
 
         self.mylog(
-            f"Previous {previous_m3}m3 {previous_kWh}kWh {previous_date}"
+            f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
         )
 
         date_time = None
@@ -2013,6 +2050,9 @@ class HomeAssistantInjector(Injector):
                 self.mylog(
                     f"New Total {current_total_kWh}kWh (+{row_meter_kWh_day})"
                 )
+            else:
+                # Not new data, continue with next data
+                continue
 
             if (date_time is not None) and (row_date_time < date_time):
                 # Use the most recent data.
@@ -2026,8 +2066,10 @@ class HomeAssistantInjector(Injector):
             if previous_m3 is not None:
                 if row_meter_m3_endIndex < previous_m3:
                     self.mylog(
-                        f"New index {row_meter_m3_endIndex} m³ is lower"
-                        f" than old index {previous_m3} m³."
+                        f"New index {row_meter_m3_endIndex} m³"
+                        f" ({row_date_time})"
+                        f" is lower"
+                        f" than old index {previous_m3} m³ ({previous_date})."
                         f" Error in source or old data - stopping",
                         st="EE",
                     )
@@ -2041,7 +2083,12 @@ class HomeAssistantInjector(Injector):
             meter_kWh_day = row["energieConsomme"]
 
         # Has data (latest data)
-        if date_time is not None:
+        if date_time is None:
+            self.mylog(
+                "    No new data, no update",
+                st="WW",
+            )
+        else:
             self.mylog(
                 f"    update value is {date_time.isoformat()}:"
                 f" {meter_m3_total} m³ -"
@@ -2362,16 +2409,16 @@ def doWork():
         required=True,
     )
     parser.add_argument(
-        "--keep_csv",
-        action="store_true",
-        help="Keep the downloaded CSV file (Deprecated, use --keep-output)",
-        required=False,
-    )
-    parser.add_argument(
         "-k",
         "--keep-output",
         action="store_true",
         help="Keep the downloaded files",
+        required=False,
+    )
+    parser.add_argument(
+        "--keep_csv",
+        action="store_true",
+        help="Keep the downloaded CSV file (Deprecated, use --keep-output)",
         required=False,
     )
     parser.add_argument(
@@ -2397,11 +2444,17 @@ def doWork():
         help="Url when destination is 'url' (file://..., http(s)://...)",
         required=False,
     )
+    parser.add_argument(
+        "--skip-download",
+        action="store_true",
+        help="Skip downloading file from web, use local file",
+    )
 
     args = parser.parse_args()
 
     # Deprecated keep_csv, but still use its value
-    args.keep_output = args.keep_output or args.keep_csv
+    # Also keep the file if download is skipped
+    args.keep_output = args.keep_output or args.keep_csv or args.skip_download
     if args.logs_folder is not None:
         args.logs_folder = str(args.logs_folder).strip("[]'")
 
@@ -2436,6 +2489,9 @@ def doWork():
     except Exception as exc:
         exit_on_error(string=str(exc), debug=args.debug, o=o)
 
+    # Add CLI arguments to the configuration (CLI has precedence)
+    configuration_json.update(vars(args))
+
     # When neither veolia nor grdf is set,
     #  get all those that are in the configuration
     isGetAvailable = not (args.veolia or args.grdf)
@@ -2451,9 +2507,6 @@ def doWork():
             string="Must select/configure at least one contract",
             debug=args.debug,
         )
-
-    # Add CLI arguments to the configuration (CLI has precedence)
-    configuration_json.update({PARAM_SCREENSHOT: args.screenshot})
 
     if args.server_type is not None:
         configuration_json.update({PARAM_SERVER_TYPE: args.server_type})
@@ -2501,8 +2554,6 @@ def doWork():
     # Do actual work
 
     if args.grdf:
-        args.veolia = False  # Only GRDF for testing at this time, TODO: remove
-
         try:
             # Get data
             try:
@@ -2545,7 +2596,7 @@ def doWork():
         except Exception as exc:
             exit_on_error(workers, str(exc), debug=args.debug, o=o)
 
-    o.mylog("Finished on success, cleaning up")
+    o.mylog("Finished on success, cleaning up", st="OK")
 
     for w in workers:
         w.cleanup(keep_output=args.keep_output)
