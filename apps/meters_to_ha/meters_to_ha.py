@@ -1726,7 +1726,7 @@ class DomoticzInjector(Injector):
             self.mylog(st="OK")
 
     def update_grdf_device(self, json_file):
-        pass
+        raise NotImplementedError(f"{self.WORKER_DESC}/GRDF")
 
     def cleanup(self, keep_output=False):
         pass
@@ -1918,6 +1918,7 @@ class HomeAssistantInjector(Injector):
             data = json.load(f)
 
         pce = list(data.keys())[0]
+        now_isostr = datetime.now(timezone.utc).isoformat()
 
         # M3 TOTAL
         sensor_name_generic_m3 = "sensor.gas_consumption_m3"
@@ -1990,10 +1991,19 @@ class HomeAssistantInjector(Injector):
                 "qualificationReleve"
             ]  # "Informative Journalier"
             row_meter_kWh_day = row["energieConsomme"]
+            row_meter_m3_endIndex = row["indexFin"]
 
             if row_data_qual != "Mesuré":
-                self.mylog(f"    Skip Quality {row_data_qual}")
-                continue
+                # Known qualities:
+                # - "Mesuré"
+                # - "Absence de Données"
+                #    -> Seems to be updated later, so wait for it.
+                self.mylog(
+                    f"    Got Quality {row_data_qual}"
+                    " -> Wait until backlog retrieved"
+                )
+                break
+                # continue
 
             if row_date_time > previous_date:
                 # Sum daily kWh consumption
@@ -2013,18 +2023,30 @@ class HomeAssistantInjector(Injector):
                     f"File contains too old data (monthly?!?): {row}"
                 )
 
+            if previous_m3 is not None:
+                if row_meter_m3_endIndex < previous_m3:
+                    self.mylog(
+                        f"New index {row_meter_m3_endIndex} m³ is lower"
+                        f" than old index {previous_m3} m³."
+                        f" Error in source or old data - stopping",
+                        st="EE",
+                    )
+                    break
+
             # Acceptable data
             date_time = row_date_time
             # date_type = row["indexFin"]  # "Informative Journalier"
 
-            meter_m3_total = row["indexFin"]
+            meter_m3_total = row_meter_m3_endIndex
             meter_kWh_day = row["energieConsomme"]
 
         # Has data (latest data)
         if date_time is not None:
             self.mylog(
                 f"    update value is {date_time.isoformat()}:"
-                f" {meter_m3_total} m³ - {meter_kWh_day} kWh",
+                f" {meter_m3_total} m³ -"
+                f" {current_total_kWh} kWh -"
+                f" {meter_kWh_day} kWh",
                 end="",
             )
 
@@ -2036,6 +2058,7 @@ class HomeAssistantInjector(Injector):
                     "unit_of_measurement": "m³",
                     "device_class": "gas",
                     "state_class": "total_increasing",
+                    "last_check": now_isostr,
                 },
             }
             r = self.open_url(
@@ -2055,6 +2078,7 @@ class HomeAssistantInjector(Injector):
                     "unit_of_measurement": "kWh",
                     "device_class": "energy",
                     "state_class": "measurement",
+                    "last_check": now_isostr,
                 },
             }
 
@@ -2076,6 +2100,7 @@ class HomeAssistantInjector(Injector):
                     "unit_of_measurement": "kWh",
                     "device_class": "energy",
                     "state_class": "total_increasing",
+                    "last_check": now_isostr,
                 },
             }
 
