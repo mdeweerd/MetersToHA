@@ -45,7 +45,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
   - [Fournisseurs](#fournisseurs)
     - [Veolia](#veolia)
     - [GRDF](#grdf)
-  - ["Serveurs" Linux](#serveurs-linux)
+  - ["Serveurs"](#serveurs)
     - [Docker - "configuration système incluse"](#docker---configuration-syst%C3%A8me-incluse)
     - [Installation "direct"](#installation-direct)
     - [Installation avec le sous-système Windows pour Linux (WSL)](#installation-avec-le-sous-syst%C3%A8me-windows-pour-linux-wsl)
@@ -624,7 +624,7 @@ Les données sont souvent à jour après 17h, mais régulièrement plus tard.
 Pour éviter des appels API inutiles(sans nouvelles données), il semble
 judicieux de les programmer à partir de 21h seulement.
 
-## "Serveurs" Linux
+## "Serveurs"
 
 ### Docker - "configuration système incluse"
 
@@ -728,13 +728,11 @@ Vous devez également obtenir
 Vous pouvez extraire le fichier `ChromeDriver.exe` qui correspond à votre
 version Chrome directement dans le dépot que vous avez récupérée.
 
-Ensuite vous devez installer les modules avec
-`python -m pip install -r requirements.txt` depuis la copie locale du
-dépot.
+Ensuite vous devez [installer MetersToHA](#installation-de-meterstoha).
 
-Un fichier de configuration valide resemble à ceci - vous devez renseigner
+Pour le lancement sous windows, vous devez renseigner vous devez renseigner
 les chemins de `chrome` et `chromedriver` (absolu ou relatifs depuis là ou
-vous lancez le script):
+vous lancez le script). Un exemple d'un fichier de configuration est:
 
 ```json
 {
@@ -769,7 +767,9 @@ python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug
 ```
 
 Pour plus d'information concernant le contenu du fichier de configuration,
-vérifiez le paragraphe correspondant dans le présent document.
+vérifiez
+[le paragraphe correspondant](#le-fichier-de-configuration-configjson) dans
+le présent document.
 
 ### Installation de MetersToHA
 
@@ -792,7 +792,10 @@ Récupération initiale:
 cd REPERTOIRE_DE_DESTIONATION
 git clone https://github.com/mdeweerd/MetersToHA
 cd MetersToHA
+
 pip3 install -r requirements.txt
+# ou
+python -m pip install -r requirements.txt
 ```
 
 Mise à jour:
