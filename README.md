@@ -14,7 +14,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 - Gestion multi-contrat
 - Vérification de l'intégrité de l'environnement (prérequis / configuration
   sur serveur domotique)
-- Mode débugue graphique
+- Mode débogue graphique
 - Possible intégration avec d'autre solution domotique (à vous de jouer)
 
 ## Table des Matières
@@ -66,7 +66,8 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 ## :warning: Limitations
 
 - GRDF n'est pas encore compatible avec Domoticz;
-- GRDF nécessite un service de résolution de captcha payant.
+- GRDF nécessite un service de résolution de captcha payant ou une
+  résolution interactive.
 
 ## Informations générales
 
@@ -194,23 +195,32 @@ ceci suffit:
 
 ## Les paramètres du script
 
-| option(s)                                     | Description                                                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| -h, --help                                    | Affiche l'aide                                                                                               |
-| -r, --run                                     | Execute le script                                                                                            |
-| --version                                     | Affiche la version du programme                                                                              |
-| --version-check                               | Verifie s'il y a une nouvelle version du script (inactif)                                                    |
-| --veolia                                      | Récupère les données de Veolia IDF                                                                           |
-| --grdf                                        | Récupère les données auprès de GRDF                                                                          |
-| -d, --debug                                   | Active l'interface graphique interactif (Serveur X nécessaire)                                               |
-| --screenshot                                  | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                         |
-| --local-config                                | Utilise un répértoire local pour la configuration navigateur                                                 |
-| -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER` | Dossier pour les fichier des traces                                                                          |
-| -c `CONFIG`, --config `CONFIG`                | Fichier de configuration                                                                                     |
-| -k, --keep-output                             | Garde les fichiers récupérés                                                                                 |
-| --insecure                                    | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)           |
-| --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                        |
-| --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...) |
+| option(s)                                     | Description                                                                                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| -h, --help                                    | Affiche l'aide                                                                                                                                         |
+| -r, --run                                     | Exécute le script                                                                                                                                      |
+| --version                                     | Affiche la version du programme                                                                                                                        |
+| --version-check                               | Vérifie s'il y a une nouvelle version du script (inactif)                                                                                              |
+| --veolia                                      | Récupère les données de Veolia IDF                                                                                                                     |
+| --grdf                                        | Récupère les données auprès de GRDF                                                                                                                    |
+| -d, --debug                                   | Active l'interface graphique interactif (Serveur X nécessaire)                                                                                         |
+| --screenshot                                  | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                                                                   |
+| --local-config                                | Utilise un répertoire local pour la configuration navigateur                                                                                           |
+| -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER` | Dossier pour les fichiers des traces                                                                                                                   |
+| -c `CONFIG`, --config `CONFIG`                | Fichier de configuration                                                                                                                               |
+| -k, --keep-output                             | Garde les fichiers récupérés                                                                                                                           |
+| --insecure                                    | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)                                                     |
+| --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                                                                  |
+| --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...)                                           |
+| --skip-download                               | Ne télécharge pas le fichier mais utilise le fichier déjà en place, utile pour utiliser un fichier téléchargé interactivement ou bien pour le débogue. |
+
+Lorsqu'une option est à la fois disponible dans le fichier de configuration
+que comme option en ligne de commande, la ligne de commande prend la
+priorité.\
+Par exemple, l'option `server-type` est la même que `type` dans
+le fichier de configuration. Ce qui permet par exemple d'effectuer un
+transfert vers un web service en spécifiant
+`--server-type url --url https://mon-service.web --skip-download`.
 
 ## Home Assistant
 
@@ -237,7 +247,7 @@ AppDaemon et les paquets).\
 Vous pouvez tout aussi bien utiliser les autres
 environnements.
 
-Une fois AppDaemon installé, vous pourez ajouter MetersToHA
+Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/). Les scripts sont placés dans le répertoire
 `../config/appdaemon/apps/meters-to-ha`. Le fichier
 `meters-to-ha-appdaemon.py` assure l'intégration sous AppDaemon.
@@ -317,7 +327,7 @@ sous `/config`. Le fichier `/config/veolia.log` pourra aider à identifier
 des causes de dysfonctionnement.
 
 Voici un exemple d'une configuration minimale à ajouter à
-`/config/appdaemon/apps/apps.yaml` - l'évenement déclencheur est par défaut
+`/config/appdaemon/apps/apps.yaml` - l'événement déclencheur est par défaut
 `call_meters_to_ha`:
 
 ```yaml
@@ -402,7 +412,7 @@ trouver par exemple des traces. Exemple avec une erreur:
 #### Lancer un appel à Veolia (AppDaemon)
 
 L’appel est lancé en déclenchant l’événement `call_meters_to_ha` (ou
-l'événement défini sous le paramètres `event_name`). Cela peut être fait
+l'événement défini sous le paramètre `event_name`). Cela peut être fait
 dans une automatisation (ce qui permet de le lancer selon un planning par
 exemple), ou de façon interactive dans les outils de développement.
 L'exemple est avec `call_veolia` (2ième exemple de configuration plus
@@ -431,12 +441,12 @@ La configuration c'est prèsque comme pour Veolia IDF. Comme la consommation
 GAZPAR est plutôt disponible en fin de journée, il est intéressant de
 consulter GRDF vers 21h par exemple.\
 Je recommande donc de personnaliser
-le `event_name`.
+l'`event_name`.
 
 Pour GRDF un captcha est présent sur la page et depuis Janvier 2023 les
 scripts "simples" ne suffisent plus.
 
-La résolution du captcha se fait soit manuellement (avec debug actif et
+La résolution du captcha se fait soit manuellement (avec débugue actif et
 configuration de DISPLAY), soit en s'appuyant sur
 [2captcha.com](https://2captcha.com/?from=16639177).
 
@@ -510,9 +520,9 @@ mode: single
 Cela récupère la consommation dans les 90 minutes suivant 1h07 en émettant
 l'événement `call_meters_to_ha` ce qui déclenche le script sous AppDaemon.
 Il mettre en place une automatisation par fournisseur (avec événements
-différents) si vous souhaitez des horaires différentes. Prenez en compte un
-délai de minimum 5 minutes entre les 2 événementsi (pour limiter les
-ressources utilisés sur votre système).
+différents) si vous souhaitez des horaires différents. Prenez en compte un
+délai de minimum 5 minutes entre les 2 événements (pour limiter les
+ressources utilisées sur votre système).
 
 Exemple pour GRDF ou l'on tente de récupérer les données jusqu'à deux fois,
 avec une condition qui vérifie que la dernière mise à jour était il y a
@@ -546,7 +556,7 @@ mode: single
 
 ### Ajout des informations au tableau "Énergie"
 
-Quelque soit la méthode pour lancer le script, il convient de configurer
+Quel que soit la méthode pour lancer le script, il convient de configurer
 votre tableau "Énergie" pour le suivre dans Home Assistant.
 
 Pour cela, accédez à la
@@ -601,7 +611,7 @@ Il semblerait que les données restituées par Veolia sont des fois un peu
 contournement c'est de réaliser l'appel entre 1h du matin et minuit.
 
 Le délai variable permet de repartir l'heure d'appel à Veolia entre les
-utilisateur pour ne pas encombre le service. Vous pouvez aussi/en sus
+utilisateurs pour ne pas encombre le service. Vous pouvez aussi/en sus
 définir une heure différente de 1h07 dans votre configuration Vous pouvez
 sûrement accepter de récupérer l'information un peu plus tard que cela vu
 qu'elle est de tout façon déjà décalé de qqs jours.
@@ -663,7 +673,7 @@ docker compose run --rm meters-to-ha-veolia-debug
 docker compose run --rm meters-to-ha-grdf-debug
 ```
 
-L'automatisation de l'éxecution avec Docker dépendre de votre système - le
+L'automatisation de l'exécution avec Docker dépendre de votre système - le
 conteneur Docker ne tourne pas en tache de fond - il n'est pas prévu pour
 automatiser la tache par lui-même.
 
@@ -730,9 +740,9 @@ version Chrome directement dans le dépot que vous avez récupérée.
 
 Ensuite vous devez [installer MetersToHA](#installation-de-meterstoha).
 
-Pour le lancement sous windows, vous devez renseigner vous devez renseigner
-les chemins de `chrome` et `chromedriver` (absolu ou relatifs depuis là ou
-vous lancez le script). Un exemple d'un fichier de configuration est:
+Pour le lancement sous Windows, vous devez renseigner les chemins de
+`chrome` et `chromedriver` (absolu ou relatifs depuis là ou vous lancez le
+script). Un exemple d'un fichier de configuration est:
 
 ```json
 {
@@ -759,7 +769,7 @@ recommande d'ajouter l'option `--debug` qui vous donnera plus de temps. Il
 faut résoudre le captcha et le valider. Ne cliquez pas le bouton
 "Connexion" du site même - le script le fait.
 
-Exemple de lancement, avec un fichier de configuration appellé
+Exemple de lancement, avec un fichier de configuration appelée
 `winconfig.json`.
 
 ```shell
@@ -864,7 +874,7 @@ Déroulement de l'exécution :
 
 1. Chargement de tous les modules python --> si erreur installer les
    modules manquants (pip3 install ...)
-2. Sanity check de l'environnement :
+2. "Sanity check" de l'environnement :
 
 - Version
 - Prérequis logiciel externe --> si erreur installer le logiciel manquant
@@ -924,7 +934,7 @@ nécessaire, et télécharge un fichier d'historique adéquat.\
 Ce fichier est
 alors décortiqué pour en extraire les informations utiles.\
 Ces données
-sont ensuite envoyés au système domotiqué choisi à travers son API.
+sont ensuite envoyés au système domotique choisi à travers son API.
 
 `Selenium` execute un navigateur Firefox ou Chromium en mode "Headless".
 
@@ -933,7 +943,7 @@ Le mode Headless indique que le système n'a pas d'écran.
 Le système Graphique (GUI) existe, mais l'affichage n'existe que dans une
 zone mémoire.
 
-Il est néansmoins possible de voir le déroulement en temps réel avec
+Il est néanmoins possible de voir le déroulement en temps réel avec
 l'option `debug`. L'affichage n'est alors plus "Headless" et il vous faudra
 un serveur X attaché à un écran physique.
 
