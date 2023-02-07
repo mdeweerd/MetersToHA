@@ -49,6 +49,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
     - [Docker - "configuration système incluse"](#docker---configuration-syst%C3%A8me-incluse)
     - [Installation "direct"](#installation-direct)
     - [Installation avec le sous-système Windows pour Linux (WSL)](#installation-avec-le-sous-syst%C3%A8me-windows-pour-linux-wsl)
+    - [Installation sous Windows](#installation-sous-windows)
     - [Installation de MetersToHA](#installation-de-meterstoha)
       - [Installation avec `git`](#installation-avec-git)
       - [Installation avec une archive](#installation-avec-une-archive)
@@ -71,7 +72,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 
 En résumé, il y a 4 étapes pour la mise en place:
 
-1. Installation sur un "serveur" Linux:
+1. a. Installation sur un "serveur" Linux:
 
 - Distribution classique: Debian, Ubuntu, Alpine, etc. - physique ou
   Machine Virtuelle (VM);
@@ -79,6 +80,10 @@ En résumé, il y a 4 étapes pour la mise en place:
 - Debian/Ubuntu avec le sous-système Windows pour Linux (WSL);
 - Au sein/en parallèle de votre système domotique (AppDaemon pour Home
   Assistant par exemple).
+
+b. Utilisation sous Windows (hors Linux/WSL).
+
+Voir instructions plus loin.
 
 2. Configuration de MetersToHA - Fichier `config.json` avec les logins,
    etc.
@@ -711,6 +716,60 @@ peut nécessiter de tout réinstaller - pensez à gardez une copie de votre
 configuration et un script d'installation des outils.
 
 Toutefois cette méthode n'a pas été testée.
+
+### Installation sous Windows
+
+Vous devez installer Python sous Windows et les modules nécessaires. La
+version testée est
+[3.10.9 obtenu depuis https://www.python.org/downloads/windows/](https://www.python.org/downloads/windows/).
+
+Vous devez également obtenir
+[ChromeDriver](https://chromedriver.chromium.org/downloads) pour Windows.
+Vous pouvez extraire le fichier `ChromeDriver.exe` qui correspond à votre
+version Chrome directement dans le dépot que vous avez récupérée.
+
+Ensuite vous devez installer les modules avec
+`python -m pip install -r requirements.txt` depuis la copie locale du
+dépot.
+
+Un fichier de configuration valide resemble à ceci - vous devez renseigner
+les chemins de `chrome` et `chromedriver` (absolu ou relatifs depuis là ou
+vous lancez le script):
+
+```json
+{
+  "veolia_login": "monm\u00e9l@mon.domaine",
+  "veolia_password": "mot de passe",
+  "veolia_contract": "5453325",
+  "grdf_login": "monm\u00e9l@mon.domaine",
+  "grdf_password": "mot de passe",
+  "grdf_pce": "21546000000000",
+  "ha_server": "http://homeassistant.local:8123",
+  "ha_token": "XXXXXXXXXXXXXXXXXXXXXX",
+  "chromium": "c:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  "chromedriver": ".\\chromedriver.exe",
+  "type": "ha",
+  "timeout": "30"
+}
+```
+
+Le déroulement sera visible - il n'y a pas eu de recherche si cela peut
+être invisible sous Windows.
+
+Pour la résolution du captcha sous Windows en mode interactif, je vous
+recommande d'ajouter l'option `--debug` qui vous donnera plus de temps. Il
+faut résoudre le captcha et le valider. Ne cliquez pas le bouton
+"Connexion" du site même - le script le fait.
+
+Exemple de lancement, avec un fichier de configuration appellé
+`winconfig.json`.
+
+```shell
+python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug
+```
+
+Pour plus d'information concernant le contenu du fichier de configuration,
+vérifiez le paragraphe correspondant dans le présent document.
 
 ### Installation de MetersToHA
 

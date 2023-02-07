@@ -462,19 +462,20 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     def init_firefox(self):
         self.mylog("Start virtual display", end="")
         # veolia website needs at least 1600x1200 to render all components
-        if self._debug:
-            self.__display = Display(visible=1, size=(1600, 1200))
-        else:
-            self.__display = Display(visible=0, size=(1600, 1200))
-        try:
-            self.__display.start()
-        except Exception as e:
-            raise RuntimeError(
-                f"{e} if you launch the script through a ssh connection"
-                " with '--debug' ensure X11 forwarding is activated"
-            )
-        else:
-            self.mylog(st="OK")
+        if sys.platform != "win32":
+            if self._debug:
+                self.__display = Display(visible=1, size=(1600, 1200))
+            else:
+                self.__display = Display(visible=0, size=(1600, 1200))
+            try:
+                self.__display.start()
+            except Exception as e:
+                raise RuntimeError(
+                    f"{e} if you launch the script through a ssh connection"
+                    " with '--debug' ensure X11 forwarding is activated"
+                )
+            else:
+                self.mylog(st="OK")
 
         self.mylog("Setup Firefox profile", end="")
         try:
@@ -549,7 +550,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     def init_chromium(self):
         # Set Chrome options
         options = webdriver.ChromeOptions()
-        if os.geteuid() == 0:
+        if (
+            sys.platform != "win32"
+            and hasattr(os, "geteuid")
+            and os.geteuid() == 0  # pylint: disable=no-member
+        ):
             options.add_argument("--no-sandbox")
         options.add_argument("--disable-modal-animations")
         options.add_argument("--disable-login-animations")
@@ -600,23 +605,24 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             "excludeSwitches", ["enable-automation"]
         )
 
-        self.mylog("Start virtual display (chromium)", end="")
-        if self._debug:
-            self.__display = Display(visible=1, size=(1280, 1024))
-        else:
-            options.add_argument("--headless")
-            options.add_argument("--disable-gpu")
+        if sys.platform != "win32":
+            self.mylog("Start virtual display (chromium)", end="")
+            if self._debug and sys.platform != "win32":
+                self.__display = Display(visible=1, size=(1280, 1024))
+            else:
+                options.add_argument("--headless")
+                options.add_argument("--disable-gpu")
+                try:
+                    self.__display = Display(visible=0, size=(1280, 1024))
+                except Exception:
+                    raise
+
             try:
-                self.__display = Display(visible=0, size=(1280, 1024))
+                self.__display.start()
             except Exception:
                 raise
-
-        try:
-            self.__display.start()
-        except Exception:
-            raise
-        else:
-            self.mylog(st="OK")
+            else:
+                self.mylog(st="OK")
 
         # Discover classes provided
         # print_classes("selenium.webdriver") ; sys.exit()

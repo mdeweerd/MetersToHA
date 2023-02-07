@@ -3,9 +3,11 @@ config.json
 error.png
 .config
 *.swp
+chromedriver.exe
 
 # Local config/data files
 **/config.json
+**/winconfig.json
 **/historique_gazpar.json*
 **/historique_jours_litres.csv*
 *.zip
