@@ -513,7 +513,7 @@ action:
     alias: Avec un délai variable pour ne pas charger le serveur tous en même temps.
   - event: call_meters_to_ha
     event_data: {}
-    alias: Déclenché l'événement definit dans la configuration 'AppDaemon'
+    alias: Déclenche l'événement définit dans la configuration 'AppDaemon'
 mode: single
 ```
 
@@ -563,7 +563,7 @@ Pour cela, accédez à la
 [page de configuration du tableau "Énergie"](https://my.home-assistant.io/redirect/config_energy/).
 
 Ajouter les nouveaux compteurs (eau, gaz) dans les bonnes classes. Il
-convient de choisir les totaux ici (pas les entités `daily`). Le compteurs
+convient de choisir les totaux ici (pas les entités `daily`). Les compteurs
 permettent d'afficher la consommation journalière facilement sur d'autres
 pages que le Tableau Énergie.
 
@@ -631,7 +631,7 @@ Pour le moment pas compatible avec Domoticz (le "connecteur" nécessite un
 développement).
 
 Les données sont souvent à jour après 17h, mais régulièrement plus tard.
-Pour éviter des appels API inutiles(sans nouvelles données), il semble
+Pour éviter des appels API inutiles (sans nouvelles données), il semble
 judicieux de les programmer à partir de 21h seulement.
 
 ## "Serveurs"
@@ -651,10 +651,10 @@ votre système Domotique (tel que AppDaemon avec Home Assistant).
 
 En résumé, les fichier suivants donnent la configuration de Docker:
 
-- `docker-compose.yml` : plusieurs configurations de containers
+- `docker-compose.yml` : plusieurs configurations de conteneurs
   (environnements d'exécution) fonctionnelles, dont des configurations pour
   le débogue.
-- `Dockerfile*`: Fichiers définisant "l'installation" de containers.
+- `Dockerfile*`: Fichiers définissant "l'installation" de conteneurs.
 
 A cela vous devez "juste" ajouter votre fichier de configuration
 "config.json".
@@ -736,7 +736,7 @@ version testée est
 Vous devez également obtenir
 [ChromeDriver](https://chromedriver.chromium.org/downloads) pour Windows.
 Vous pouvez extraire le fichier `ChromeDriver.exe` qui correspond à votre
-version Chrome directement dans le dépot que vous avez récupérée.
+version Chrome directement dans le dépôt que vous avez récupéré.
 
 Ensuite vous devez [installer MetersToHA](#installation-de-meterstoha).
 
@@ -936,7 +936,7 @@ alors décortiqué pour en extraire les informations utiles.\
 Ces données
 sont ensuite envoyés au système domotique choisi à travers son API.
 
-`Selenium` execute un navigateur Firefox ou Chromium en mode "Headless".
+`Selenium` exécute un navigateur Firefox ou Chromium en mode "Headless".
 
 Le mode Headless indique que le système n'a pas d'écran.
 
@@ -944,8 +944,8 @@ Le système Graphique (GUI) existe, mais l'affichage n'existe que dans une
 zone mémoire.
 
 Il est néanmoins possible de voir le déroulement en temps réel avec
-l'option `debug`. L'affichage n'est alors plus "Headless" et il vous faudra
-un serveur X attaché à un écran physique.
+l'option `--debug`. L'affichage n'est alors plus "Headless" et il vous
+faudra un serveur X attaché à un écran physique.
 
 ## Environnements testés:
 

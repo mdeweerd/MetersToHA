@@ -891,7 +891,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         Get screenshot and save to file in logs_folder
         """
 
-        fn_img = "{}{}".format(self.configuration[PARAM_LOGS_FOLDER], basename)
+        fn_img = f"{self.configuration[PARAM_LOGS_FOLDER]}{basename}"
         # Screenshots are only for debug, so errors are not blocking.
         try:
             self.mylog(f"Get & Save '{fn_img}'", end="--")
