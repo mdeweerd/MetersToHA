@@ -915,7 +915,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         if method is None:
             self.mylog(
                 "Can not resolve using captcha service"
-                " missing {PARAM_2CAPTCHA_TOKEN}",
+                f" missing {PARAM_2CAPTCHA_TOKEN}",
                 st="WW",
             )
             return None
@@ -1464,7 +1464,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         with open(g_file, "w", encoding="utf_8") as grdf_file:
             # json.dump(result, grdf_file)
-            self.mylog("Writing {g_file}", end="~~")
+            self.mylog(f"Writing {g_file}", end="~~")
             grdf_file.write(content)
 
         return g_file
@@ -1969,9 +1969,8 @@ class HomeAssistantInjector(Injector):
 
         # Get last known data now
         #  - should load this before loading JSON to get maximum range of data.
-        response = self.open_url(
-            HA_API_SENSOR_FORMAT % (sensor_name_generic_kwh,)
-        )
+        sensor = sensor_name_generic_kwh
+        response = self.open_url(HA_API_SENSOR_FORMAT % (sensor,))
 
         # Response looks like:
         # {'entity_id': 'sensor.gas_consumption_kwh', 'state': '28657',
@@ -1987,12 +1986,16 @@ class HomeAssistantInjector(Injector):
         #
         # print(f"{response!r}")
         current_total_kWh: float = 0
-        previous_date = datetime.now(timezone.utc) - dt.timedelta(days=1)
+        previous_date = datetime.now(timezone.utc) - dt.timedelta(days=7)
+
         previous_m3 = None
         previous_kWh = None
         if isinstance(response, dict) and "state" in response:
             previous_kWh = response["state"]
-            current_total_kWh = float(previous_kWh)
+            try:
+                current_total_kWh = float(previous_kWh)
+            except ValueError:
+                pass
             attributes = response["attributes"]
             if "date_time" in attributes:
                 previous_date_str = attributes["date_time"]
@@ -2002,22 +2005,32 @@ class HomeAssistantInjector(Injector):
                 previous_date_str = response["last_updated"]
             else:
                 previous_date_str = None
-            if previous_date_str is not None:
-                previous_date = dt.datetime.fromisoformat(previous_date_str)
 
             if "meter_m3" in attributes:
-                previous_m3 = float(attributes["meter_m3"])
+                try:
+                    previous_m3 = float(attributes["meter_m3"])
+                    if previous_date_str is not None:
+                        previous_date = dt.datetime.fromisoformat(
+                            previous_date_str
+                        )
+                except ValueError:
+                    pass
 
         if previous_m3 is None:
+            sensor = sensor_name_generic_m3
             response = self.open_url(
                 HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,)
             )
 
             if isinstance(response, dict) and "state" in response:
-                previous_m3 = float(response["state"])
+                try:
+                    previous_m3 = float(response["state"])
+                except ValueError:
+                    sensor = "None"
 
         self.mylog(
             f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
+            f" from {sensor}"
         )
 
         date_time = None
@@ -2330,7 +2343,7 @@ def check_new_script_version(o):
             o.mylog(
                 f'New version "{j["name"]}"({j["tag_name"]}) available.'
                 f"Check : https://github.com/{REPO_BASE}/releases/latest",
-                st="ww",
+                st="WW",
             )
         else:
             o.mylog(st="OK")
@@ -2566,7 +2579,7 @@ def doWork():
                     "Encountered error "
                     + str(exc_get).rstrip()
                     + "// -> Retrying once",
-                    st="ww",
+                    st="WW",
                 )
                 gazpar_file = crawler.get_gazpar_file()
 
@@ -2588,7 +2601,7 @@ def doWork():
                     "Encountered error"
                     + str(exc_get).rstrip()
                     + "// -> Retrying once",
-                    st="ww",
+                    st="WW",
                 )
                 veolia_idf_file = crawler.get_veolia_idf_file()
 

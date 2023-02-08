@@ -68,6 +68,11 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 - GRDF n'est pas encore compatible avec Domoticz;
 - GRDF nécessite un service de résolution de captcha payant ou une
   résolution interactive.
+- Si vous migrez depuis
+  [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
+  vous devez desactiver ces automatisations et vos "sensors" de type
+  template (dans `configuration.yaml`) - sinon les valeurs s'écrasent
+  celles de MetersToHA.
 
 ## Informations générales
 
