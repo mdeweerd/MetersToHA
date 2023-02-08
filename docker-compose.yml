@@ -160,6 +160,11 @@ services:
     extends: meters-to-ha-debug-local
     environment:
       DISPLAY: :0
+    command: >
+       sh -c '
+         i=0 ; while [ -f /tmp/.X$$i-lock ] ; do i=$$((i+1))  ; done ; echo $$i ;
+         DISPLAY=:$$i ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --debug --keep-output --local-config --veolia
+       '
     volumes:
       - \\wsl.localhost\Debian\mnt\wslg\.X11-unix:/tmp/.X11-unix
       - \\wsl.localhost\Debian\mnt\wslg\PulseServer:/tmp/PulseServer
