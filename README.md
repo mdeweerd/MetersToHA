@@ -896,13 +896,24 @@ Déroulement de l'exécution :
 4. Téléversement des données dans Domoticz
 
 ```shell
-./apps/meters_to_ha/meters_to_ha.py --run --debug
+./apps/meters_to_ha/meters_to_ha.py --run --keep-output --debug
 ```
 
 Afficher toutes les options disponibles :
 
 ```shell
 ./apps/meters_to_ha/meters_to_ha.py --help
+```
+
+Lorque la récupération des données a déjà fonctionné (avec
+`--keep-output`), vous pouvez pendant les essais réutiliser le fichier déjà
+téléchargé avec l'option `--skip-download`. Cela permettra la mise au point
+la configuration de l'envoi des données vers votre système domotique.
+
+Exemple:
+
+```shell
+./apps/meters_to_ha/meters_to_ha.py --grdf -r --keep-output --skip-download
 ```
 
 ### Paramétrer votre système pour le mode débogue (optionnel, mais recommandé)
