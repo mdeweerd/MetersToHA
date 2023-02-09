@@ -1,5 +1,5 @@
 ---
-files: ^(.*\.(py|json|md|sh|yaml|cfg|txt))$
+files: ^(.*\.(py|json|md|sh|yaml|yml|cfg|txt))$
 exclude: ^(\.[^/]*cache/.*)$
 repos:
   - repo: https://github.com/executablebooks/mdformat
@@ -24,7 +24,7 @@ repos:
       - id: no-commit-to-branch
         args: [--branch, main]
       - id: check-yaml
-        args: [--unsafe]
+        exclude: ^(docker-compose\.yml)$
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -119,3 +119,7 @@ repos:
           - --show-error-context
         additional_dependencies:
           - paho-mqtt
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v2.1.1
+    hooks:
+      - id: docker-compose-check

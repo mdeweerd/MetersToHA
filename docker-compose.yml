@@ -121,7 +121,7 @@ services:
   #
   # Debug targets (requires XServer)
   #
-  
+
   # Run script in debug mode and keep the recovered output (data) in a file
   #
   # Run this using `docker compose run --rm meters-to-ha-debug-veolia` on the CLI
