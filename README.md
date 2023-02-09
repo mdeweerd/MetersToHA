@@ -72,8 +72,8 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 - Si vous migrez depuis
   [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
   vous devez desactiver ces automatisations et vos "sensors" de type
-  template (dans `configuration.yaml`) - sinon les valeurs s'écrasent
-  celles de MetersToHA.
+  template (dans `configuration.yaml`) - sinon les valeurs écrasent celles
+  de MetersToHA.
 
 ## Informations générales
 
