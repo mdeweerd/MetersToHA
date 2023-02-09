@@ -981,6 +981,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 "https://2captcha.com/in.php"
                 f"?key={key}&method={captchamethod}"
                 f"&googlekey={site_key}&pageurl={page_url}"
+                f"&soft_id=3887"
             )
             # print(f"2CAPTCHA REQUEST:{url}\n")
             response = requests.get(url)
