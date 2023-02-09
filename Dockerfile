@@ -36,6 +36,7 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
         python3-colorama \
         python3-urllib3 \
         python3-requests \
+        python3-paho-mqtt \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 

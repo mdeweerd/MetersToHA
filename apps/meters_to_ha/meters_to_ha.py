@@ -94,6 +94,11 @@ PARAM_DOMOTICZ_PASSWORD = "domoticz_password"
 PARAM_HA_SERVER = "ha_server"
 PARAM_HA_TOKEN = "ha_token"
 
+PARAM_MQTT_SERVER = "mqtt_server"
+PARAM_MQTT_PORT = "mqtt_port"
+PARAM_MQTT_LOGIN = "mqtt_login"
+PARAM_MQTT_PASSWORD = "mqtt_password"
+
 PARAM_INSECURE = "insecure"
 
 PARAM_URL = "url"
@@ -1491,6 +1496,83 @@ class Injector(Worker):
     def update_grdf_device(self, json_file):
         raise NotImplementedError(f"{self.WORKER_DESC}/GRDF")
 
+    def veolia_to_dict(self, csv_file) -> dict[str, Any] | None:
+        """
+        Convert Veolia IDF meter data to dict.
+        """
+
+        # pylint: disable=too-many-locals
+        self.mylog("Parsing csv file")
+
+        with open(csv_file, encoding="utf_8") as f:
+            data: dict[str, Any] = {}
+
+            rows = list(csv.reader(f, delimiter=";"))
+            # List has at least two rows, the exception handles it.
+            row = rows[-1]
+            p_row = rows[-2]
+
+            method = row[3]  # "Mesuré" or "Estimé"
+            if method in ("Estimé",):
+                self.mylog(f"File contains estimated data in last line: {row}")
+                # Try previous row which may be a measurement
+                row = p_row
+                p_row = rows[-3]
+
+            date = row[0][0:10]
+            date_time = row[0]
+            meter_total = row[1]
+            meter_period_total = row[2]
+            method = row[3]  # "Mesuré" or "Estimé"
+
+            p_date_time = p_row[0]
+            p_meter_total = p_row[1]
+            p_meter_period_total = p_row[2]
+
+            if method in ("Estimé",):
+                self.mylog("    Skip Method " + method)
+                # Do not use estimated values which may result
+                # in a total that is not increasing
+                # (when the estimated value is smaller than the
+                #  previous real value or higher than the next
+                #  real value)
+                raise RuntimeError(
+                    f"File contains estimated data in last lines: {row!r}"
+                )
+
+            # Check line integrity (Date starting with 2 (Year))
+            if date[0] == "2":
+                # Verify data integrity :
+                d1 = datetime.strptime(date, "%Y-%m-%d")
+                d2 = datetime.now()
+                if abs((d2 - d1).days) > 30:
+                    raise RuntimeError(
+                        f"File contains too old data (monthly?!?): {row!r}"
+                    )
+                self.mylog(
+                    f"    previous value  {p_date_time}: "
+                    f"{p_meter_total}L - {p_meter_period_total}L",
+                    end="",
+                )
+                self.mylog(
+                    f"    update value is {date_time}: "
+                    f"{meter_total}L - {meter_period_total}L",
+                    end="",
+                )
+
+                data = {
+                    "date_time": date_time,
+                    "contract": self.configuration[PARAM_VEOLIA_CONTRACT],
+                    "meter_total": meter_total,
+                    "total_unit": "L",
+                    "device_class": "water",
+                    "daily_total": meter_period_total,
+                    "daily_unit": "L",
+                }
+
+                return data
+        return None
+
 
 ###############################################################################
 # Object injects historical data into domoticz
@@ -2179,6 +2261,74 @@ class HomeAssistantInjector(Injector):
         pass
 
 
+class MqttInjector(Injector):
+    WORKER_DESC = "MQTT"
+
+    def __init__(self, config_dict, super_print, debug=False):
+
+        self.configuration = {
+            # Mandatory config values
+            PARAM_URL: None,
+            # Needed for veolia only (to do: add to request as parameter)
+            PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
+            PARAM_MQTT_SERVER: None,
+            PARAM_MQTT_LOGIN: None,
+            PARAM_MQTT_PASSWORD: None,
+            PARAM_MQTT_PORT: None,
+            # Optional config values
+            PARAM_TIMEOUT: "30",
+            PARAM_INSECURE: False,
+        }
+        super().__init__(config_dict, super_print=super_print, debug=debug)
+
+    def sanity_check(self):
+        pass
+
+    def update_veolia_device(self, csv_file):
+        # pylint:disable=import-outside-toplevel
+
+        import paho.mqtt.client as mqtt
+        from paho.mqtt import publish
+
+        data = self.veolia_to_dict(csv_file)
+
+        if data is not None:
+            state_topic = f"veolia/{data['contract']}/last_data"
+            mqtt_server = self.configuration[PARAM_MQTT_SERVER]
+            mqtt_port = self.configuration[PARAM_MQTT_PORT]
+            mqtt_login = self.configuration[PARAM_MQTT_LOGIN]
+            mqtt_password = self.configuration[PARAM_MQTT_PASSWORD]
+            auth = {"username": mqtt_login, "password": mqtt_password}
+            # tls_dict= {'ca_certs':"<ca_certs>", 'certfile':"<certfile>",
+            #            'keyfile':"<keyfile>", 'tls_version':"<tls_version>",
+            #            'ciphers':"<ciphers">}
+            tls_dict = None
+            # will =  {'topic': "<topic>", 'payload':"<payload">,
+            #          'qos':<qos>, 'retain':<retain>}
+
+            publish.single(
+                state_topic,
+                payload=data,
+                qos=0,
+                retain=False,
+                hostname=mqtt_server,
+                port=mqtt_port,
+                # will=will,
+                auth=auth,
+                keepalive=60,
+                client_id="",
+                tls=tls_dict,
+                protocol=mqtt.MQTTv311,
+                transport="tcp",
+            )
+
+    def update_grdf_device(self, json_file):
+        pass
+
+    def cleanup(self, keep_output=False):
+        pass
+
+
 class UrlInjector(Injector):
     WORKER_DESC = "URL Destination"
 
@@ -2544,6 +2694,11 @@ def doWork():
             workers.append(injector)
         elif server_type == "url":
             injector = UrlInjector(
+                configuration_json, super_print=o.mylog, debug=args.debug
+            )
+            workers.append(injector)
+        elif server_type == "mqtt":
+            injector = MqttInjector(
                 configuration_json, super_print=o.mylog, debug=args.debug
             )
             workers.append(injector)

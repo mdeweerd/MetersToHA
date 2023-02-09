@@ -42,6 +42,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
   - [Domoticz](#domoticz)
     - [Création du "Virtual Sensor" sur Domoticz :](#cr%C3%A9ation-du-virtual-sensor-sur-domoticz-)
     - [Spécificités de configuration](#sp%C3%A9cificit%C3%A9s-de-configuration)
+  - [MQTT](#mqtt)
   - [Fournisseurs](#fournisseurs)
     - [Veolia](#veolia)
     - [GRDF](#grdf)
@@ -175,16 +176,17 @@ Explication des champs:
   Pour Veolia, vous n'avez
   pas besoin de ce service.
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
-  écrire vers un fichier ou "POST"er vers une URL (à terme "mqtt" par
-  exemple).
+  écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
 - `url`: Si type est 'url', url de type
   "file://chemin/vers/fichier/local.extension" ou
   "https://domaine.url/pourPOST"
 - `timeout`: Le délai en secondes que le script attend pour certaines
   étapes.
+- `mqtt_server`, `mqtt_port`, `mqtt_login`, `mqtt_password`: Serveur, port
+  et identifiant pour MQTT.
 
-Ne mettez que les valeurs utiles. Si vous consultez seulement Veolia IDF,
-ceci suffit:
+Ne mettez que les valeurs utiles. Si vous consultez seulement Veolia IDF
+avec Home Assistant, ceci suffit:
 
 ```json
 {
@@ -215,7 +217,7 @@ ceci suffit:
 | -c `CONFIG`, --config `CONFIG`                | Fichier de configuration                                                                                                                               |
 | -k, --keep-output                             | Garde les fichiers récupérés                                                                                                                           |
 | --insecure                                    | Ignore les erreurs de certificat du système domotique (utile pour les certificats SSL auto-signés)                                                     |
-| --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom'. Si 'url', le paramètre '--url' est nécessaire                                                                  |
+| --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom', 'mqtt'. Si 'url', le paramètre '--url' est nécessaire                                                          |
 | --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...)                                           |
 | --skip-download                               | Ne télécharge pas le fichier mais utilise le fichier déjà en place, utile pour utiliser un fichier téléchargé interactivement ou bien pour le débogue. |
 
@@ -607,6 +609,10 @@ pour les captchas, vous devez définir les champs suivants:
 | __"domoticz_server"__ | http://127.0.0.1:8080/ | Url du serveur Domoticz                                                                     |
 | __"domoticz_idx"__    | 123                    | Le numero du "virtual sensor" Domoticz crée (se trouve dans : DomoticzDevices (Colonne Idx) |
 
+## MQTT
+
+Non testé.
+
 ## Fournisseurs
 
 ### Veolia
@@ -709,6 +715,7 @@ bibliothèques prérequis:
   - colorama
   - urllib3
   - requests
+  - paho-mqtt (en cas d'utilisation de MQTT)
 
 Les fichiers Dockerfile (Ubuntu 22.04), DockerfileDebian (Debian bullseye),
 et DockerfileAlpine (Alpine 3.17) peuvent vous aider pour trouver les
