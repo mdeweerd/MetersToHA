@@ -814,7 +814,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         for fn in self.files_to_cleanup:
             try:
                 if not self._debug and not keep_output and os.path.exists(fn):
-
                     # Remove file
                     self.mylog(f"Remove downloaded file {fn}", end="")
                     os.remove(fn)
@@ -1582,7 +1581,6 @@ class DomoticzInjector(Injector):
     WORKER_DESC = "Domoticz"
 
     def __init__(self, config_dict, super_print, debug=False):
-
         self.configuration = {
             # Mandatory config values
             PARAM_DOMOTICZ_VEOLIA_IDX: None,
@@ -1802,7 +1800,6 @@ class DomoticzInjector(Injector):
 
                 # Check line integrity (Date starting by 2 or 1)
                 if date[0] == "2" or date[0] == "1":
-
                     # Verify data integrity :
                     d1 = datetime.strptime(date, "%Y-%m-%d")
                     d2 = datetime.now()
@@ -1856,7 +1853,6 @@ class HomeAssistantInjector(Injector):
     WORKER_DESC = "Home Assistant"
 
     def __init__(self, config_dict, super_print, debug=False):
-
         self.configuration = {
             # Mandatory config values
             PARAM_HA_SERVER: None,
@@ -2280,7 +2276,6 @@ class MqttInjector(Injector):
     WORKER_DESC = "MQTT"
 
     def __init__(self, config_dict, super_print, debug=False):
-
         self.configuration = {
             # Mandatory config values
             PARAM_URL: None,
@@ -2348,7 +2343,6 @@ class UrlInjector(Injector):
     WORKER_DESC = "URL Destination"
 
     def __init__(self, config_dict, super_print, debug=False):
-
         self.configuration = {
             # Mandatory config values
             PARAM_URL: None,
@@ -2428,7 +2422,6 @@ class UrlInjector(Injector):
             raise RuntimeError(f"Unsupported URL scheme {parsed_url.scheme}")
 
     def update_veolia_device(self, csv_file):
-
         with open(csv_file, "rb") as f:
             self.open_url(
                 self.configuration[PARAM_URL],

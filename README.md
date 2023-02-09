@@ -255,7 +255,9 @@ Vous pouvez tout aussi bien utiliser les autres
 environnements.
 
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
-[HACS](https://hacs.xyz/). Les scripts sont placés dans le répertoire
+[HACS](https://hacs.xyz/) après
+[activation des applications AppDaemon dans HACS](https://hacs.xyz/docs/categories/appdaemon_apps/#enable-appdaemon-apps-in-hacs).
+Les scripts sont placés dans le répertoire
 `../config/appdaemon/apps/meters-to-ha`. Le fichier
 `meters-to-ha-appdaemon.py` assure l'intégration sous AppDaemon.
 `meters_to_ha.py` est le script indépendant et commun à toute installation.
