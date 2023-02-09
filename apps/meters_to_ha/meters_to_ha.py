@@ -2026,6 +2026,22 @@ class HomeAssistantInjector(Injector):
                 )
                 self.mylog(st="OK")
 
+    def get_date_from_ha_state(self, response):
+        if "date_time" in response["attributes"]:
+            previous_date_str = response["attributes"]["date_time"]
+        elif "last_changed" in response:
+            previous_date_str = response["last_changed"]
+        elif "last_updated" in response:
+            previous_date_str = response["last_updated"]
+        else:
+            previous_date_str = None
+
+        if previous_date_str is not None:
+            previous_date = dt.datetime.fromisoformat(previous_date_str)
+        else:
+            previous_date = None
+        return previous_date
+
     def update_grdf_device(self, json_file):
         """
         Inject Gazpar Data from GRDF into Home Assistant.
@@ -2049,10 +2065,13 @@ class HomeAssistantInjector(Injector):
         sensor_name_daily_generic_kwh = "sensor.gas_daily_kwh"
         sensor_name_daily_pce_kwh = f"sensor.grdf_{pce}_daily_kwh"
 
-        # Get last known data now
+        # Get last known data now - from kWh sensor
         #  - should load this before loading JSON to get maximum range of data.
         sensor = sensor_name_generic_kwh
-        response = self.open_url(HA_API_SENSOR_FORMAT % (sensor,))
+        try:
+            response = self.open_url(HA_API_SENSOR_FORMAT % (sensor,))
+        except RuntimeError:
+            response = None
 
         # Response looks like:
         # {'entity_id': 'sensor.gas_consumption_kwh', 'state': '28657',
@@ -2078,37 +2097,32 @@ class HomeAssistantInjector(Injector):
                 current_total_kWh = float(previous_kWh)
             except ValueError:
                 pass
-            attributes = response["attributes"]
-            if "date_time" in attributes:
-                previous_date_str = attributes["date_time"]
-            elif "last_changed" in response:
-                previous_date_str = response["last_changed"]
-            elif "last_updated" in response:
-                previous_date_str = response["last_updated"]
-            else:
-                previous_date_str = None
 
+            attributes = response["attributes"]
             if "meter_m3" in attributes:
                 try:
                     previous_m3 = float(attributes["meter_m3"])
-                    if previous_date_str is not None:
-                        previous_date = dt.datetime.fromisoformat(
-                            previous_date_str
-                        )
+                    rdate = self.get_date_from_ha_state(response)
+                    if rdate is not None:
+                        previous_date = rdate
                 except ValueError:
                     pass
 
-        if previous_m3 is None:
-            sensor = sensor_name_generic_m3
-            response = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,)
-            )
+        # Get last known data now - from m3 sensor
+        try:
+            if previous_m3 is None:
+                sensor = sensor_name_generic_m3
+                response = self.open_url(
+                    HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,)
+                )
 
-            if isinstance(response, dict) and "state" in response:
-                try:
+                if isinstance(response, dict) and "state" in response:
                     previous_m3 = float(response["state"])
-                except ValueError:
-                    sensor = "None"
+                    rdate = self.get_date_from_ha_state(response)
+                    if rdate is not None:
+                        previous_date = rdate
+        except (ValueError, RuntimeError):
+            sensor = "None"
 
         self.mylog(
             f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
