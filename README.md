@@ -79,7 +79,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 
 En résumé, il y a 4 étapes pour la mise en place:
 
-1. a. Installation sur un "serveur" Linux:
+1. a. Installation sur Linux ou Windows
 
 - Distribution classique: Debian, Ubuntu, Alpine, etc. - physique ou
   Machine Virtuelle (VM);
@@ -87,10 +87,7 @@ En résumé, il y a 4 étapes pour la mise en place:
 - Debian/Ubuntu avec le sous-système Windows pour Linux (WSL);
 - Au sein/en parallèle de votre système domotique (AppDaemon pour Home
   Assistant par exemple).
-
-b. Utilisation sous Windows (hors Linux/WSL).
-
-Voir instructions plus loin.
+- Utilisation sous Windows (hors Linux/WSL), avec navigation visible.
 
 2. Configuration de MetersToHA - Fichier `config.json` avec les logins,
    etc.
