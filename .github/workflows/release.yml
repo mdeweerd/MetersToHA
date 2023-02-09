@@ -15,7 +15,7 @@ jobs:
 
       - name: Get version
         id: version
-        uses: home-assistant/actions/helpers/version@master
+        uses: home-assistant/actions/helpers/version@meters-to-ha
       - name: Set version number
         run: >-
           python3

@@ -24,7 +24,8 @@ repos:
       - id: no-commit-to-branch
         args: [--branch, main]
       - id: check-yaml
-        exclude: ^(docker-compose\.yml)$
+        # Exclude because of bug in checker
+        exclude: ^(docker-compose\.yml|.*/release-drafter\.yml)$
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
