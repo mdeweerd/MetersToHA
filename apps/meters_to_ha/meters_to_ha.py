@@ -2316,9 +2316,13 @@ class MqttInjector(Injector):
             # will =  {'topic': "<topic>", 'payload':"<payload">,
             #          'qos':<qos>, 'retain':<retain>}
 
+            self.mylog(
+                f"MQTT Publish {mqtt_server}:{mqtt_port} {auth} {data!r}"
+            )
+
             publish.single(
                 state_topic,
-                payload=data,
+                payload=json.dumps(data),
                 qos=0,
                 retain=False,
                 hostname=mqtt_server,

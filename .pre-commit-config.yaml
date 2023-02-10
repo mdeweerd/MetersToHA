@@ -39,6 +39,7 @@ repos:
       - id: check-docstring-first
       - id: fix-byte-order-marker
       - id: check-case-conflict
+      - id: pretty-format-json
       # - id: check-toml
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.29.0
