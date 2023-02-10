@@ -2324,7 +2324,7 @@ class MqttInjector(Injector):
                 state_topic,
                 payload=json.dumps(data),
                 qos=0,
-                retain=False,
+                retain=True,  # Retain this data as a state
                 hostname=mqtt_server,
                 port=mqtt_port,
                 # will=will,
