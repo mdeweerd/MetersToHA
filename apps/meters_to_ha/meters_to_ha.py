@@ -822,11 +822,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             except Exception as e:
                 self.mylog(str(e), st="EE")
 
-    def wait_until_disappeared(self, method, key, wait_message=None):
+    def wait_until_disappeared(
+        self, method, key, wait_message=None, timeout=None
+    ):
         """Wait until element is gone"""
+
         if wait_message is None:
-            wait_message = f"Wait for missing {key}"
+            wait_message = f"Wait for until {key} is gone"
+
         self.mylog(wait_message, end="")
+
+        if timeout is None:
+            # No timeout provided, default timeout
+            timeout = self.configuration[PARAM_TIMEOUT]
 
         ep = EC.visibility_of_element_located(
             (
@@ -835,15 +843,22 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
         )
 
-        timeout_message = "Failed, page timeout (timeout={})".format(
-            str(self.configuration[PARAM_TIMEOUT]),
+        timeout_message = f"Failed, page timeout (timeout={timeout})"
+
+        WebDriverWait(self.__browser, timeout=timeout).until_not(
+            ep, message=timeout_message
         )
-        self.__wait.until_not(ep, message=timeout_message)
 
         self.mylog(st="OK")
 
     def click_in_view(  # pylint: disable=R0913
-        self, method, key, click_message=None, wait_message=None, delay=0
+        self,
+        method,
+        key,
+        click_message=None,
+        wait_message=None,
+        delay=0,
+        timeout=None,
     ):
         """
         1. Wait until element is visible
@@ -852,19 +867,21 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         4. Click
         """
         # Wait until element is visible
+        if wait_message is None:
+            wait_message = f"Wait for Button {method}:{key}"
+        self.mylog(wait_message, end="")
+
+        if timeout is None:
+            # No timeout provided, default timeout
+            timeout = self.configuration[PARAM_TIMEOUT]
+
+        timeout_message = f"Failed, page timeout (timeout={timeout})"
+
         ep = EC.visibility_of_element_located(
             (
                 method,
                 key,
             )
-        )
-
-        if wait_message is None:
-            wait_message = f"Wait for Button {key}"
-        self.mylog(wait_message, end="")
-
-        timeout_message = "Failed, page timeout (timeout={})".format(
-            str(self.configuration[PARAM_TIMEOUT]),
         )
         el = self.__wait.until(ep, message=timeout_message)
 
@@ -1320,7 +1337,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         time.sleep(3)
 
+        content: None | str = None
         isLoggedIn = False
+
         try:
             # If date_debut is present, likely already logged in
             date_debut_el = self.__browser.find_element(By.ID, "date-debut")
@@ -1395,6 +1414,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Give the user some time to resolve the captcha
             # FEAT: Wait until it disappears, use 2captcha if configured
 
+            CONNEXION_XPATH = r"//input[@value='Connexion']"
+
             self.mylog("Proceed with captcha resolution", end="~~")
             if self.resolve_captcha2() is not None:
                 # Some time for captcha to remove.
@@ -1415,30 +1436,61 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     re_btn.click()
                     self.__browser.switch_to.default_content()
 
+                    # Try to click connexion in case captcha worked.
+                    try:
+                        self.click_in_view(
+                            By.XPATH,
+                            CONNEXION_XPATH,
+                            # wait_message="",
+                            click_message="Click on connexion",
+                            delay=random.uniform(1, 2),
+                        )
+                        # Even if click succeeded, not always connected
+                    except Exception:
+                        pass
+
+                waitUntilConnexionGone = 2
                 if self._debug:
-                    # Let the user some time to resolve the captcha
+                    # Allow some some time to resolve captcha, and connect
                     self.mylog("Waiting 30 seconds for the user", end="~~")
-                    time.sleep(30)
+                    waitUntilConnexionGone = 30
                 else:
+                    # Not in debug mode, only wait a bit
                     self.mylog(
                         "No debug interface, proceed (delay 2s)", end="~~"
                     )
-                    # Not in debug mode, only wait for captcha
-                    time.sleep(2)
+
+                try:
+                    self.wait_until_disappeared(
+                        By.XPATH,
+                        CONNEXION_XPATH,
+                        wait_message=None,
+                        timeout=waitUntilConnexionGone,
+                    )
+                    # If button disappeared, then logged in
+                    isLoggedIn = True
+                except Exception:
+                    pass
 
             self.__browser.switch_to.default_content()
 
             if self.configuration[PARAM_SCREENSHOT]:
                 self.get_screenshot("screen_before_connection.png")
 
-            self.click_in_view(
-                By.XPATH,
-                r"//input[@value='Connexion']",
-                # wait_message="",
-                click_message="Click on connexion",
-                delay=random.uniform(1, 2),
-            )
-            time.sleep(5)
+            if not isLoggedIn:
+                try:
+                    self.click_in_view(
+                        By.XPATH,
+                        CONNEXION_XPATH,
+                        # wait_message="",
+                        click_message="Click on connexion",
+                        delay=random.uniform(1, 2),
+                        timeout=2,
+                    )
+                    time.sleep(5)
+                except Exception:
+                    # Already clicked or other error
+                    pass
 
             # Get data from GRDF ############
 
@@ -1463,6 +1515,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # r=self.__browser.requests[-1:][0]
             # self.__browser(self.__browser.wait_for_request(r.path))
             # print(f"Url {data_url} -> R:{result!r}\n")
+
+        if content is None:
+            raise Exception("No content")
 
         if not self.configuration[PARAM_KEEP_OUTPUT]:
             self.files_to_cleanup.append(g_file)
