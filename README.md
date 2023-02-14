@@ -777,8 +777,9 @@ Le déroulement sera visible - il n'y a pas eu de recherche si cela peut
 
 Pour la résolution du captcha sous Windows en mode interactif, je vous
 recommande d'ajouter l'option `--debug` qui vous donnera plus de temps. Il
-faut résoudre le captcha et le valider. Ne cliquez pas le bouton
-"Connexion" du site même - le script le fait.
+faut résoudre le captcha et le valider. Vous pouvez cliquer le bouton
+"Connexion" également. Si le captcha est validé automatiquement, le script
+avance automatiquement et vous n'aurez pas à résoudre de captcha.
 
 Exemple de lancement, avec un fichier de configuration appelée
 `winconfig.json`.
