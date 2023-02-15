@@ -828,7 +828,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         """Wait until element is gone"""
 
         if wait_message is None:
-            wait_message = f"Wait for until {key} is gone"
+            wait_message = f"Wait until {key} is gone"
 
         self.mylog(wait_message, end="")
 
