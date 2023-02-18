@@ -51,6 +51,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
     - [Installation "direct"](#installation-direct)
     - [Installation avec le sous-système Windows pour Linux (WSL)](#installation-avec-le-sous-syst%C3%A8me-windows-pour-linux-wsl)
     - [Installation sous Windows](#installation-sous-windows)
+      - [Planification de tâche](#planification-de-t%C3%A2che)
     - [Installation de MetersToHA](#installation-de-meterstoha)
       - [Installation avec `git`](#installation-avec-git)
       - [Installation avec une archive](#installation-avec-une-archive)
@@ -154,7 +155,7 @@ Explication des champs:
   Cela peut être
   [http://homeassistant.local:8123](http://homeassistant.local:8123) dans
   le cas ou vous n'avez pas touché la configuration réseau.
-- `ha_token`: voir ci-dessous, permets d'accéder à Home Assistant depuis le
+- `ha_token`: voir ci-dessous, permet d'accéder à Home Assistant depuis le
   script.\
   Seulement pour Home Assistant
 - `2captcha_token`: à obtenir sur
@@ -353,7 +354,7 @@ veolia_idf:
   module: meters_to_ha_appdaemon
   class: MetersToHA
   # optionnel - Par défault "call_meters_to_ha".
-  #     Permets de définir plusieurs lancements distincts, par exemple
+  #     Permet de définir plusieurs lancements distincts, par exemple
   #     pour consulter Veolia à une certaine heure, et GRDF à une autre heure.
   event_name: call_veolia
   # optionnel - Par exemple --grdf     pour ne faire que la requête auprès de GRDF
@@ -461,7 +462,7 @@ grdf:
   module: meters_to_ha
   class: MetersToHA
   # optionnel - Par défault "call_meters_to_ha".
-  #     Permets de définir plusieurs lancements distincts, par exemple
+  #     Permet de définir plusieurs lancements distincts, par exemple
   #     pour consulter Veolia à une certaine heure, et GRDF à une autre heure.
   event_name: call_grdf
   # extra_opts - Paramètres complémentaires pour la ligne de commande (optionnel)
@@ -772,26 +773,56 @@ script). Un exemple d'un fichier de configuration est:
 }
 ```
 
-Le déroulement sera visible - il n'y a pas eu de recherche si cela peut
-être invisible sous Windows.
+Sans l'option `--debug` le déroulement sera visible. Dans ce cas s'il y a
+un captcha à résoudre, le login ne sera pas réussi. L'option `--screenshot`
+permet d'enregister le ontenu du navigateur (caché) dans
+`screen_before_connection.png` ou vous pouvez vérifier s'il y avait un
+captcha ou pas.
 
-Pour la résolution du captcha sous Windows en mode interactif, je vous
-recommande d'ajouter l'option `--debug` qui vous donnera plus de temps. Il
-faut résoudre le captcha et le valider. Vous pouvez cliquer le bouton
-"Connexion" également. Si le captcha est validé automatiquement, le script
-avance automatiquement et vous n'aurez pas à résoudre de captcha.
+Sinon, pour la résolution du captcha sous Windows en mode interactif,
+l'option `--debug` est nécessaire. Lorsque le popup apparaiti, vous\
+devez
+le captcha et le valider. Cliquez le bouton "Connexion" également. Si le
+captcha est validé automatiquement, le script avance automatiquement comme
+en mode caché et vous n'aurez pas à résoudre de captcha.
 
 Exemple de lancement, avec un fichier de configuration appelée
-`winconfig.json`.
+`winconfig.json`, avec une capture d'écrant avant connexion.
 
 ```shell
-python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug
+python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug --screenshot
 ```
 
 Pour plus d'information concernant le contenu du fichier de configuration,
 vérifiez
 [le paragraphe correspondant](#le-fichier-de-configuration-configjson) dans
 le présent document.
+
+#### Planification de tâche
+
+Vous pouvez planifier l'exécution de la tâche sous Windows.
+
+Pour y parvenir, cherchez `Planificateur de tâches` dans la zone de
+recherche windows.\
+Choissez "Créer une tâche de base" et suivre le
+processus. Choississez "Tous les jours" et "Démarrez le" à une heure qui
+sera celle de tous les jours. Puis "Démarrer un programme".\
+Il est ensuite
+important de choisir votre `pythonw.exe` comme programme, les paramètres et
+"Commencez dans" qui doit correspondre au chemin de MetersToHA (contenant
+le sous-répertoire apps).
+
+![](images/Win11PlanificationTache.png)
+
+Avant de "Terminer", choisissez d'ouvrir les propriétés de la tâche afin de
+pouvoir activer l'exécution même si l'utilisateur n'est pas connecté. Vous
+pourrez y ajuster également d'autres paramètres (voir les onglets).
+
+Trouvez la tache dans "Bibliothèque du Planificateur de tâches" et faites
+"Exécuter" (dans le menu accessible par clique droit de la tâche) afin de
+vérifier que cela fonctionne (vérifiez les fichiers de sortie).\
+Quand cela
+ne fonctionne pas, assurez-vous que tous les chemins sont corrects.
 
 ### Installation de MetersToHA
 

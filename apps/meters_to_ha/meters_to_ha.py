@@ -621,24 +621,28 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             "excludeSwitches", ["enable-automation"]
         )
 
-        if sys.platform != "win32":
-            self.mylog("Start virtual display (chromium)", end="")
-            if self._debug and sys.platform != "win32":
-                self.__display = Display(visible=1, size=(1280, 1024))
-            else:
-                options.add_argument("--headless")
-                options.add_argument("--disable-gpu")
+        self.mylog("Start virtual display (chromium)", end="")
+        if self._debug and sys.platform != "win32":
+            self.__display = Display(visible=1, size=(1280, 1024))
+        else:
+            options.add_argument("--headless")
+            if sys.platform != "win32":
                 try:
+                    options.add_argument("--disable-gpu")
                     self.__display = Display(visible=0, size=(1280, 1024))
                 except Exception:
                     raise
+            else:
+                options.add_argument("window-size=1280,1024")
 
+        if sys.platform != "win32":
             try:
                 self.__display.start()
             except Exception:
                 raise
-            else:
-                self.mylog(st="OK")
+
+        # No exception up to here, so ok
+        self.mylog(st="OK")
 
         # Discover classes provided
         # print_classes("selenium.webdriver") ; sys.exit()
