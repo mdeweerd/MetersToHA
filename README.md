@@ -69,8 +69,8 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
 
 - GRDF n'est pas encore compatible avec Domoticz;
 - GRDF utilise un captcha. Il peut être validé "tout seul" dans certains
-  cas (peu de requêts par jour) ou nécessiter une résolution interactive
-  soit un service de résolution de captcha payant.
+  cas (si peu de requêtes par jour), ou nécessiter une résolution
+  interactive, ou un service de résolution de captcha payant.
 - Si vous migrez depuis
   [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
   vous devez desactiver ces automatisations et vos "sensors" de type
