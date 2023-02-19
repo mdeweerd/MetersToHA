@@ -616,10 +616,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 "safebrowsing.enabled": True,
             },
         )
+        options.add_argument("start-maximized")
         options.add_experimental_option("useAutomationExtension", False)
         options.add_experimental_option(
             "excludeSwitches", ["enable-automation"]
         )
+        options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        options.add_argument("--disable-blink-features=AutomationControlled")
 
         self.mylog("Start virtual display (chromium)", end="")
         if self._debug:
