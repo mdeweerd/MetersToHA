@@ -622,8 +622,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
 
         self.mylog("Start virtual display (chromium)", end="")
-        if self._debug and sys.platform != "win32":
-            self.__display = Display(visible=1, size=(1280, 1024))
+        if self._debug:
+            if sys.platform != "win32":
+                self.__display = Display(visible=1, size=(1280, 1024))
         else:
             options.add_argument("--headless")
             if sys.platform != "win32":
