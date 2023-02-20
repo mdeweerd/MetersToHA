@@ -576,24 +576,28 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
     def init_chromium(self):
+        if hasUndetectedDriver:
+            options = uc.ChromeOptions()
+        else:
+            options = webdriver.ChromeOptions()
+
         # Set Chrome options
-        options = webdriver.ChromeOptions()
         if (
             sys.platform != "win32"
             and hasattr(os, "geteuid")
             and os.geteuid() == 0  # pylint: disable=no-member
         ):
             options.add_argument("--no-sandbox")
-        options.add_argument("--disable-modal-animations")
-        options.add_argument("--disable-login-animations")
-        options.add_argument("--disable-renderer-backgrounding")
-        options.add_argument("--disable-background-timer-throttling")
-        options.add_argument("--disable-backgrounding-occluded-wndows")
-        options.add_argument("--disable-translate")
-        options.add_argument("--disable-popup-blocking")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-modal-animations")
+            options.add_argument("--disable-login-animations")
+            options.add_argument("--disable-renderer-backgrounding")
+            options.add_argument("--disable-background-timer-throttling")
+            options.add_argument("--disable-backgrounding-occluded-wndows")
+            options.add_argument("--disable-translate")
+            options.add_argument("--disable-popup-blocking")
+            options.add_argument("--disable-notifications")
+            options.add_argument("--disable-infobars")
+            options.add_argument("--disable-dev-shm-usage")
 
         local_dir = str(self.configuration[PARAM_DOWNLOAD_FOLDER])
 
@@ -613,22 +617,24 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # if self._debug:
         #     Does not work well with veolia due to multiple "same" elements
         #     options.add_argument("--auto-open-devtools-for-tabs")
+        options.add_experimental_option(
+            "prefs",
+            {
+                "credentials_enable_service": False,
+                "download.default_directory": self.configuration[
+                    PARAM_DOWNLOAD_FOLDER
+                ],
+                "profile.default_content_settings.popups": 0,
+                "profile.password_manager_enabled": False,
+                "download.prompt_for_download": False,
+                "download.directory_upgrade": True,
+                "extensions_to_open": "text/csv",
+                "safebrowsing.enabled": True,
+            },
+        )
+        options.add_argument("--disable-blink-features=AutomationControlled")
+
         if not hasUndetectedDriver:
-            options.add_experimental_option(
-                "prefs",
-                {
-                    "credentials_enable_service": False,
-                    "download.default_directory": self.configuration[
-                        PARAM_DOWNLOAD_FOLDER
-                    ],
-                    "profile.default_content_settings.popups": 0,
-                    "profile.password_manager_enabled": False,
-                    "download.prompt_for_download": False,
-                    "download.directory_upgrade": True,
-                    "extensions_to_open": "text/csv",
-                    "safebrowsing.enabled": True,
-                },
-            )
             options.add_experimental_option("useAutomationExtension", False)
             options.add_experimental_option(
                 "excludeSwitches", ["enable-automation"]
@@ -636,11 +642,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             options.add_experimental_option(
                 "excludeSwitches", ["enable-logging"]
             )
-            options.add_argument(
-                "--disable-blink-features=AutomationControlled"
-            )
 
-        self.mylog("Start virtual display (chromium)", end="")
+        if sys.platform != "win32":
+            self.mylog("Start virtual display (chromium)", end="")
+
         if self._debug:
             if sys.platform != "win32":
                 self.__display = Display(visible=1, size=(1280, 1024))
