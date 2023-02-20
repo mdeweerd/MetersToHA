@@ -10,12 +10,14 @@ chromedriver.exe
 **/winconfig.json
 **/historique_gazpar.json*
 **/historique_jours_litres.csv*
+**/screen_before_connection.png
 *.zip
 demo
 support
 veolia_data.csv
 veolia_test_data.csv
 getData
+getDataHeadless
 
 
 # Local script
