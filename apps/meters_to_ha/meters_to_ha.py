@@ -84,6 +84,7 @@ PARAM_LOGS_FOLDER = "logs_folder"
 PARAM_SCREENSHOT = "screenshot"
 PARAM_SKIP_DOWNLOAD = "skip_download"
 PARAM_KEEP_OUTPUT = "keep_output"
+PARAM_CHROME_VERSION = "chrome_version"
 
 PARAM_SERVER_TYPE = "type"
 PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
@@ -158,8 +159,6 @@ try:
     try:
         import undetected_chromedriver as uc
 
-        uc.TARGET_VERSION = 110
-        uc.install(executable_path="./abc.exe")
         hasUndetectedDriver = True
     except ImportError:
         pass
@@ -442,6 +441,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_CHROMEDRIVER: which("chromedriver")
             if which("chromedriver")
             else self.install_dir + "/chromedriver",
+            PARAM_CHROME_VERSION: PARAM_OPTIONAL_VALUE,
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: self.install_dir,
             PARAM_LOGS_FOLDER: self.install_dir,
@@ -683,7 +683,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     + "chromedriver.log",
                 )
             if hasUndetectedDriver:
+                chrome_version = self.configuration[PARAM_CHROME_VERSION]
                 browser = uc.Chrome(
+                    version_main=chrome_version,
                     service=chromeService,
                     options=options,
                 )
@@ -2710,7 +2712,15 @@ def doWork():
         action="store_true",
         help="Skip downloading file from web, use local file",
     )
-
+    parser.add_argument(
+        "--chrome-version",
+        help="When using undetected-chromedriver, "
+        "version to use in case of error "
+        "'This version of ChromeDriver only supports Chrome version ...'",
+        required=False,
+        nargs=1,
+        type=int,
+    )
     args = parser.parse_args()
 
     # Deprecated keep_csv, but still use its value
@@ -2718,6 +2728,8 @@ def doWork():
     args.keep_output = args.keep_output or args.keep_csv or args.skip_download
     if args.logs_folder is not None:
         args.logs_folder = str(args.logs_folder).strip("[]'")
+    if args.chrome_version is not None:
+        args.chrome_version = args.chrome_version[0]
 
     # Init output
     try:
