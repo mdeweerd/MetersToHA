@@ -146,6 +146,7 @@ return data;
 return [];
 }
 """
+hasUndetectedDriver = False
 
 try:
     # Only add packages that are not built-in here
@@ -153,12 +154,23 @@ try:
     import urllib3
     from colorama import Fore, Style
     from pyvirtualdisplay import Display, xauth
+
+    try:
+        import undetected_chromedriver as uc
+
+        uc.TARGET_VERSION = 110
+        uc.install(executable_path="./abc.exe")
+        hasUndetectedDriver = True
+    except ImportError:
+        pass
+
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
     from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
+
 except ImportError as excImport:
     print(
         f"Error: failed to import required Python module : {excImport}",
@@ -601,28 +613,32 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # if self._debug:
         #     Does not work well with veolia due to multiple "same" elements
         #     options.add_argument("--auto-open-devtools-for-tabs")
-        options.add_experimental_option(
-            "prefs",
-            {
-                "credentials_enable_service": False,
-                "download.default_directory": self.configuration[
-                    PARAM_DOWNLOAD_FOLDER
-                ],
-                "profile.default_content_settings.popups": 0,
-                "profile.password_manager_enabled": False,
-                "download.prompt_for_download": False,
-                "download.directory_upgrade": True,
-                "extensions_to_open": "text/csv",
-                "safebrowsing.enabled": True,
-            },
-        )
-        options.add_argument("start-maximized")
-        options.add_experimental_option("useAutomationExtension", False)
-        options.add_experimental_option(
-            "excludeSwitches", ["enable-automation"]
-        )
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        options.add_argument("--disable-blink-features=AutomationControlled")
+        if not hasUndetectedDriver:
+            options.add_experimental_option(
+                "prefs",
+                {
+                    "credentials_enable_service": False,
+                    "download.default_directory": self.configuration[
+                        PARAM_DOWNLOAD_FOLDER
+                    ],
+                    "profile.default_content_settings.popups": 0,
+                    "profile.password_manager_enabled": False,
+                    "download.prompt_for_download": False,
+                    "download.directory_upgrade": True,
+                    "extensions_to_open": "text/csv",
+                    "safebrowsing.enabled": True,
+                },
+            )
+            options.add_experimental_option("useAutomationExtension", False)
+            options.add_experimental_option(
+                "excludeSwitches", ["enable-automation"]
+            )
+            options.add_experimental_option(
+                "excludeSwitches", ["enable-logging"]
+            )
+            options.add_argument(
+                "--disable-blink-features=AutomationControlled"
+            )
 
         self.mylog("Start virtual display (chromium)", end="")
         if self._debug:
@@ -666,10 +682,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     log_path=str(self.configuration[PARAM_LOGS_FOLDER])
                     + "chromedriver.log",
                 )
-            browser = webdriver.Chrome(
-                service=chromeService,
-                options=options,
-            )
+            if hasUndetectedDriver:
+                browser = uc.Chrome(
+                    service=chromeService,
+                    options=options,
+                )
+            else:
+                browser = webdriver.Chrome(
+                    service=chromeService,
+                    options=options,
+                )
+
             browser.maximize_window()
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
             self.__wait = WebDriverWait(browser, timeout)
