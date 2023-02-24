@@ -50,7 +50,7 @@ HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
     - [Docker - "configuration système incluse"](#docker---configuration-syst%C3%A8me-incluse)
     - [Installation "direct"](#installation-direct)
     - [Installation avec le sous-système Windows pour Linux (WSL)](#installation-avec-le-sous-syst%C3%A8me-windows-pour-linux-wsl)
-    - [Installation sous Windows](#installation-sous-windows)
+    - [Installation native sous Windows](#installation-native-sous-windows)
       - [Planification de tâche](#planification-de-t%C3%A2che)
     - [Installation de MetersToHA](#installation-de-meterstoha)
       - [Installation avec `git`](#installation-avec-git)
@@ -740,22 +740,42 @@ configuration et un script d'installation des outils.
 
 Toutefois cette méthode n'a pas été testée.
 
-### Installation sous Windows
+### Installation native sous Windows
 
-Vous devez installer Python sous Windows et les modules nécessaires. La
-version testée est
+Pour une solution n'utilisant aucune forme de Linux sous Windows (ni WSL,
+ni Docker, ni une VM), vous devez installer Python sous Windows et les
+modules nécessaires. La version testée est
 [3.10.9 obtenu depuis https://www.python.org/downloads/windows/](https://www.python.org/downloads/windows/).
 
-Vous devez également obtenir
+Vous aurez également besoin de
 [ChromeDriver](https://chromedriver.chromium.org/downloads) pour Windows.
+
 Vous pouvez extraire le fichier `ChromeDriver.exe` qui correspond à votre
 version Chrome directement dans le dépôt que vous avez récupéré.
+
+Une autre méthode qui semble fonctionne c'est de laiser faire
+`undetected-chromedriver` à installer avec
+
+```shell
+pip install undetected-chromedriver
+```
+
+`undetected-chromedriver` est un module qui se charge de récuperer le
+binaire et de le patcher pour que la navigation soit moins détectable comme
+une navigation géré par un automatisme. Cela semble avoir une certaine
+efficacité pour la validation simple d'un captcha. Il faudra probablement
+ajouter l'option `--chrome-version` au lancement de `meterstoha.py` (voir
+[METERSTOHA.BAT](METERSTOHA.BAT) pour un exemple d'automatisation).
 
 Ensuite vous devez [installer MetersToHA](#installation-de-meterstoha).
 
 Pour le lancement sous Windows, vous devez renseigner les chemins de
 `chrome` et `chromedriver` (absolu ou relatifs depuis là ou vous lancez le
-script). Un exemple d'un fichier de configuration est:
+script).\
+Vous pouvez omettre `chromedriver` si vous avez installé le
+module `undetected-chromedriver`.
+
+Un exemple d'un fichier de configuration est:
 
 ```json
 {
@@ -788,11 +808,14 @@ captcha est validé automatiquement, le script avance automatiquement comme
 en mode caché et vous n'aurez pas à résoudre de captcha.
 
 Exemple de lancement, avec un fichier de configuration appelée
-`winconfig.json`, avec une capture d'écrant avant connexion.
+`winconfig.json`, avec une capture d'écran avant connexion.
 
 ```shell
 python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug --screenshot
 ```
+
+Le fichier [METERSTOHA.BAT](METERSTOHA.BAT) montre plus de variantes sur le
+lancement (interactif ou pas, avec trace ou pas).
 
 Pour plus d'information concernant le contenu du fichier de configuration,
 vérifiez
