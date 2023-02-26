@@ -219,6 +219,7 @@ avec Home Assistant, ceci suffit:
 | --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom', 'mqtt'. Si 'url', le paramètre '--url' est nécessaire                                                          |
 | --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...)                                           |
 | --skip-download                               | Ne télécharge pas le fichier mais utilise le fichier déjà en place, utile pour utiliser un fichier téléchargé interactivement ou bien pour le débogue. |
+| --chrome-version CHROME_VERSION               | La version (principale) de chrome lorsque `undetected-chromedriver` est installé.  Unombre tel que 109, 110, ... .                                     |
 
 Lorsqu'une option est à la fois disponible dans le fichier de configuration
 que comme option en ligne de commande, la ligne de commande prend la
