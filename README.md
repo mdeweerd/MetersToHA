@@ -3,15 +3,19 @@
 Ce script automatise le transfert de l'information de consommation d'eau et
 de gaz vers des systèmes domotiques tels que
 [Home Assistant](https://www.home-assistant.io/) et
-[Domoticz](https://domoticz.com/).
+[Domoticz](https://domoticz.com/) et d'autres en MQTT.
 
-Ceci est la documentation spécifique pour Home Assistant avec AppDaemon et
-HACS. C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf).
+C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf) déjà
+connu et accélérant le développement.
+
+L'idée est que MetersToHA s'enrichit d'autre collecteurs et systèmes
+domotiques afin d'éviter la multiplication de modules à installer - à vous
+de jouer.
 
 ## Fonctionnalités :
 
 - Récupération des valeurs de consommation au fil du temps;
-- Gestion multi-contrat
+- Gestion multi-contrat (veolia-idf)
 - Vérification de l'intégrité de l'environnement (prérequis / configuration
   sur serveur domotique)
 - Mode débogue graphique
