@@ -1,17 +1,17 @@
 {
-    "codeowners": [
-        "@mdeweerd"
-    ],
-    "documentation": "https://github.com/mdeweerd/MetersToHA",
-    "issue_tracker": "https://github.com/mdeweerd/MetersToHA/issues",
-    "name": "MetersToHA",
-    "requirements": [
-"urllib3>=1.24.2",
-"colorama>=0.3.7",
-"selenium>=3.14.1",
-"PyVirtualDisplay>=0.2.4",
-"requests>=2.23.0",
-"paho-mqtt"
-    ],
-    "version": "0.0.0"
+  "name": "MetersToHA",
+  "codeowners": [
+    "@mdeweerd"
+  ],
+  "documentation": "https://github.com/mdeweerd/MetersToHA",
+  "issue_tracker": "https://github.com/mdeweerd/MetersToHA/issues",
+  "requirements": [
+    "urllib3>=1.24.2",
+    "colorama>=0.3.7",
+    "selenium>=3.14.1",
+    "PyVirtualDisplay>=0.2.4",
+    "requests>=2.23.0",
+    "paho-mqtt"
+  ],
+  "version": "0.0.0"
 }

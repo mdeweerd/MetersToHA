@@ -1,3 +1,6 @@
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+
 # Meters To Home Automation (MetersToHA / Meters2HA / M2HA)
 
 Ce script automatise le transfert de l'information de consommation d'eau et
@@ -260,7 +263,11 @@ environnements.
 
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/) après
-[activation des applications AppDaemon dans HACS](https://hacs.xyz/docs/categories/appdaemon_apps/#enable-appdaemon-apps-in-hacs).
+[activation des applications AppDaemon dans HACS](https://hacs.xyz/docs/categories/appdaemon_apps/#enable-appdaemon-apps-in-hacs)
+comme ceci en suivatn "Configuration" pour HACS dans "Paramètres>Appareils
+et services":
+![Activate AppDaemon Apps](images/hacs_discover_appdaemon.png).
+
 Les scripts sont placés dans le répertoire
 `../config/appdaemon/apps/meters-to-ha`. Le fichier
 `meters-to-ha-appdaemon.py` assure l'intégration sous AppDaemon.
