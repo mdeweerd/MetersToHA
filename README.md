@@ -564,7 +564,7 @@ condition:
   - condition: template
     value_template: >-
       {{
-      (as_timestamp(now())-as_timestamp(states.sensor.gas_consumption_kwh.last_updated))
+      (as_timestamp(now())-as_timestamp(states.sensor.gas_consumption_kwh.last_updated|default('1970-01-01')))
       > 17*3600 }}
 action:
   - delay: '{{ range(0, 55*60+1) | random }}'
