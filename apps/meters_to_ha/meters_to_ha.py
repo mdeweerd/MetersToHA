@@ -104,6 +104,10 @@ PARAM_INSECURE = "insecure"
 
 PARAM_URL = "url"
 
+# Name for parameter where local state is stored
+STATE_FILE = "state_file"
+INSTALL_DIR = "install_dir"
+
 REPO_BASE = "s0nik42/veolia-idf"
 
 # Script provided by 2captcha to identify captcha information on the page
@@ -278,12 +282,10 @@ class Output(Worker):
         logs_folder = (
             os.path.dirname(os.path.realpath(__file__))
             if config_dict[PARAM_LOGS_FOLDER] is None
-            else self.install_dir
+            else config_dict[INSTALL_DIR]
         )
-        if logs_folder[-1] != os.path.sep:
-            logs_folder += os.path.sep
 
-        logfile = logs_folder + "service.log"
+        logfile = os.path.join(logs_folder, "service.log")
 
         # In standard mode log to a file
         if self._debug is False:
@@ -429,18 +431,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_KEEP_OUTPUT: False,
             PARAM_GECKODRIVER: which("geckodriver")
             if which("geckodriver")
-            else self.install_dir + "/geckodriver",
+            else os.path.join(config_dict[INSTALL_DIR], "geckodriver"),
             PARAM_FIREFOX: which("firefox")
             if which("firefox")
-            else self.install_dir + "/firefox",
+            else os.path.join(config_dict[INSTALL_DIR], "firefox"),
             PARAM_CHROMIUM: which("chromium")
             if which("chromium")
             else which("chromium-browser")
             if which("chromium-browser")
-            else self.install_dir + "/chromium",
+            else os.path.join(config_dict[INSTALL_DIR], "chromium"),
             PARAM_CHROMEDRIVER: which("chromedriver")
             if which("chromedriver")
-            else self.install_dir + "/chromedriver",
+            else os.path.join(config_dict[INSTALL_DIR], "chromedriver"),
             PARAM_CHROME_VERSION: PARAM_OPTIONAL_VALUE,
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: self.install_dir,
@@ -458,13 +460,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         else:
             self.mylog(st="OK")
 
-        self.__full_path_download_veolia_idf_file = (
-            str(self.configuration[PARAM_DOWNLOAD_FOLDER])
-            + self.download_veolia_filename
+        self.__full_path_download_veolia_idf_file = os.path.join(
+            self.configuration[PARAM_DOWNLOAD_FOLDER],
+            self.download_veolia_filename,
         )
-        self.__full_path_download_grdf_file = (
-            str(self.configuration[PARAM_DOWNLOAD_FOLDER])
-            + self.download_grdf_filename
+        self.__full_path_download_grdf_file = os.path.join(
+            self.configuration[PARAM_DOWNLOAD_FOLDER],
+            self.download_grdf_filename,
         )
 
     def init(self):
@@ -532,8 +534,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             ff_service = FirefoxService(
                 executable_path=self.configuration[PARAM_GECKODRIVER],
-                log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                + "geckodriver.log",
+                log_path=os.path.join(
+                    self.configuration[PARAM_LOGS_FOLDER], "geckodriver.log"
+                ),
             )
             if not hasattr(ff_service, "process"):
                 # Webdriver may complain about missing process.
@@ -678,14 +681,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if "chromium" in inspect.getmembers(webdriver):
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                    + "chromedriver.log",
+                    log_path=os.path.join(
+                        self.configuration[PARAM_LOGS_FOLDER],
+                        "chromedriver.log",
+                    ),
                 )
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    log_path=str(self.configuration[PARAM_LOGS_FOLDER])
-                    + "chromedriver.log",
+                    log_path=os.path.join(
+                        self.configuration[PARAM_LOGS_FOLDER],
+                        "chromedriver.log",
+                    ),
                 )
             if hasUndetectedDriver:
                 chrome_version = self.configuration[PARAM_CHROME_VERSION]
@@ -950,7 +957,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         Get screenshot and save to file in logs_folder
         """
 
-        fn_img = f"{self.configuration[PARAM_LOGS_FOLDER]}{basename}"
+        fn_img = os.path.join(self.configuration[PARAM_LOGS_FOLDER], basename)
         # Screenshots are only for debug, so errors are not blocking.
         try:
             self.mylog(f"Get & Save '{fn_img}'", end="--")
@@ -1955,6 +1962,7 @@ class HomeAssistantInjector(Injector):
             # Optional config values
             PARAM_TIMEOUT: "30",
             PARAM_INSECURE: False,
+            STATE_FILE: PARAM_OPTIONAL_VALUE,
         }
         super().__init__(config_dict, super_print=super_print, debug=debug)
 
@@ -2155,14 +2163,6 @@ class HomeAssistantInjector(Injector):
         sensor_name_daily_generic_kwh = "sensor.gas_daily_kwh"
         sensor_name_daily_pce_kwh = f"sensor.grdf_{pce}_daily_kwh"
 
-        # Get last known data now - from kWh sensor
-        #  - should load this before loading JSON to get maximum range of data.
-        sensor = sensor_name_generic_kwh
-        try:
-            response = self.open_url(HA_API_SENSOR_FORMAT % (sensor,))
-        except RuntimeError:
-            response = None
-
         # Response looks like:
         # {'entity_id': 'sensor.gas_consumption_kwh', 'state': '28657',
         #  'attributes': {
@@ -2181,27 +2181,54 @@ class HomeAssistantInjector(Injector):
 
         previous_m3 = None
         previous_kWh = None
-        if isinstance(response, dict) and "state" in response:
-            previous_kWh = response["state"]
-            try:
-                current_total_kWh = float(previous_kWh)
-            except ValueError:
-                pass
 
-            attributes = response["attributes"]
-            if "meter_m3" in attributes:
+        entity_data = None
+
+        # Get last known data - response looks as shown abovej0
+        #  - should load this before loading JSON to get maximum range of data.
+
+        for sensor in (
+            sensor_name_pce_kwh,
+            sensor_name_generic_kwh,
+        ):
+            try:
+                response = self.open_url(HA_API_SENSOR_FORMAT % (sensor,))
+            except RuntimeError:
+                response = None
+
+            self.mylog(f"From {sensor}: {response!r}")
+
+            if isinstance(response, dict) and "state" in response:
+                entity_data = response
+                previous_kWh = response["state"]
                 try:
-                    previous_m3 = float(attributes["meter_m3"])
-                    rdate = self.get_date_from_ha_state(response)
-                    if rdate is not None:
-                        previous_date = rdate
+                    current_total_kWh = float(previous_kWh)
                 except ValueError:
                     pass
 
+                attributes = response["attributes"]
+                if "meter_m3" in attributes:
+                    try:
+                        previous_m3 = float(attributes["meter_m3"])
+                        rdate = self.get_date_from_ha_state(response)
+                        if rdate is not None:
+                            previous_date = rdate
+                    except ValueError:
+                        pass
+                break
+
         # Get last known data now - from m3 sensor
-        try:
-            if previous_m3 is None:
-                sensor = sensor_name_generic_m3
+        for m3_sensor in (
+            sensor_name_pce_m3,
+            sensor_name_generic_m3,
+        ):
+            if previous_m3 is not None:
+                # m3 already known
+                break
+
+            # previous_m3 is None:
+            try:
+                sensor = m3_sensor
                 response = self.open_url(
                     HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,)
                 )
@@ -2211,14 +2238,27 @@ class HomeAssistantInjector(Injector):
                     rdate = self.get_date_from_ha_state(response)
                     if rdate is not None:
                         previous_date = rdate
-        except (ValueError, RuntimeError):
-            sensor = "None"
+            except (ValueError, RuntimeError):
+                sensor = "None"  # For log message just below
+
+        state = get_state_file(self.configuration[STATE_FILE])
+        self.mylog(f"state: {state!r}", "~~")
+        previous_kWh = None
+        if previous_kWh is None:
+            state = get_state_file(self.configuration[STATE_FILE])
+            if "grdf" in state:
+                grdf_state = state["grdf"]
+                self.mylog(f"grdf_state: {grdf_state!r}", "~~")
+                previous_kWh = grdf_state["state"]
+                if "m3" in grdf_state:
+                    previous_m3 = grdf_state["m3"]
 
         self.mylog(
             f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
             f" from {sensor}"
         )
 
+        # sys.exit()   # For debug
         date_time = None
         for row in data[pce]["releves"]:
             row_date = row["dateFinReleve"]
@@ -2287,6 +2327,12 @@ class HomeAssistantInjector(Injector):
                 "    No new data, no update",
                 st="WW",
             )
+            if entity_data is not None:
+                if previous_m3 is not None:
+                    entity_data["m3"] = previous_m3
+                update_state_file(
+                    self.configuration[STATE_FILE], {"grdf": entity_data}
+                )
         else:
             self.mylog(
                 f"    update value is {date_time.isoformat()}:"
@@ -2297,7 +2343,7 @@ class HomeAssistantInjector(Injector):
             )
 
             # M3 METER TOTAL
-            data = {
+            entity_data = {
                 "state": meter_m3_total,
                 "attributes": {
                     "date_time": date_time.isoformat(),
@@ -2308,16 +2354,16 @@ class HomeAssistantInjector(Injector):
                 },
             }
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_generic_m3,), entity_data
             )
             self.mylog(f"{r!r}")
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_pce_m3,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_pce_m3,), entity_data
             )
             self.mylog(f"{r!r}")
 
             # kWh Daily
-            data = {
+            entity_data = {
                 "state": meter_kWh_day,
                 "attributes": {
                     "date_time": date_time.isoformat(),
@@ -2329,17 +2375,19 @@ class HomeAssistantInjector(Injector):
             }
 
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_daily_generic_kwh,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_daily_generic_kwh,),
+                entity_data,
             )
             self.mylog(f"{r!r}")
 
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_daily_pce_kwh,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_daily_pce_kwh,),
+                entity_data,
             )
             self.mylog(f"{r!r}")
 
             # Total kWh
-            data = {
+            entity_data = {
                 "state": current_total_kWh,
                 "attributes": {
                     "date_time": date_time.isoformat(),
@@ -2351,11 +2399,18 @@ class HomeAssistantInjector(Injector):
             }
 
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_generic_kwh,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_generic_kwh,), entity_data
             )
+
+            # Store state to local file to cope with HA restart
+            entity_data["m3"] = meter_m3_total
+            update_state_file(
+                self.configuration[STATE_FILE], {"grdf": entity_data}
+            )
+
             self.mylog(f"{r!r}")
             r = self.open_url(
-                HA_API_SENSOR_FORMAT % (sensor_name_pce_kwh,), data
+                HA_API_SENSOR_FORMAT % (sensor_name_pce_kwh,), entity_data
             )
             self.mylog(f"{r!r}")
 
@@ -2578,6 +2633,35 @@ def exit_on_error(
     sys.exit(2)
 
 
+def get_state_file(file):
+    try:
+        with open(file, encoding="utf_8") as state_file:
+            state = json.load(state_file)
+    except json.JSONDecodeError:  # as e:
+        # self.mylog(f"JSON format error : {e}", "EE")
+        pass
+    except Exception:
+        # self.mylog("No previous state available", "~~")
+        pass
+    else:
+        return state
+    return {}
+
+
+def update_state_file(file, data):
+    print(f"Get_state_file {file} {data!r}")
+    state = get_state_file(file)
+    # Add CLI arguments to the configuration (CLI has precedence)
+    state.update(data)
+
+    try:
+        with open(file, "w", encoding="utf_8") as state_file:
+            state_file.write(json.dumps(state, indent=2))
+    except Exception:  # as _e:
+        # self.mylog(f"Could not write state to {file}: {e}", "EE")
+        pass
+
+
 def check_new_script_version(o):
     # FEAT: Check only if not running in HAOS (AppDaemon) instance
     #       Maybe with env variable?
@@ -2736,9 +2820,11 @@ def doWork():
     if args.chrome_version is not None:
         args.chrome_version = args.chrome_version[0]
 
+    install_dir = os.path.dirname(os.path.realpath(__file__))
+
     # Init output
     try:
-        d = {PARAM_LOGS_FOLDER: args.logs_folder}
+        d = {PARAM_LOGS_FOLDER: args.logs_folder, INSTALL_DIR: install_dir}
         o = Output(d, debug=args.debug)
     except Exception as exc:
         exit_on_error(string=f"Init output - {exc}", debug=args.debug)
@@ -2767,6 +2853,10 @@ def doWork():
     except Exception as exc:
         exit_on_error(string=str(exc), debug=args.debug, o=o)
 
+    configuration_json.update({INSTALL_DIR: install_dir})
+    if PARAM_DOWNLOAD_FOLDER not in configuration_json:
+        configuration_json.update({PARAM_DOWNLOAD_FOLDER: install_dir})
+
     # Add CLI arguments to the configuration (CLI has precedence)
     configuration_json.update(vars(args))
 
@@ -2786,10 +2876,21 @@ def doWork():
             debug=args.debug,
         )
 
+    configuration_json.update({INSTALL_DIR: install_dir})
+
     if args.server_type is not None:
         configuration_json.update({PARAM_SERVER_TYPE: args.server_type})
     if args.url is not None:
         configuration_json.update({PARAM_URL: args.url})
+
+    configuration_json.update(
+        {
+            STATE_FILE: os.path.join(
+                configuration_json[PARAM_DOWNLOAD_FOLDER],
+                "meters2ha_state.json",
+            )
+        }
+    )
 
     # Create objects
     try:
