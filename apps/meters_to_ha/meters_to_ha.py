@@ -789,9 +789,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 else:
                     self.hasFirefox = True
                     self.mylog(st="OK")
-        elif os.access(
-            str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK
-        ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
+        elif (
+            hasUndetectedDriver
+            or os.access(str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK)
+            and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK)
+        ):
             self.mylog(st="OK")
             self.hasChromium = True
         else:
