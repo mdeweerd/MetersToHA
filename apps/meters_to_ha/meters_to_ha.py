@@ -727,7 +727,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog("chromium unknown in selenium webdriver", end="--")
             raise
         except Exception:
-            time.sleep(20)
             raise
         else:
             # Now we know the browser works
@@ -1227,6 +1226,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         self.mylog(st="OK")
 
+        ep = EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, r'input[type="password"],.profileIcon')
+        )
+        self.__wait.until(
+            ep,
+            message="Failed, page timeout (timeout="
+            + str(self.configuration[PARAM_TIMEOUT])
+            + ")",
+        )
+
         try:
             # If profile element is present, likely already logged in
             if self.configuration[PARAM_SCREENSHOT]:
@@ -1302,6 +1311,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         # Should be logged in here
 
+        # Wait until element is at least visible
+        ep = EC.visibility_of_any_elements_located((By.CSS_SELECTOR, r".logo"))
+        self.__wait.until(
+            ep,
+            message="Failed, page timeout (timeout="
+            + str(self.configuration[PARAM_TIMEOUT])
+            + ")",
+        )
+
         # Wait until spinner is gone #####
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
@@ -1323,12 +1341,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 r" or contains(text(), 'HISTORIQUE')]",
             )
         )
-        el = self.__wait.until(
-            ep,
-            message="failed, page timeout (timeout="
-            + str(self.configuration[PARAM_TIMEOUT])
-            + ")",
-        )
+        try:
+            el = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+        except Exception:
+            pass
+
         self.mylog(st="OK")
 
         time.sleep(2)
