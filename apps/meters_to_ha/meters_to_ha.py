@@ -1436,16 +1436,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # location.
                 csvDataLink = self.__browser.find_element(
                     By.XPATH,
-                    r"//a[@download='historique_jours_litres.csv']",
+                    f"//a[@download='{self.download_veolia_filename}']",
                 )
                 data = csvDataLink.get_attribute("href")
 
                 response = urllib.request.urlopen(data)  # nosec
                 self.mylog(
                     f"Write {v_file}",
+                    st="--",
                     end="",
                 )
-                with open(v_file + "test", "wb") as f:
+                with open(v_file, "wb") as f:
                     f.write(response.file.read())
 
             except Exception:
