@@ -1324,11 +1324,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
 
-        if not self._debug:
-            self.__browser.execute_script(
-                "return (document.body.style.zoom = '0.5');"
-            )
-
         self.__browser.switch_to.default_content()
 
         # Different handling dependent on multiple or single contract
