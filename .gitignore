@@ -11,6 +11,7 @@ chromedriver.exe
 **/historique_gazpar.json*
 **/historique_jours_litres.csv*
 **/screen_before_connection.png
+**/meters2ha_state.json
 *.zip
 demo
 support

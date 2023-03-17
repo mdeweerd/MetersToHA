@@ -396,7 +396,10 @@ class Configuration(Worker):
 # Object that retrieves the historical data from Service website(s)
 ###############################################################################
 class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
-    site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
+    # Go to login page directly
+    # site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
+    # Go to login page directly only when not logged in
+    site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     download_veolia_filename = "historique_jours_litres.csv"
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
     # site_grdf_url = "ttps://login.monespace.grdf.fr/mire/connexion"
@@ -439,6 +442,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if which("chromium")
             else which("chromium-browser")
             if which("chromium-browser")
+            else "/usr/bin/chromium-browser"
+            if os.path.exists("/usr/bin/chromium-browser")
             else os.path.join(config_dict[INSTALL_DIR], "chromium"),
             PARAM_CHROMEDRIVER: which("chromedriver")
             if which("chromedriver")
@@ -695,6 +700,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     ),
                 )
             if hasUndetectedDriver:
+                sys.path.append(
+                    os.path.join(
+                        os.path.expanduser("~"),
+                        ".local",
+                        "share",
+                        "undetected_chromedriver",
+                    )
+                )
                 chrome_version = self.configuration[PARAM_CHROME_VERSION]
                 browser = uc.Chrome(
                     version_main=chrome_version,
@@ -714,6 +727,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog("chromium unknown in selenium webdriver", end="--")
             raise
         except Exception:
+            time.sleep(20)
             raise
         else:
             # Now we know the browser works
@@ -789,11 +803,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 else:
                     self.hasFirefox = True
                     self.mylog(st="OK")
-        elif (
-            hasUndetectedDriver
-            or os.access(str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK)
-            and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK)
-        ):
+        elif os.access(
+            str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK
+        ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
             self.mylog(st="OK")
             self.hasChromium = True
         else:
@@ -924,7 +936,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         timeout_message = f"Failed, page timeout (timeout={timeout})"
 
-        ep = EC.visibility_of_element_located(
+        # ep = EC.visibility_of_element_located(
+        ep = EC.presence_of_element_located(
             (
                 method,
                 key,
@@ -954,7 +967,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         else:
             self.mylog(st="OK")
 
-    def get_screenshot(self, basename: str):
+    def get_screenshot(self, basename: str, dump_html: bool = False):
         """
         Get screenshot and save to file in logs_folder
         """
@@ -969,6 +982,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(
                 f"Exception while getting screenshot {fn_img}: {e}", end=""
             )
+
+        if dump_html:
+            try:
+                fn_html = fn_img + ".html"
+                with open(fn_html, "w", encoding="utf_8") as html_file:
+                    self.mylog(f"Writing {fn_html}", end="~~")
+                    html_file.write(self.__browser.page_source)
+            except Exception as e:
+                self.mylog(f"Could not dump html {fn_html}: {e}", end="")
 
     def resolve_captcha2(self) -> str | None:
         # pylint: disable=too-many-locals,too-many-return-statements
@@ -1200,74 +1222,96 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.mylog("Connexion au site Veolia Eau Ile de France", end="")
 
         self.__browser.get(self.__class__.site_url)
-        self.__wait.until(document_initialised)
-
-        self.mylog(st="OK")
-
-        # Wait for Password ######
-        # More than one email element on the page,
-        # visibility depends on screen size.
-        self.mylog("Waiting for Password", end="")
-
-        ep = EC.visibility_of_any_elements_located(
-            (By.CSS_SELECTOR, r'input[type="password"]')
-        )
-        el_password = self.__wait.until(
-            ep,
-            message="failed, page timeout (timeout="
-            + str(self.configuration[PARAM_TIMEOUT])
-            + ")",
-        )
-        # Get first (and normally only) visible element
-        el_password = el_password[0]
-        self.mylog(st="OK")
-
-        # Wait for Email ########
-        # More than one email element on the page,
-        # visibility depends on screen size.
-        self.mylog("Waiting for Email", end="")
-        ep = EC.visibility_of_any_elements_located(
-            (By.XPATH, r"//input[@inputmode='email']")
-        )
-        el_email = self.__wait.until(
-            ep,
-            message="failed, page timeout (timeout="
-            + str(self.configuration[PARAM_TIMEOUT])
-            + ")",
-        )
-        # Get first (and normally only) visible element
-        el_email = el_email[0]
-        self.mylog(st="OK")
-
-        # Type Email ###########
-        self.mylog("Type Email", end="")
-        el_email.clear()
-        el_email.send_keys(self.configuration[PARAM_VEOLIA_LOGIN])
-        self.mylog(st="OK")
-
-        # Type Password ########
-        self.mylog("Type Password", end="")
-        el_password.clear()
-        el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
-        self.mylog(st="OK")
-
-        # Click Submit #########
-        self.click_in_view(
-            By.CLASS_NAME,
-            "submit-button",
-            wait_message="Waiting for submit button",
-            click_message="Click on submit button",
-            delay=1,
-        )
-
         time.sleep(0.5)  # Small wait after submit
         self.__wait.until(document_initialised)
 
-        # time.sleep(10)
+        self.mylog(st="OK")
+
+        try:
+            # If profile element is present, likely already logged in
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("check_profile.png")
+            profile_el = self.__browser.find_element(
+                By.CLASS_NAME, "profileIcon"
+            )
+            if profile_el is not None:
+                isLoggedIn = True
+        except Exception:
+            isLoggedIn = False
+
+        if not isLoggedIn:
+            # Wait for Password ######
+            # More than one email element on the page,
+            # visibility depends on screen size.
+            self.mylog("Waiting for Password", end="")
+
+            ep = EC.visibility_of_any_elements_located(
+                (By.CSS_SELECTOR, r'input[type="password"]')
+            )
+            el_password = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            # Get first (and normally only) visible element
+            el_password = el_password[0]
+            self.mylog(st="OK")
+
+            # Wait for Email ########
+            # More than one email element on the page,
+            # visibility depends on screen size.
+            self.mylog("Waiting for Email", end="")
+            ep = EC.visibility_of_any_elements_located(
+                (By.XPATH, r"//input[@inputmode='email']")
+            )
+            el_email = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            # Get first (and normally only) visible element
+            el_email = el_email[0]
+            self.mylog(st="OK")
+
+            # Type Email ###########
+            self.mylog("Type Email", end="")
+            el_email.clear()
+            el_email.send_keys(self.configuration[PARAM_VEOLIA_LOGIN])
+            self.mylog(st="OK")
+
+            # Type Password ########
+            self.mylog("Type Password", end="")
+            el_password.clear()
+            el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+            self.mylog(st="OK")
+
+            # Click Submit #########
+            self.click_in_view(
+                By.CLASS_NAME,
+                "submit-button",
+                wait_message="Waiting for submit button",
+                click_message="Click on submit button",
+                delay=1,
+            )
+
+            time.sleep(0.5)  # Small wait after submit
+            self.__wait.until(document_initialised)
+            # time.sleep(10)
+
+        # Should be logged in here
 
         # Wait until spinner is gone #####
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
+
+        if not self._debug:
+            self.__browser.execute_script(
+                "return (document.body.style.zoom = '0.5');"
+            )
+
+        self.__browser.switch_to.default_content()
 
         # Different handling dependent on multiple or single contract
 
@@ -2968,6 +3012,12 @@ def doWork():
                 veolia_idf_file = crawler.get_veolia_idf_file()
                 # veolia_idf_file = "./veolia_test_data.csv"
             except Exception as exc_get:
+                try:
+                    if configuration_json[PARAM_SCREENSHOT]:
+                        crawler.get_screenshot("screen_on_exception1.png")
+                except Exception:
+                    pass
+
                 # Retry once on failure to manage
                 # stalement exception that occurs sometimes
                 o.mylog(
@@ -2980,6 +3030,14 @@ def doWork():
 
             injector.update_veolia_device(veolia_idf_file)
         except Exception as exc:
+            try:
+                if configuration_json[PARAM_SCREENSHOT]:
+                    crawler.get_screenshot(
+                        "screen_on_exception2.png", dump_html=True
+                    )
+            except Exception:
+                pass
+
             exit_on_error(workers, str(exc), debug=args.debug, o=o)
 
     o.mylog("Finished on success, cleaning up", st="OK")
