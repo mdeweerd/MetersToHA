@@ -45,6 +45,7 @@ import subprocess
 import sys
 import time
 import traceback
+import urllib
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from shutil import which
@@ -686,6 +687,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if "chromium" in inspect.getmembers(webdriver):
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
+                    # service_args=["--verbose"],  # More debug info
                     log_path=os.path.join(
                         self.configuration[PARAM_LOGS_FOLDER],
                         "chromedriver.log",
@@ -694,6 +696,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
+                    # service_args=["--verbose"],  # More debug info
                     log_path=os.path.join(
                         self.configuration[PARAM_LOGS_FOLDER],
                         "chromedriver.log",
@@ -1421,6 +1424,33 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         while t > 0 and not os.path.exists(v_file):
             time.sleep(1)
             t -= 1
+            try:
+                # For some reason (possibly Security setting),
+                # the CSV file is not written to disk in Chrome 110.
+                #
+                # After the click on HISTORIQUE, the data is provided
+                # in a hidden link as a data link.
+                #
+                # This code gets that data link, decodes it and saves
+                # the data so that it is available at the expected
+                # location.
+                csvDataLink = self.__browser.find_element(
+                    By.XPATH,
+                    r"//a[@download='historique_jours_litres.csv']",
+                )
+                data = csvDataLink.get_attribute("href")
+
+                response = urllib.request.urlopen(data)  # nosec
+                self.mylog(
+                    f"Write {v_file}",
+                    end="",
+                )
+                with open(v_file + "test", "wb") as f:
+                    f.write(response.file.read())
+
+            except Exception:
+                pass
+
         if os.path.exists(v_file):
             self.mylog(st="OK")
         else:
