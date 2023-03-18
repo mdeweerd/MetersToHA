@@ -31,7 +31,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import csv
 import datetime as dt
 import inspect
@@ -1799,8 +1798,16 @@ class DomoticzInjector(Injector):
         url_test = str(self.configuration[PARAM_DOMOTICZ_SERVER]) + uri
 
         # Add Authentication Items if needed
-        if self.configuration[PARAM_DOMOTICZ_LOGIN] != "" and self.configuration[PARAM_DOMOTICZ_PASSWORD] != "":
-            http_auth = ':'.join((self.configuration[PARAM_DOMOTICZ_LOGIN] , self.configuration[PARAM_DOMOTICZ_PASSWORD] ))
+        if (
+            self.configuration[PARAM_DOMOTICZ_LOGIN] != ""
+            and self.configuration[PARAM_DOMOTICZ_PASSWORD] != ""
+        ):
+            http_auth = ":".join(
+                (
+                    self.configuration[PARAM_DOMOTICZ_LOGIN],
+                    self.configuration[PARAM_DOMOTICZ_PASSWORD],
+                )
+            )
 
             self.headers.update(urllib3.make_headers(basic_auth=http_auth))
 
