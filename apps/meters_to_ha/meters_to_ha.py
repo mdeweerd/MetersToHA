@@ -1412,28 +1412,20 @@ class DomoticzInjector(Injector):
             config_dict=config_dict, super_print=super_print, debug=debug
         )
 
+        self.headers = urllib3.make_headers()
+
     def open_url(self, uri, data=None):  # pylint: disable=unused-argument
         # Generate URL
         url_test = str(self.configuration[PARAM_DOMOTICZ_SERVER]) + uri
 
         # Add Authentication Items if needed
-        if self.configuration[PARAM_DOMOTICZ_LOGIN] != "":
-            b64domoticz_login = base64.b64encode(
-                str(self.configuration[PARAM_DOMOTICZ_LOGIN]).encode()
-            )
-            b64domoticz_password = base64.b64encode(
-                str(self.configuration[PARAM_DOMOTICZ_PASSWORD]).encode()
-            )
-            url_test = (
-                url_test
-                + "&username="
-                + b64domoticz_login.decode()
-                + "&password="
-                + b64domoticz_password.decode()
-            )
+        if self.configuration[PARAM_DOMOTICZ_LOGIN] != "" and self.configuration[PARAM_DOMOTICZ_PASSWORD] != "":
+            http_auth = ':'.join((self.configuration[PARAM_DOMOTICZ_LOGIN] , self.configuration[PARAM_DOMOTICZ_PASSWORD] ))
+
+            self.headers.update(urllib3.make_headers(basic_auth=http_auth))
 
         try:
-            response = self._http.request("GET", url_test)
+            response = self.__http.request("GET", url_test, headers=self.headers)
         except urllib3.exceptions.MaxRetryError as e:
             # HANDLE CONNECTIVITY ERROR
             raise RuntimeError(f"url={url_test} : {e}")
