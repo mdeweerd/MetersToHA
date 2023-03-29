@@ -743,6 +743,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def sanity_check(self):
         checkBrowser = False  # True if we want to download something
+        reason = " (Unknown reason)"
         if self.configuration[PARAM_VEOLIA]:
             # Getting Veolia data
             v_file = self.__full_path_download_veolia_idf_file
@@ -754,6 +755,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         f"'{v_file}' already exists, reused (--skip_download)",
                         "--",
                     )
+                    reason = " (Skip download)"
                 else:
                     checkBrowser = True
                     self.mylog(
@@ -768,16 +770,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     open(v_file, "a+", encoding="utf_8").close()
                 except Exception as e:
                     raise RuntimeError(f'"{v_file}" {e}')
-                else:
-                    checkBrowser = True
-                    self.mylog(st="OK")
+
+                checkBrowser = True
+                self.mylog(st="OK")
 
         if self.configuration[PARAM_GRDF]:
-            if not self.configuration[PARAM_SKIP_DOWNLOAD]:
+            if self.configuration[PARAM_SKIP_DOWNLOAD]:
+                reason = " (Skip download)"
+            else:
                 checkBrowser = True
 
         if not checkBrowser:
             # Not checking browser, we do not need it
+            self.mylog(f"Skip browser check, not needed{reason}", "--")
             return
 
         self.mylog(
