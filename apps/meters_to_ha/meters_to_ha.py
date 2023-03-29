@@ -754,9 +754,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         f"'{v_file}' already exists, reused (--skip_download)",
                         "--",
                     )
-                    return
-
-                self.mylog(f"'{v_file}' already exists, will be removed", "WW")
+                else:
+                    self.mylog(
+                        f"'{v_file}' already exists, will be removed", "WW"
+                    )
             else:
                 if self.configuration[PARAM_SKIP_DOWNLOAD]:
                     self.mylog(f"Can't reuse missing '{v_file}'", "EE")
@@ -769,14 +770,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 else:
                     checkBrowser = True
                     self.mylog(st="OK")
-
-            try:
-                self.mylog("Remove temporary download file", end="")
-                os.remove(v_file)
-            except Exception:
-                raise
-            else:
-                self.mylog(st="OK")
 
         if self.configuration[PARAM_GRDF]:
             if not self.configuration[PARAM_SKIP_DOWNLOAD]:
@@ -1328,6 +1321,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # time.sleep(10)
 
         # Should be logged in here
+
+        try:
+            self.mylog("Remove temporary download file", end="")
+            os.remove(v_file)
+        except Exception:
+            raise
+        else:
+            self.mylog(st="OK")
 
         # Wait until element is at least visible
         ep = EC.visibility_of_any_elements_located((By.CSS_SELECTOR, r".logo"))
