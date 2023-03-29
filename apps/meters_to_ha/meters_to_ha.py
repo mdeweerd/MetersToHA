@@ -480,15 +480,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             return
         try:
             if self.hasFirefox:
-                Exception("Does not have firefox")
+                self.mylog("Try starting Firefox", end="")
                 self.init_firefox()
+                self.mylog(st="OK")
                 return
         except (Exception, xauth.NotFoundError):
             self.mylog(st="~~")
 
         if self.hasChromium:
             # Firefox did not load, try Chromium
+            self.mylog("Try starting Chromium", end="")
             self.init_chromium()
+            self.mylog(st="OK")
             return
 
         raise Exception("No browser could be started with selenium")
@@ -783,12 +786,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.mylog(
             'Check availability of "geckodriver"+"firefox"'
             ' or "chromedriver"+"chromium"',
+            st="~~",
             end="",
         )
+
+        hasBrowser = False
         if os.access(
             str(self.configuration[PARAM_GECKODRIVER]), os.X_OK
         ) and os.access(str(self.configuration[PARAM_FIREFOX]), os.X_OK):
-            self.mylog(st="OK")
             self.mylog("Check firefox browser version", end="")
             try:
                 major, minor = self.__get_firefox_version()
@@ -803,14 +808,22 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     )
                 else:
                     self.hasFirefox = True
+                    hasBrowser = True
                     self.mylog(st="OK")
-        elif (
+
+        if (
             hasUndetectedDriver
             or os.access(str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK)
         ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
-            self.mylog(st="OK")
+            if hasUndetectedDriver:
+                extraMsg = "with undetected driver"
+            else:
+                extraMsg = ""
+            self.mylog(f"Found chromium binary{extraMsg}", st="OK")
             self.hasChromium = True
-        else:
+            hasBrowser = True
+
+        if not hasBrowser:
             raise OSError(
                 '"%s"/"%s" or "%s"/"%s": no valid pair of executables found'
                 % (
