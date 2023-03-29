@@ -743,7 +743,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def sanity_check(self):
         checkBrowser = False  # True if we want to download something
-        reason = " (Unknown reason)"
+        reason = " (Missing Veolia or GRDF or Unknown reason)"
         if self.configuration[PARAM_VEOLIA]:
             # Getting Veolia data
             v_file = self.__full_path_download_veolia_idf_file
@@ -2974,9 +2974,6 @@ def doWork():
     if PARAM_DOWNLOAD_FOLDER not in configuration_json:
         configuration_json.update({PARAM_DOWNLOAD_FOLDER: install_dir})
 
-    # Add CLI arguments to the configuration (CLI has precedence)
-    configuration_json.update(vars(args))
-
     # When neither veolia nor grdf is set,
     #  get all those that are in the configuration
     isGetAvailable = not (args.veolia or args.grdf)
@@ -2992,6 +2989,10 @@ def doWork():
             string="Must select/configure at least one contract",
             debug=args.debug,
         )
+
+    # Add CLI arguments to the configuration (CLI has precedence)
+    # Also include update to veolia/grdf options.
+    configuration_json.update(vars(args))
 
     configuration_json.update({INSTALL_DIR: install_dir})
 
