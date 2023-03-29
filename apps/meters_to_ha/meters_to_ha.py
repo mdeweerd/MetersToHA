@@ -263,7 +263,7 @@ class Worker:
             print(f"{st}{string}")
         else:
             print(
-                f"{st} {string} ", end="", flush="True"
+                f"{st} {string} ", end=end, flush=True
             )  # type:ignore[call-overload]
 
     def cleanup(self, keep_output=False):
@@ -313,7 +313,7 @@ class Output(Worker):
 
         if end is not None:
             st = st + " " if st else ""
-            print(st + "%-75s" % (string,), end="", flush=True)
+            print(st + "%-75s" % (string,), end=end, flush=True)
             self.__print_buffer = self.__print_buffer + string
         elif self.__print_buffer:
             st = st if st else "[--] "
@@ -494,7 +494,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
             return
 
-        raise Exception("No browser could be started with selenium")
+        raise Exception(
+            "No browser could be started with selenium"
+            f" {self.hasFirefox}-{self.hasChromium}"
+        )
 
     # INIT DISPLAY & BROWSER
     def init_firefox(self):
@@ -787,7 +790,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             'Check availability of "geckodriver"+"firefox"'
             ' or "chromedriver"+"chromium"',
             st="~~",
-            end="",
         )
 
         hasBrowser = False
