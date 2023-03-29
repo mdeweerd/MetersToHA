@@ -755,6 +755,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         "--",
                     )
                 else:
+                    checkBrowser = True
                     self.mylog(
                         f"'{v_file}' already exists, will be removed", "WW"
                     )
