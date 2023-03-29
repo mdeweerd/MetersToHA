@@ -782,7 +782,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if not checkBrowser:
             # Not checking browser, we do not need it
-            self.mylog(f"Skip browser check, not needed{reason}", "--")
+            self.mylog(f"Skip browser check, not needed{reason}", st="--")
             return
 
         self.mylog(
