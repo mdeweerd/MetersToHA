@@ -1085,7 +1085,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 "&soft_id=3887"
             )
             # print(f"2CAPTCHA REQUEST:{url}\n")
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             if response.text[0:2] != "OK":
                 self.mylog(
                     f"2Captcha Service error: Error code {response.text}",
@@ -1110,7 +1110,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     "Sleeping for 10 seconds to wait for 2Captcha", st="~~"
                 )
                 time.sleep(10)
-                response = requests.get(token_url)
+                response = requests.get(token_url, timeout=10)
 
                 self.mylog(
                     f"2Captcha Service response {response.text}", st="~~"
@@ -1133,7 +1133,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # "softId":
             }
             api_url = "https://api.capmonster.cloud/createTask"
-            response = requests.post(api_url, headers=headers, json=api_data)
+            response = requests.post(
+                api_url, headers=headers, json=api_data, timeout=10
+            )
             if response.status_code != 200:
                 self.mylog(
                     f"capmonster status {response.status_code}"
@@ -1167,7 +1169,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 )
                 time.sleep(10)
                 response = requests.post(
-                    token_url, headers=headers, json=token_data
+                    token_url, headers=headers, json=token_data, timeout=10
                 )
 
                 self.mylog(
@@ -2103,6 +2105,7 @@ class HomeAssistantInjector(Injector):
                     api_url,
                     headers=headers,
                     verify=not (self.configuration[PARAM_INSECURE]),
+                    timeout=30,
                 )
             else:
                 response = requests.post(
@@ -2110,6 +2113,7 @@ class HomeAssistantInjector(Injector):
                     headers=headers,
                     json=data,
                     verify=not (self.configuration[PARAM_INSECURE]),
+                    timeout=30,
                 )
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
@@ -2301,7 +2305,7 @@ class HomeAssistantInjector(Injector):
 
         entity_data = None
 
-        # Get last known data - response looks as shown abovej0
+        # Get last known data - response looks as shown above
         #  - should load this before loading JSON to get maximum range of data.
 
         for sensor in (
@@ -2330,6 +2334,9 @@ class HomeAssistantInjector(Injector):
                         rdate = self.get_date_from_ha_state(response)
                         if rdate is not None:
                             previous_date = rdate
+                            self.mylog(
+                                f"Previous HA date (kWh) {previous_date}"
+                            )
                     except ValueError:
                         pass
                 break
@@ -2355,6 +2362,7 @@ class HomeAssistantInjector(Injector):
                     rdate = self.get_date_from_ha_state(response)
                     if rdate is not None:
                         previous_date = rdate
+                        self.mylog(f"Previous date (m3) {previous_date}")
             except (ValueError, RuntimeError):
                 sensor = "None"  # For log message just below
 
@@ -2367,6 +2375,8 @@ class HomeAssistantInjector(Injector):
                 grdf_state = state["grdf"]
                 self.mylog(f"grdf_state: {grdf_state!r}", "~~")
                 previous_kWh = grdf_state["state"]
+                previous_date_str = grdf_state["attributes"]["date_time"]
+                previous_date = dt.datetime.fromisoformat(previous_date_str)
                 if "m3" in grdf_state:
                     previous_m3 = grdf_state["m3"]
 
@@ -2424,9 +2434,9 @@ class HomeAssistantInjector(Injector):
                     self.mylog(
                         f"New index {row_meter_m3_endIndex} m³"
                         f" ({row_date_time})"
-                        f" is lower"
+                        " is lower"
                         f" than old index {previous_m3} m³ ({previous_date})."
-                        f" Error in source or old data - stopping",
+                        " Error in source or old data - stopping",
                         st="EE",
                     )
                     break
@@ -2653,6 +2663,7 @@ class UrlInjector(Injector):
                     headers=headers,
                     data=data,
                     verify=not (self.configuration[PARAM_INSECURE]),
+                    timeout=30,
                 )
             except Exception as e:
                 # HANDLE CONNECTIVITY ERROR

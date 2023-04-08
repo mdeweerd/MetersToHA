@@ -1,6 +1,6 @@
 ---
 files: ^(.*\.(py|json|md|sh|yaml|yml|cfg|txt))$
-exclude: ^(\.[^/]*cache/.*)$
+exclude: ^(\.[^/]*cache/.*|demo/.*|debug/.*)$
 repos:
   - repo: https://github.com/executablebooks/mdformat
     # Do this before other tools "fixing" the line endings
@@ -68,7 +68,7 @@ repos:
     rev: v1.0.6
     hooks:
       - id: python-bandit-vulnerability-check
-        args: [--skip, 'B105,B110,B311,B404,B603', --recursive, .]
+        args: [--skip, 'B105,B110,B311,B404,B603', --recursive, apps]
 
   - repo: https://github.com/fsouza/autoflake8
     rev: v0.4.0
