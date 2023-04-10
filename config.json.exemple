@@ -27,7 +27,7 @@
   "2captcha_token": "XXXXXXXXXXX",
   "capmonster_token": "XXXXXXXXXXX",
 
-  "### 6":"Pour le choix du type de serveur (Domoticz par défait), 'ha' pour Home Assistant",
+  "### 6":"Pour le choix du type de serveur (Domoticz par défaut), 'ha' pour Home Assistant",
   "type": "ha",
 
   "### 7":"Valeur d'expiration pour certaines requêtes",
