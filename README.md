@@ -127,6 +127,9 @@ Dans tous les cas il faut un fichier de configuration. Pour Home Assistant,
 le point de départ peut être `config.json.exemple.home-assistant` que vous
 renommez en `config.json` (ou autre).
 
+Attention, AppDaemon efface le répertoire "MetersToHA" lors de la mise à
+jour - vous devez donc obligatoirement loger ce fichier ailleurs.
+
 Exemple de configuration:
 
 ```json
