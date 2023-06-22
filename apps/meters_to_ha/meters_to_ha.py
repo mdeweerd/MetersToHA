@@ -1582,7 +1582,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog("Proceed with captcha resolution", end="~~")
             if self.resolve_captcha2() is not None:
                 # Some time for captcha to remove.
-                self.mylog("Automatic resultution succeeded", end="~~")
+                self.mylog("Automatic resolution succeeded", end="~~")
                 time.sleep(2)
             else:
                 # Manual
@@ -1651,6 +1651,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         timeout=2,
                     )
                     time.sleep(5)
+                    self.mylog("End of wait after connexion", end="~~")
                 except Exception:
                     # Already clicked or other error
                     pass
@@ -1670,8 +1671,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 self.configuration[PARAM_GRDF_PCE],
             )
 
+            self.mylog("Get Data URL", end="~~")
             self.__browser.get(data_url)
 
+            self.mylog("Get Data Content", end="~~")
             # result = self.__browser.page_source
             content = self.__browser.find_element(By.TAG_NAME, "pre").text
             # result = json.loads(content)
