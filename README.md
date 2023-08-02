@@ -169,21 +169,34 @@ Explication des champs:
 - `ha_token`: voir ci-dessous, permet d'accéder à Home Assistant depuis le
   script.\
   Seulement pour Home Assistant
-- `2captcha_token`: à obtenir sur
-  [2captcha.com](https://2captcha.com/?from=16639177).\
-  Seulement si vous
-  souhaitez résoudre les captchas automatiquement (GRDF, sinon vous devez
-  utiliser --debug qui nécessite un serveur
-  X).\
-  [capmonster.cloud](https://capmonster.cloud/) est également
-  disponible.\
-  Un débat assez complet concernant ce type de service est
-  dans
+- Paramètre pour résolution de captcha.\
+  Seulement si vous souhaitez
+  résoudre les captchas automatiquement (GRDF, sinon vous devez utiliser
+  --debug qui nécessite un serveur X).\
+  Un débat assez complet concernant
+  ce type de service est dans
   [cet issue d'un autre projet](https://github.com/iv-org/invidious/issues/1256).
   Inutile d'ouvrir un issue de débat ici, sauf pour proposer une
   alternative s'appuyant (moins) sur l'humain.\
   Pour Veolia, vous n'avez
-  pas besoin de ce service.
+  pas besoin de ce type de service.\
+  1,07 capthas/jour ont du être résolus
+  en moyenne dans une configuration ou Meters2HA est exécuté jusqu'à deux
+  fois par soir (au cas ou le premier appel n'a pas donné de résultat).
+  Pour 27% des jours, aucune résolution n'était nécessaire, pour 55% une
+  seule résolution, et pour 18%, 2 résolutions.\
+  Deux services sont
+  compatibles, ajouté le paramètre du service choisi, les estimations sont
+  sur la base des tarifs et observations en aout 2023:
+  - `2captcha_token`: à obtenir sur
+    [2captcha.com](https://2captcha.com/?from=16639177). Montant minimum 3€
+    pour environ 1000 captchas (paypal), soit 2.5 années. 2captcha indique
+    que les captchas sont résolus par des personnes.
+  - `capmonster_token`: à obtenir sur
+    [capmonster.cloud](https://capmonster.cloud/).\
+    Montant minimum $6 pour
+    environ 10000 captchas (paypal), soit 25 ans. Zennolabs indique que les
+    captchas sont résolus automatiquement (par machine).
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
 - `url`: Si type est 'url', url de type
