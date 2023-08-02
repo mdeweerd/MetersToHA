@@ -175,8 +175,8 @@ Explication des champs:
   souhaitez résoudre les captchas automatiquement (GRDF, sinon vous devez
   utiliser --debug qui nécessite un serveur
   X).\
-  [capmonster.cloud](https://capmonster.cloud/) a été intégré sans
-  être testé.\
+  [capmonster.cloud](https://capmonster.cloud/) est également
+  disponible.\
   Un débat assez complet concernant ce type de service est
   dans
   [cet issue d'un autre projet](https://github.com/iv-org/invidious/issues/1256).
