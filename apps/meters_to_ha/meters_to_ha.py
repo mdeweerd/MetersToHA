@@ -1144,9 +1144,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 )
                 return None
             resp_data = response.json()
-            if resp_data["error_id"] != 0:
+            if "errorId" in resp_data and resp_data["errorId"] != 0:
                 self.mylog(
-                    f"capmonster error {resp_data['error_id']}:"
+                    f"capmonster error {resp_data['errorId']}:"
                     f"{resp_data['errorDescription']}",
                     st="EE",
                 )
@@ -1165,7 +1165,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             while max_loops > 0:
                 max_loops -= 1
                 self.mylog(
-                    "Sleeping for 10 seconds to wait for 2Captcha", st="~~"
+                    "Sleeping for 10 seconds to wait for CapMonster", st="~~"
                 )
                 time.sleep(10)
                 response = requests.post(
@@ -1184,9 +1184,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     )
                     # Try again - we've successfully requested a task
                     continue
-                if resp_data["error_id"] != 0:
+                if "errorId" in resp_data and resp_data["errorId"] != 0:
                     self.mylog(
-                        f"capmonster error {resp_data['error_id']}:"
+                        f"capmonster error {resp_data['errorId']}:"
                         f"{resp_data['errorDescription']}",
                         st="EE",
                     )
