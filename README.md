@@ -68,6 +68,7 @@ de jouer.
     - [Paramétrer votre système pour le mode débogue (optionnel, mais recommandé)](#param%C3%A9trer-votre-syst%C3%A8me-pour-le-mode-d%C3%A9bogue-optionnel-mais-recommand%C3%A9)
   - [Principe de fonctionnement](#principe-de-fonctionnement)
   - [Environnements testés:](#environnements-test%C3%A9s)
+  - [Cas de figure:](#cas-de-figure)
   - [Remerciements/Contributeurs](#remerciementscontributeurs)
 
 <!-- mdformat-toc end -->
@@ -709,8 +710,18 @@ docker compose run --rm meters-to-ha-grdf
 Ou en mode débogue (nécessite un serveur X local):
 
 ```shell
-docker compose run --rm meters-to-ha-veolia-debug
-docker compose run --rm meters-to-ha-grdf-debug
+docker compose run --rm meters-to-ha-debug-veolia
+docker compose run --rm meters-to-ha-debug-grdf
+```
+
+Docker a parfois
+[un bogue (?)](https://github.com/docker/for-win/issues/13398) concernant
+`host.docker.internal` utilisé comme adresse pour le hôte sur lequel tourne
+docker. Dans ce cas, vous pouvez fournir la configuration DISPLAY avec l'IP
+de votre PC directement avec `-eDISPLAY=`:
+
+```shell
+docker compose run -eDISPLAY=10.33.2.69:0.0 --rm meters-to-ha-debug-grdf
 ```
 
 L'automatisation de l'exécution avec Docker dépendre de votre système - le
@@ -1069,6 +1080,14 @@ Anciens (plus testés avec les versions récentes):
 - Ubuntu 21.04 - Firefox
 
 A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
+
+## Cas de figure:
+
+- #9 NoSuchElementException pour `find_element(By.TAG_NAME, "pre")`. Le
+  processus pense avoir attînt l'étape du résultat.
+  - Vérifiez que la résulution du captcha se fait correctement. Cette
+    erreur a été constaté lorsque cet autre message apparaissait:
+    `capmonster status 402{"errorId":1,"errorCode":"ERROR_ZERO_BALANCE","errorDescription":"Account has zero balance"}`
 
 ## Remerciements/Contributeurs
 

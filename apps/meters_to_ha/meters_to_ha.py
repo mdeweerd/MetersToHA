@@ -167,6 +167,7 @@ try:
     except ImportError:
         pass
 
+    import selenium
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
@@ -1676,7 +1677,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             self.mylog("Get Data Content", end="~~")
             # result = self.__browser.page_source
-            content = self.__browser.find_element(By.TAG_NAME, "pre").text
+            try:
+                content = self.__browser.find_element(By.TAG_NAME, "pre").text
+            except selenium.common.exceptions.NoSuchElementException:
+                self.mylog(
+                    "<pre> Element not found."
+                    " This may be due to an issue with the captcha resolution."
+                    " Check the log for other errors and"
+                    " check your captcha solver configuration",
+                    end="EE",
+                )
+                content = None
             # result = json.loads(content)
             # r=self.__browser.requests[-1:][0]
             # self.__browser(self.__browser.wait_for_request(r.path))
