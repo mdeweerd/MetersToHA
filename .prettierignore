@@ -1,0 +1,11 @@
+# Keem workflow happy
+.*
+apps/meters_to_ha/manifest.json
+example**
+hacs.json
+haos-addon/build.yaml
+haos-addon/config.yaml
+haos-addon/translations/CHANGELOG.md
+haos-addon/translations/en.yaml
+haos-addon/translations/fr.yaml
+README.md

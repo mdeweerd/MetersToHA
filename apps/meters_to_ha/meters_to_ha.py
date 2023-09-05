@@ -56,9 +56,11 @@ VERSION = "v2.0"
 HA_API_SENSOR_FORMAT = "/api/states/%s"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
 PARAM_CAPMONSTER_TOKEN = "capmonster_token"
+PARAM_CAPTCHAAI_TOKEN = "captchaai_token"
 CAPTCHA_TOKENS = (
     PARAM_CAPMONSTER_TOKEN,
     PARAM_2CAPTCHA_TOKEN,
+    PARAM_CAPTCHAAI_TOKEN,
 )
 PARAM_OPTIONAL_VALUE = (
     "Optional"  # Used internally to indicate optional dummy value
@@ -455,6 +457,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_LOGS_FOLDER: self.install_dir,
             PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPMONSTER_TOKEN: PARAM_OPTIONAL_VALUE,
+            PARAM_CAPTCHAAI_TOKEN: PARAM_OPTIONAL_VALUE,
         }
 
         self.mylog("Start loading configuration")
@@ -1021,8 +1024,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if method is None:
             self.mylog(
-                "Can not resolve using captcha service"
-                f" missing {PARAM_2CAPTCHA_TOKEN}",
+                "Can not resolve using captcha service - "
+                "missing one of ('%s')" % ("', '".join(CAPTCHA_TOKENS),),
                 st="WW",
             )
             return None
@@ -1053,7 +1056,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 .getAttribute("src")))
             .get("k")
             """
-        # Method 2 to fine key
+        # Method 2 to find key
         GET_KEY = (
             SCRIPT_2CAPTCHA + r"return (findRecaptchaClients())[0].sitekey;"
         )
@@ -1076,51 +1079,73 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # print(f"{short_url}\n")
         page_url = short_url
 
-        if method == PARAM_2CAPTCHA_TOKEN:
+        if method in (PARAM_2CAPTCHA_TOKEN, PARAM_CAPTCHAAI_TOKEN):
             captchamethod = "userrecaptcha"
+            # Compute request
+            if method == PARAM_CAPTCHAAI_TOKEN:
+                # @see https://help.captchaai.com/en/articles/6878224-how-to-solve-openbullet-captcha-using-captchaai # noqa
+                service = "Captchaai"
+                uri = "https://ocr.captchaai.com"
+                url_args = {
+                    "key": key,
+                    "method": captchamethod,
+                    "googlekey": site_key,
+                    "pageurl": page_url,
+                }
+                url = f"{uri}/in.php?" + urlencode(url_args)
+            else:
+                service = "2Captcha"
+                uri = "https://2captcha.com"
+                url = (
+                    f"{uri}/in.php?key={key}&method={captchamethod}"
+                    f"&googlekey={site_key}&pageurl={page_url}"
+                    "&soft_id=3887"
+                )
+
             # submit request
-            url = (
-                "https://2captcha.com/in.php"
-                f"?key={key}&method={captchamethod}"
-                f"&googlekey={site_key}&pageurl={page_url}"
-                "&soft_id=3887"
-            )
-            # print(f"2CAPTCHA REQUEST:{url}\n")
-            response = requests.get(url, timeout=10)
-            if response.text[0:2] != "OK":
+            self.mylog(f"{service} {url}", st="~~")
+            retries = 3
+            while retries > 0:
+                response = requests.get(url, timeout=10)
+                retries -= 1
+                if response.text[0:2] == "OK":
+                    break
                 self.mylog(
-                    f"2Captcha Service error: Error code {response.text}",
+                    f"{service} Service error: Error code {response.text}",
                     st="WW",
                 )
-                return None
+                if retries <= 0:
+                    return None
+                time.sleep(2)
 
-            self.mylog(f"2Captcha Service response {response.text}", st="~~")
+            self.mylog(f"{service} Service response {response.text}", st="~~")
 
             captcha_id = response.text[3:]
             # Polling for response
-            token_url = (
-                f"https://2captcha.com/res.php"
-                f"?key={key}&action=get&id={captcha_id}"
-            )
+            token_url = f"{uri}/res.php?key={key}&action=get&id={captcha_id}"
 
             max_loops = 12
+            timeout = 20
             captcha_results = None
             while max_loops > 0:
                 max_loops -= 1
                 self.mylog(
-                    "Sleeping for 10 seconds to wait for 2Captcha", st="~~"
+                    f"Sleeping for {timeout} seconds to wait for {service}",
+                    st="~~",
                 )
-                time.sleep(10)
+                time.sleep(timeout)
+                timeout = 10
                 response = requests.get(token_url, timeout=10)
 
                 self.mylog(
-                    f"2Captcha Service response {response.text}", st="~~"
+                    f"{service} Service response {response.text}", st="~~"
                 )
                 if response.text[0:2] == "OK":
                     captcha_results = response.text[3:]
                     break
         elif method == PARAM_CAPMONSTER_TOKEN:
             headers = {"Accept-Encoding": "application/json"}
+            service = "capmonster"
             api_data = {
                 "clientKey": key,
                 "task": {
@@ -1139,7 +1164,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             if response.status_code != 200:
                 self.mylog(
-                    f"capmonster status {response.status_code}"
+                    f"{service} status {response.status_code}"
                     f"{response.text}",
                     st="EE",
                 )
@@ -1147,7 +1172,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             resp_data = response.json()
             if "errorId" in resp_data and resp_data["errorId"] != 0:
                 self.mylog(
-                    f"capmonster error {resp_data['errorId']}:"
+                    f"{service} error {resp_data['errorId']}:"
                     f"{resp_data['errorDescription']}",
                     st="EE",
                 )
@@ -1174,12 +1199,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 )
 
                 self.mylog(
-                    f"capmonster Service response {response.text}", st="~~"
+                    f"{service} Service response {response.text}", st="~~"
                 )
                 resp_data = response.json()
                 if response.status_code != 200:
                     self.mylog(
-                        f"capmonster status {response.status_code}"
+                        f"{service} status {response.status_code}"
                         f"{response.text}",
                         st="EE",
                     )
@@ -1187,7 +1212,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     continue
                 if "errorId" in resp_data and resp_data["errorId"] != 0:
                     self.mylog(
-                        f"capmonster error {resp_data['errorId']}:"
+                        f"{service} error {resp_data['errorId']}:"
                         f"{resp_data['errorDescription']}",
                         st="EE",
                     )

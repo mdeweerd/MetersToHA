@@ -4,6 +4,7 @@ error.png
 .config
 *.swp
 chromedriver.exe
+*.stackdump
 
 # Local config/data files
 **/*.docx
@@ -22,7 +23,7 @@ veolia_test_data.csv
 getData
 getDataHeadless
 
-
+**/attic
 # Local script
 do[A-Z]*
 run[A-Z]*

@@ -1,0 +1,51 @@
+---
+configuration:
+  captchaservice:
+    name: Captcha Service
+    description: The captcha service to resolve the captcha (only needed for GRDF)
+    example: 2captcha
+  token_captchaservice:
+    name: Captcha Service Token
+    description: Token required to access the captcha service
+    example: ba48563e215a579d25f5d5b76ad7a018
+  grdf_login:
+    name: GRDF Login
+    description: User Login for GRDF site (email)
+    example: user.name@example.com
+  grdf_password:
+    name: GRDF Password
+    description: User Password for GRDF site
+    example: YourSecret'Q
+  grdf_pce:
+    name: GRDF PCE
+    description: GRDF identification of the "Point de Comptage et d'Estimation (PCE)"  (end
+      Point Counter and Estimation)
+    example: '21546020012301'
+  ha_server:
+    name: Home Assistant Server
+    description: Home Asistant Server to send data to
+    example: https://subdomain.domain.name
+  ha_token:
+    name: Home Assistant Token
+    description: Long Lived Token created on your Home Assistant Server for MetersToHA
+    example: WViNTMzMjAyM2RkMiIsIm-OvEn0_QKLscaKcXVA_ecQoHVwRVYYv5pzA0eyJ0eXAiOiJKV1QiLCJ.eyJpc3MiOiI1OhbGciOiJIUzI1NiJ9WNjODg5NjRjMGI0YzM5OGZhOlhdCI6MTY1Mzg1MDY0OSwiZXhwIjoxOTY5MjEwNjQ5fQ.jkOiQUi
+  timeout:
+    name: Connection/Step Timeout
+    description: Value (seconds) used for timeout delays
+    example: '30'
+  type:
+    name: Server Type
+    description: The type of your server (ha=Home Assistant)
+    example: ha
+  veolia_contract:
+    name: Veolia Contract
+    description: veolia_contract
+    example: '6400002'
+  veolia_login:
+    name: Veolia Login
+    description: User Login for Veolia site (email)
+    example: user.name@example.com
+  veolia_password:
+    name: Veolia Password
+    description: User Password for Veolia site
+    example: YourSecret'Q

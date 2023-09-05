@@ -46,6 +46,7 @@ repos:
       - id: fix-byte-order-marker
       - id: check-case-conflict
       - id: pretty-format-json
+        exclude: ^(.vscode|.devcontainer)
         args:
           # order of keys in manifest.json is "special"
           - --no-sort-keys
@@ -113,6 +114,7 @@ repos:
           - hassapi
           - pyflakes
           - paho-mqtt
+          - aiohttp
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -132,3 +134,14 @@ repos:
     rev: v3.0.1
     hooks:
       - id: docker-compose-check
+  - repo: https://github.com/lovesegfault/beautysh.git
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
+        exclude: (run.sh)$
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.5
+    hooks:
+      - id: shellcheck
+        files: ^[^\.].*\.sh$
+        args: [--shell, bash]
