@@ -202,7 +202,7 @@ Explication des champs:
     1 Thread (fil de traitement)
     offert pour les utilisateurs de Meters2HA. Il faaut:
     1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169)
-       pour s'insrire.
+       pour s'inscrire.
     2. Demander de bénéficier de
        [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
        à travers un Ticket
@@ -680,7 +680,7 @@ Non testé.
 ### Veolia
 
 Il semblerait que les données restituées par Veolia sont des fois un peu
-"farfelus". La meilleure méthode connue pour éviter cela est de
+"farfelues". La meilleure méthode connue pour éviter cela est de
 contournement c'est de réaliser l'appel entre 1h du matin et minuit.
 
 Le délai variable permet de repartir l'heure d'appel à Veolia entre les
@@ -693,7 +693,7 @@ Voici un exemple d'une récupération pour une journée partielle:
 
 ![](images/PartialDay.png)
 
-Et voici un exemple de données "farfelus" (les 5400L de conso journalière
+Et voici un exemple de données "farfelues" (les 5400L de conso journalière
 sont inexactes).
 
 ![](images/BadWaterDaily.png)
