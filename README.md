@@ -143,13 +143,18 @@ Exemple de configuration:
   "grdf_pce": "21546000000000",
   "ha_server": "https://MONINSTANCEHA",
   "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
-  "2captcha_token": "XXXXXXXXXXX",
+  "captchaai_token": "XXXXXXXXXXX",
   "type": "ha",
   "timeout": "30"
 }
 ```
 
-Les fournisseurs consultables dépendent des paramètres renseignés.
+Les fournisseurs consultables dépendent des paramètres renseignés.\
+C.a.d.
+qu'il convient de supprimerz les clefs inutiles, remplacer
+"captchaai_token" par "2captcha_token" ou "capmonster_token" en fonction de
+votre service, modifiez la valeur de "type" en fonction de votre
+plateforme.
 
 Explication des champs:
 
@@ -158,18 +163,22 @@ Explication des champs:
   de login sur le site de Veolia IDF, et le numéro de votre
   contrat.\
   Seulement pour Veolia Ile-de-France.
+
 - `grdf_login`, `grdf_password`, `grdf_pce`: Les informations de login sur
   le site de GRDF. L'identification du Point de Comptage et Estimation
   (PCE) est optionnel (actuellement).\
   Seulement pour GRDF.
+
 - `ha_server`: le domaine + le port accessibles depuis là ou le script
   tourne.\
   Cela peut être
   [http://homeassistant.local:8123](http://homeassistant.local:8123) dans
   le cas ou vous n'avez pas touché la configuration réseau.
+
 - `ha_token`: voir ci-dessous, permet d'accéder à Home Assistant depuis le
   script.\
   Seulement pour Home Assistant
+
 - Paramètre pour résolution de captcha.\
   Seulement si vous souhaitez
   résoudre les captchas automatiquement (GRDF, sinon vous devez utiliser
@@ -189,6 +198,26 @@ Explication des champs:
   Deux services sont
   compatibles, ajouté le paramètre du service choisi, les estimations sont
   sur la base des tarifs et observations en aout 2023:
+
+  - <a id="captchaai"></a>`captchaai_token`:\
+    1 Thread (fil de traitement)
+    offert pour les utilisateurs de Meters2HA. Il faaut:
+    1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169)
+       pour s'insrire.
+    2. Demander de bénéficier de
+       [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
+       à travers un Ticket
+       ([Home>Dashboard>Tickets](https://captchaai.com/tickets.php#?from=151169)>New Ticket):
+    ```plaintext
+    I would like to benefit from the offer
+      " 1 Free Thread for MetersToHA Users".
+    ```
+    3. Ajouter la clef API à votre configuration (pas besoin d'attendre
+       l'activation).
+    4. Attendre l'activation de l'offre.
+    5. Profitez de la résolution reCAPTCHA 100%, hCaptcha, Solve Media, and
+       27500+ captchas d'image.
+    6. Tester et mettre en route MetersToHA.
   - `2captcha_token`: à obtenir sur
     [2captcha.com](https://2captcha.com/?from=16639177). Montant minimum 3€
     pour environ 1000 captchas (paypal), soit 2.5 années. 2captcha indique
@@ -198,13 +227,17 @@ Explication des champs:
     Montant minimum $6 pour
     environ 10000 captchas (paypal), soit 25 ans. Zennolabs indique que les
     captchas sont résolus automatiquement (par machine).
+
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
+
 - `url`: Si type est 'url', url de type
   "file://chemin/vers/fichier/local.extension" ou
   "https://domaine.url/pourPOST"
+
 - `timeout`: Le délai en secondes que le script attend pour certaines
   étapes.
+
 - `mqtt_server`, `mqtt_port`, `mqtt_login`, `mqtt_password`: Serveur, port
   et identifiant pour MQTT.
 
