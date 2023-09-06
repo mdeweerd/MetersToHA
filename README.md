@@ -81,7 +81,7 @@ de jouer.
   interactive, ou un service de résolution de captcha payant.
 - Si vous migrez depuis
   [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
-  vous devez desactiver ces automatisations et vos "sensors" de type
+  vous devez désactiver ces automatisations et vos "sensors" de type
   template (dans `configuration.yaml`) - sinon les valeurs écrasent celles
   de MetersToHA.
 
@@ -119,7 +119,7 @@ Ce script fonctionne pour:
   valable pour Veolia en IDF.\
   Vous pouvez trouver votre portail en
   fonction de la ville en visitant
-  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS .
+  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS.
 - [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
 
 ## Le fichier de configuration (`config.json`)
@@ -151,10 +151,9 @@ Exemple de configuration:
 
 Les fournisseurs consultables dépendent des paramètres renseignés.\
 C.a.d.
-qu'il convient de supprimerz les clefs inutiles, remplacer
-"captchaai_token" par "2captcha_token" ou "capmonster_token" en fonction de
-votre service, modifiez la valeur de "type" en fonction de votre
-plateforme.
+qu'il convient de supprimer les clefs inutiles, remplacer "captchaai_token"
+par "2captcha_token" ou "capmonster_token" en fonction de votre service,
+modifiez la valeur de "type" en fonction de votre plateforme.
 
 Explication des champs:
 
@@ -207,7 +206,7 @@ Explication des champs:
     2. Demander de bénéficier de
        [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
        à travers un Ticket
-       ([Home>Dashboard>Tickets](https://captchaai.com/tickets.php#?from=151169)>New Ticket):
+       ([Home> Dashboard> Tickets](https://captchaai.com/tickets.php#?from=151169)> New Ticket):
     ```plaintext
     I would like to benefit from the offer
       " 1 Free Thread for MetersToHA Users".
@@ -314,8 +313,8 @@ environnements.
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/) après
 [activation des applications AppDaemon dans HACS](https://hacs.xyz/docs/categories/appdaemon_apps/#enable-appdaemon-apps-in-hacs)
-comme ceci en suivatn "Configuration" pour HACS dans "Paramètres>Appareils
-et services":
+comme ceci en suivant "Configuration" pour HACS dans
+"Paramètres>Appareils et services":
 ![Activate AppDaemon Apps](images/hacs_discover_appdaemon.png).
 
 Les scripts sont placés dans le répertoire
@@ -416,7 +415,7 @@ serveur X actif et disponible sur l'IP indiqué.
 veolia_idf:
   module: meters_to_ha_appdaemon
   class: MetersToHA
-  # optionnel - Par défault "call_meters_to_ha".
+  # optionnel - Par défaut "call_meters_to_ha".
   #     Permet de définir plusieurs lancements distincts, par exemple
   #     pour consulter Veolia à une certaine heure, et GRDF à une autre heure.
   event_name: call_veolia
@@ -507,7 +506,7 @@ Extrait de la fin d'une trace:
 
 #### GRDF (AppDaemon)
 
-La configuration c'est prèsque comme pour Veolia IDF. Comme la consommation
+La configuration c'est presque comme pour Veolia IDF. Comme la consommation
 GAZPAR est plutôt disponible en fin de journée, il est intéressant de
 consulter GRDF vers 21h par exemple.\
 Je recommande donc de personnaliser
@@ -650,11 +649,11 @@ Prérequis :
 
 ### Création du "Virtual Sensor" sur Domoticz :
 
-- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
+- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
 
 - Créer un "Virtual Sensor" de type : "Managed Counter"
 
-- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
+- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
 
   | >                   | Sensor pour conso eau |
   | ------------------- | --------------------- |
