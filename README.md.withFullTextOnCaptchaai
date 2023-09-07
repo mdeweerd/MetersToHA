@@ -143,7 +143,7 @@ Exemple de configuration:
   "grdf_pce": "21546000000000",
   "ha_server": "https://MONINSTANCEHA",
   "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
-  "2captcha_token": "XXXXXXXXXXX",
+  "captchaai_token": "XXXXXXXXXXX",
   "type": "ha",
   "timeout": "30"
 }
@@ -151,9 +151,9 @@ Exemple de configuration:
 
 Les fournisseurs consultables dépendent des paramètres renseignés.\
 C.a.d.
-qu'il convient de supprimer les clefs inutiles, remplacer "2captcha_token"
-par "capmonster_token" en fonction de votre service, modifiez la valeur de
-"type" en fonction de votre plateforme.
+qu'il convient de supprimer les clefs inutiles, remplacer "captchaai_token"
+par "2captcha_token" ou "capmonster_token" en fonction de votre service,
+modifiez la valeur de "type" en fonction de votre plateforme.
 
 Explication des champs:
 
@@ -198,17 +198,34 @@ Explication des champs:
   compatibles, ajouté le paramètre du service choisi, les estimations sont
   sur la base des tarifs et observations en aout 2023:
 
-  - `2captcha_token`: 3€ - ±1000 captchas - environ 2.5 ans (choisir
-    Paypal).\
-    [2captcha.com](https://2captcha.com/?from=16639177).\
-    2captcha
-    indique que les captchas sont résolus par des personnes.
-  - `capmonster_token`: $6 - ±10000 captchas - environ 25
-    ans.\
-    [capmonster.cloud](https://capmonster.cloud/SelectPaymentType).\
-    Montant
-    minimum $6 pour environ 10000 captchas (paypal), soit 25 ans. Zennolabs
-    indique que les captchas sont résolus automatiquement (par machine).
+  - <a id="captchaai"></a>`captchaai_token`:\
+    1 Thread (fil de traitement)
+    offert pour les utilisateurs de Meters2HA. Il faaut:
+    1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169)
+       pour s'inscrire.
+    2. Demander de bénéficier de
+       [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
+       à travers un Ticket
+       ([Home> Dashboard> Tickets](https://captchaai.com/tickets.php#?from=151169)> New Ticket):
+    ```plaintext
+    I would like to benefit from the offer
+      " 1 Free Thread for MetersToHA Users".
+    ```
+    3. Ajouter la clef API à votre configuration (pas besoin d'attendre
+       l'activation).
+    4. Attendre l'activation de l'offre.
+    5. Profitez de la résolution reCAPTCHA 100%, hCaptcha, Solve Media, and
+       27500+ captchas d'image.
+    6. Tester et mettre en route MetersToHA.
+  - `2captcha_token`: à obtenir sur
+    [2captcha.com](https://2captcha.com/?from=16639177). Montant minimum 3€
+    pour environ 1000 captchas (paypal), soit 2.5 années. 2captcha indique
+    que les captchas sont résolus par des personnes.
+  - `capmonster_token`: à obtenir sur
+    [capmonster.cloud](https://capmonster.cloud/).\
+    Montant minimum $6 pour
+    environ 10000 captchas (paypal), soit 25 ans. Zennolabs indique que les
+    captchas sont résolus automatiquement (par machine).
 
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
