@@ -22,6 +22,10 @@ veolia_data.csv
 veolia_test_data.csv
 getData
 getDataHeadless
+node_modules/
+package-lock.json
+package.json
+
 
 **/attic
 # Local script
