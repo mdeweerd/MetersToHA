@@ -10,7 +10,8 @@ configuration:
     example: ba48563e215a579d25f5d5b76ad7a018
   grdf_event:
     name: Déclencheur GRDF
-    description: Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
+    description:
+      Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
       pour GRDF
   grdf_login:
     name: Identifiant GRDF
@@ -23,7 +24,7 @@ configuration:
   grdf_pce:
     name: GRDF PCE
     description: GRDF Numéro du Point de Comptage et d'Estimation (PCE)
-    example: '21546020012301'
+    example: "21546020012301"
   ha_server:
     name: Seveur Home Assistant
     description: Serveur Home Assistant vers lequel envoyer les données
@@ -34,21 +35,23 @@ configuration:
     example: WViNTMzMjAyM2RkMiIsIm-OvEn0_QKLscaKcXVA_ecQoHVwRVYYv5pzA0eyJ0eXAiOiJKV1QiLCJ.eyJpc3MiOiI1OhbGciOiJIUzI1NiJ9WNjODg5NjRjMGI0YzM5OGZhOlhdCI6MTY1Mzg1MDY0OSwiZXhwIjoxOTY5MjEwNjQ5fQ.jkOiQUi
   timeout:
     name: Délai d'expiration
-    description: Un délai en secondes utilisé comme délai d'expiration pour diverses
+    description:
+      Un délai en secondes utilisé comme délai d'expiration pour diverses
       de Meters2HA
-    example: '30'
+    example: "30"
   type:
     name: Type de Serveur
     description: Le type de votre serveur ('ha'=Home Assistant, mqtt, ...)
     example: ha
   veolia_event:
     name: Déclencheur Veolia
-    description: Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
+    description:
+      Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
       pour Veolia
   veolia_contract:
     name: Veolia Contract
     description: veolia_contract
-    example: '6400002'
+    example: "6400002"
   veolia_login:
     name: Identifiant Veolia
     description: Identifiant (email) pour le site Veolia (email)
@@ -59,37 +62,43 @@ configuration:
     example: YourSecret'Q
   skip_download:
     name: Ne pas télécharger
-    description: Ne télécharge pas les données, mais utilisera les données déjà présentes
+    description:
+      Ne télécharge pas les données, mais utilisera les données déjà présentes
       localement.  Utile lors de la mise au point de la configuration, pendant le
       débogue, ou lorsque vous téléchargez le fichier par d'autre moyens (car les
       données sont quand même interprétées et envoyées vers votre système Domotique).
   trace:
     name: Activation Trace détaillée
-    description: Losque actif, chaque ligne exécutée de 'meters_to_ha.py' sera dans
+    description:
+      Losque actif, chaque ligne exécutée de 'meters_to_ha.py' sera dans
       'service.log'
   debug:
     name: Activation Débogue sur Terminal X
     description: Ouvrira le navigateur sur le terminal X spécifié dans DISPLAY
   DISPLAY:
     name: Valeur DISPLAY pour l'affichage X
-    description: Specification complète de l'adresse du terminal X accessible depuis
+    description:
+      Specification complète de l'adresse du terminal X accessible depuis
       votre instance Home Assistance.  Par exemple, vous lancez MobiXterm sur votre
       PC qui a comme IP 10.33.2.69, et les connexions depuis votre réseau privé vers
       ce serveur sont autorisés.  La valeur "10.33.2.69:0.0" est en principe la bonne.
   insecure:
     name: Accepter les certificats SSL "insécures"
-    description: Accepte les certificats autosignés.  Utile seulement lorsque ce n'est
+    description:
+      Accepte les certificats autosignés.  Utile seulement lorsque ce n'est
       pas le serveur Home Assistant du module complémentaire ("add-on") est utilisé.
   local_config:
     name: Configuration Chrome "Locale"
-    description: Lorsque actif, maintient les données de configuration de chrome entre
+    description:
+      Lorsque actif, maintient les données de configuration de chrome entre
       les lancements.
   screenshot:
     name: Prendre des captures d'écran
     description: Prend des captures d'écran qui peuvent être utiles au débogue.
   keep_output:
     name: Garder les fichiers intermédiaires
-    description: Si active, la suppression des fichiers intermédiaires et de données
+    description:
+      Si active, la suppression des fichiers intermédiaires et de données
       n'est pas effectuée.
   mqtt_login:
     name: Identifiant pour Serveur mqtt

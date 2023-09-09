@@ -76,7 +76,7 @@ if bashio::config.has_value logs_folder ; then
   # shellcheck disable=SC2089
   RUN_OPT="${RUN_OPT} -l $(bashio::config logs_folder)"
   LOGS_FOLDER="$(bashio::config logs_folder)"
-  mkdir -p ${LOGS_FOLDER}
+  mkdir -p "${LOGS_FOLDER}"
 fi
 
 if bashio::config.has_value type ; then

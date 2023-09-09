@@ -17,7 +17,7 @@ arch:
   - i386
 options:
   log_level: info
-  timeout: '30'
+  timeout: "30"
   type: ha
   #logs_folder: /config/MetersToHA
   #download_folder: /config/MetersToHA
@@ -65,5 +65,4 @@ schema:
   domoticz_password: password?
   domoticz_server: url?
   domoticz_idx: str?
-
 # image: ghcr.io/mdeweerd/MetersToHA/haos-addon/{arch}

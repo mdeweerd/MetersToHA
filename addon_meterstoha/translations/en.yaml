@@ -18,9 +18,10 @@ configuration:
     example: YourSecret'Q
   grdf_pce:
     name: GRDF PCE
-    description: GRDF identification of the "Point de Comptage et d'Estimation (PCE)"  (end
+    description:
+      GRDF identification of the "Point de Comptage et d'Estimation (PCE)"  (end
       Point Counter and Estimation)
-    example: '21546020012301'
+    example: "21546020012301"
   ha_server:
     name: Home Assistant Server
     description: Home Asistant Server to send data to
@@ -32,7 +33,7 @@ configuration:
   timeout:
     name: Connection/Step Timeout
     description: Value (seconds) used for timeout delays
-    example: '30'
+    example: "30"
   type:
     name: Server Type
     description: The type of your server (ha=Home Assistant)
@@ -40,7 +41,7 @@ configuration:
   veolia_contract:
     name: Veolia Contract
     description: veolia_contract
-    example: '6400002'
+    example: "6400002"
   veolia_login:
     name: Veolia Login
     description: User Login for Veolia site (email)
