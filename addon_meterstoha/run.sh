@@ -67,10 +67,16 @@ if bashio::config.has_value log_level ; then
   LOG_LEVEL="$(bashio::config log_level)"
 fi
 
+if bashio::config.has_value download_folder ; then
+  # shellcheck disable=SC2089
+  mkdir "$(bashio::config download_folder)"
+fi
+
 if bashio::config.has_value logs_folder ; then
   # shellcheck disable=SC2089
   RUN_OPT="${RUN_OPT} -l $(bashio::config logs_folder)"
   LOGS_FOLDER="$(bashio::config logs_folder)"
+  mkdir -p ${LOGS_FOLDER}
 fi
 
 if bashio::config.has_value type ; then
