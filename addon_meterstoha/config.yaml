@@ -12,8 +12,10 @@ init: false
 arch:
   - aarch64
   - amd64
-  # - armhf
   - armv7
+  # Next architectures are missing the chromium-browser
+  # Need to check for firefox availability
+  # - armhf
   # - i386
 options:
   log_level: info
