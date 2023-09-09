@@ -67,4 +67,4 @@ schema:
   domoticz_password: password?
   domoticz_server: url?
   domoticz_idx: str?
-  image: ghcr.io/mdeweerd/MetersToHA/haos-addon/{arch}
+image: ghcr.io/mdeweerd/MetersToHA/haos-addon/{arch}
