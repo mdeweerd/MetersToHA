@@ -12,15 +12,15 @@ init: false
 arch:
   - aarch64
   - amd64
-  - armhf
+  # - armhf
   - armv7
-#  - i386
+  # - i386
 options:
   log_level: info
-  timeout: "30"
+  timeout: '30'
   type: ha
-  #logs_folder: /config/MetersToHA
-  #download_folder: /config/MetersToHA
+  # logs_folder: /config/MetersToHA
+  # download_folder: /config/MetersToHA
   logs_folder: /config
   download_folder: /config
   grdf_event: call_grdf
