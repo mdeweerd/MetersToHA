@@ -4,7 +4,7 @@ build_from:
   amd64: ghcr.io/hassio-addons/base:14.1.0
   armhf: ghcr.io/hassio-addons/base:14.1.0
   armv7: ghcr.io/hassio-addons/base:14.1.0
-  i386: ghcr.io/hassio-addons/base:14.1.0
+  # i386: ghcr.io/hassio-addons/base:14.1.0
 # codenotary:
 #   base_image: dummy@dummy.com
 #   signer: dummy@dummy.com
