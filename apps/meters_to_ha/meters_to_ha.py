@@ -283,9 +283,9 @@ class Output(Worker):
         self.__logger = logging.getLogger()
         self.__print_buffer = ""
         logs_folder = (
-            os.path.dirname(os.path.realpath(__file__))
+            config_dict[INSTALL_DIR]
             if config_dict[PARAM_LOGS_FOLDER] is None
-            else config_dict[INSTALL_DIR]
+            else config_dict[PARAM_LOGS_FOLDER]
         )
 
         logfile = os.path.join(logs_folder, "service.log")

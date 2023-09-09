@@ -6,6 +6,8 @@ error.png
 chromedriver.exe
 
 # Local config/data files
+**/*.docx
+**/*.md.*
 **/config.json
 **/winconfig.json
 **/historique_gazpar.json*
