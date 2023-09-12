@@ -152,5 +152,6 @@ echo "Generated script '$EXEC_EVENT_SH':"
 cat "$EXEC_EVENT_SH"
 
 HAEVENT2EXEC=./haevent2exec.py
+echo "\"${HAEVENT2EXEC}\" --config-json \"$CONFIG_FILE\" --external-program \"$EXEC_EVENT_SH\" --log-level=\"${LOG_LEVEL//\\"/\\\\"}\" $events"
 # shellcheck disable=SC2086,SC2090
 "${HAEVENT2EXEC}" --config-json "$CONFIG_FILE" --external-program "$EXEC_EVENT_SH" --log-level="${LOG_LEVEL//\"/\\\"}" $events
