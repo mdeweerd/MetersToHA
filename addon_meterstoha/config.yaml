@@ -32,7 +32,7 @@ options:
   debug: false
   skip_download: false
 schema:
-  log_level: list(trace|debug|info|warning|error)?
+  log_level: list(error|warning|info|debug|trace)?
   type: list(ha|mqtt|url|domoticz)
   captchaservice: list(2captcha|capmonster|captchaai)?
   token_captchaservice: password?
