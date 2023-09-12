@@ -174,6 +174,10 @@ VALID_LOGGING_LEVELS = ["debug", "info", "warning", "error"]
 
 
 async def main():
+    logging.basicConfig(
+        format="%(asctime)s %(message)s", datefmt="[%Y/%m/%d %H:%M:%S]"
+    )
+
     parser = argparse.ArgumentParser(
         description="Home Assistant Event Listener"
     )

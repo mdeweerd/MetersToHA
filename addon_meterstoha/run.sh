@@ -63,8 +63,15 @@ if bashio::config.has_value DISPLAY ; then
 fi
 
 LOG_LEVEL=info
+TRACE_OPT=""
 if bashio::config.has_value log_level ; then
   LOG_LEVEL="$(bashio::config log_level)"
+  if [ "${LOG_LEVEL}" == "trace" ] ; then
+     # Maximum level inside app
+     LOG_LEVEL="debug"
+     # Enable tracing python
+     TRACE_OPT="-m trace --ignore-dir=/usr/lib -t"
+  fi
 fi
 
 if bashio::config.has_value download_folder ; then
@@ -106,11 +113,6 @@ fi
 
 if bashio::config.true keep_output ; then
   RUN_OPT="${RUN_OPT} --keep-output"
-fi
-
-TRACE_OPT=""
-if bashio::config.true trace ; then
-  TRACE_OPT="-m trace --ignore-dir=/usr/lib -t"
 fi
 
 
