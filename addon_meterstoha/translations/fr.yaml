@@ -67,11 +67,11 @@ configuration:
       localement.  Utile lors de la mise au point de la configuration, pendant le
       débogue, ou lorsque vous téléchargez le fichier par d'autre moyens (car les
       données sont quand même interprétées et envoyées vers votre système Domotique).
-  trace:
-    name: Activation Trace détaillée
+  log_level:
+    name: Niveau de débogue
     description:
-      Losque actif, chaque ligne exécutée de 'meters_to_ha.py' sera dans
-      'service.log'
+      Impacte les messages remonté.  Le niveau "trace" entraine la présence
+      de chaque ligne exécutée dans 'service.log'
   debug:
     name: Activation Débogue sur Terminal X
     description: Ouvrira le navigateur sur le terminal X spécifié dans DISPLAY

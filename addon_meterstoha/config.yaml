@@ -31,9 +31,8 @@ options:
   screenshot: true
   debug: false
   skip_download: false
-  trace: false
 schema:
-  log_level: list(debug|info|warning|error)?
+  log_level: list(trace|debug|info|warning|error)?
   type: list(ha|mqtt|url|domoticz)
   captchaservice: list(2captcha|capmonster|captchaai)?
   token_captchaservice: password?
@@ -56,7 +55,6 @@ schema:
   local_config: bool?
   insecure: bool?
   skip_download: bool?
-  trace: bool?
   debug: bool?
   # item: match(regex)
   mqtt_login: str?
