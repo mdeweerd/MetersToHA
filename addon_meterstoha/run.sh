@@ -76,7 +76,7 @@ fi
 
 if bashio::config.has_value download_folder ; then
   # shellcheck disable=SC2089
-  mkdir "$(bashio::config download_folder)"
+  mkdir -p "$(bashio::config download_folder)"
 fi
 
 if bashio::config.has_value logs_folder ; then
