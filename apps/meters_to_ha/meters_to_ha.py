@@ -1690,14 +1690,21 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 r"/e-conso/pce/consommation/informatives"
                 r"?dateDebut={}&dateFin={}&pceList[]={}"
             ).format(
-                (dt.datetime.now() - dt.timedelta(days=7)).strftime(
+                (dt.datetime.now() - dt.timedelta(days=14)).strftime(
                     "%Y-%m-%d"
                 ),
                 dt.datetime.now().strftime("%Y-%m-%d"),
                 self.configuration[PARAM_GRDF_PCE],
             )
 
-            self.mylog("Get Data URL", end="~~")
+            self.mylog(
+                r"Get Data URL {}".format(
+                    data_url.removesuffix(self.configuration[PARAM_GRDF_PCE])
+                    + "<PCE>"
+                ),
+                end="~~",
+            )
+            self.mylog(r"Get Data URL {}".format(data_url), end="~~")
             self.__browser.get(data_url)
 
             self.mylog("Get Data Content", end="~~")
