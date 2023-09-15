@@ -1356,13 +1356,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         # Should be logged in here
 
-        try:
-            self.mylog("Remove temporary download file. ", end="")
-            os.remove(v_file)
-        except Exception:
-            raise
-        else:
-            self.mylog(st="OK")
+        if os.path.exists(v_file):
+            try:
+                self.mylog("Remove temporary download file. ", end="")
+                os.remove(v_file)
+            except Exception:
+                raise
+            else:
+                self.mylog(st="OK")
 
         # Wait until element is at least visible
         ep = EC.visibility_of_any_elements_located((By.CSS_SELECTOR, r".logo"))
