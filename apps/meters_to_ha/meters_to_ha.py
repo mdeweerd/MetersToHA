@@ -947,7 +947,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         """
         # Wait until element is visible
         if wait_message is None:
-            wait_message = f"Wait for Button {method}:{key}"
+            wait_message = f"Wait for Button {method}:{key}. "
         self.mylog(wait_message, end="")
 
         if timeout is None:
@@ -968,7 +968,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.mylog(st="OK")
 
         if delay != 0.0:
-            self.mylog(f"Wait before clicking ({delay:.1f}s)", end="")
+            self.mylog(f"Wait before clicking ({delay:.1f}s).", end="")
             self.mylog(st="~~")
             time.sleep(delay)
 
@@ -995,7 +995,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         fn_img = os.path.join(self.configuration[PARAM_LOGS_FOLDER], basename)
         # Screenshots are only for debug, so errors are not blocking.
         try:
-            self.mylog(f"Get & Save '{fn_img}'", end="--")
+            self.mylog(f"Get & Save '{fn_img}'. ", end="--")
             # img = self.__display.waitgrab()
             self.__browser.get_screenshot_as_file(fn_img)
         except Exception as e:
@@ -1007,7 +1007,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             try:
                 fn_html = fn_img + ".html"
                 with open(fn_html, "w", encoding="utf_8") as html_file:
-                    self.mylog(f"Writing {fn_html}", end="~~")
+                    self.mylog(f"Writing {fn_html}. ", end="~~")
                     html_file.write(self.__browser.page_source)
             except Exception as e:
                 self.mylog(f"Could not dump html {fn_html}: {e}", end="")
@@ -1605,10 +1605,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             CONNEXION_XPATH = r"//input[@value='Connexion']"
 
-            self.mylog("Proceed with captcha resolution", end="~~")
+            self.mylog("Proceed with captcha resolution. ", end="~~")
             if self.resolve_captcha2() is not None:
                 # Some time for captcha to remove.
-                self.mylog("Automatic resolution succeeded", end="~~")
+                self.mylog("Automatic resolution succeeded. ", end="~~")
                 time.sleep(2)
             else:
                 # Manual
@@ -1617,7 +1617,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # Not sure that click is needed for 2captcha
                 clickRecaptcha = True
                 if clickRecaptcha:
-                    self.mylog("Clicking on the captcha button", end="~~")
+                    self.mylog("Clicking on the captcha button. ", end="~~")
                     self.__browser.switch_to.frame(0)
                     re_btn = self.__browser.find_element(
                         By.CLASS_NAME, "recaptcha-checkbox-border"
@@ -1641,12 +1641,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 waitUntilConnexionGone = 2
                 if self._debug:
                     # Allow some some time to resolve captcha, and connect
-                    self.mylog("Waiting 30 seconds for the user", end="~~")
+                    self.mylog("Waiting 30 seconds for the user. ", end="~~")
                     waitUntilConnexionGone = 30
                 else:
                     # Not in debug mode, only wait a bit
                     self.mylog(
-                        "No debug interface, proceed (delay 2s)", end="~~"
+                        "No debug interface, proceed (delay 2s). ", end="~~"
                     )
 
                 try:
@@ -1677,7 +1677,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         timeout=2,
                     )
                     time.sleep(5)
-                    self.mylog("End of wait after connexion", end="~~")
+                    self.mylog("End of wait after connexion. ", end="~~")
                 except Exception:
                     # Already clicked or other error
                     pass
@@ -1697,17 +1697,22 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 self.configuration[PARAM_GRDF_PCE],
             )
 
+            # Log URL while hiding personal information
             self.mylog(
                 r"Get Data URL {}".format(
                     data_url.removesuffix(self.configuration[PARAM_GRDF_PCE])
-                    + "<PCE>"
+                    + "<PCE> . "
                 ),
                 end="~~",
             )
-            self.mylog(r"Get Data URL {}".format(data_url), end="~~")
+
+            # Next line would log without hiding data
+            # self.mylog(r"Get Data URL {}".format(data_url), end="~~")
+
+            # Go to the URL.
             self.__browser.get(data_url)
 
-            self.mylog("Get Data Content", end="~~")
+            self.mylog("Get Data Content. ", end="~~")
             # result = self.__browser.page_source
             try:
                 content = self.__browser.find_element(By.TAG_NAME, "pre").text
@@ -1733,7 +1738,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         with open(g_file, "w", encoding="utf_8") as grdf_file:
             # json.dump(result, grdf_file)
-            self.mylog(f"Writing {g_file}", end="~~")
+            self.mylog(f"Writing '{g_file}'. ", end="~~")
             grdf_file.write(content)
 
         return g_file
@@ -1766,7 +1771,7 @@ class Injector(Worker):
         """
 
         # pylint: disable=too-many-locals
-        self.mylog("Parsing csv file")
+        self.mylog("Parsing csv file.")
 
         with open(csv_file, encoding="utf_8") as f:
             data: dict[str, Any] = {}
@@ -2312,7 +2317,7 @@ class HomeAssistantInjector(Injector):
         Inject Gazpar Data from GRDF into Home Assistant.
         """
         # pylint: disable=too-many-locals
-        self.mylog("Parsing JSON file")
+        self.mylog("Parsing JSON file.")
 
         with open(json_file, encoding="utf_8") as f:
             data = json.load(f)
