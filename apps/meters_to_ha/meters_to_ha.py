@@ -995,7 +995,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         fn_img = os.path.join(self.configuration[PARAM_LOGS_FOLDER], basename)
         # Screenshots are only for debug, so errors are not blocking.
         try:
-            self.mylog(f"Get & Save '{fn_img}'. ", end="--")
+            self.mylog(f"Grab & Save '{fn_img}'. ", end="--")
             # img = self.__display.waitgrab()
             self.__browser.get_screenshot_as_file(fn_img)
         except Exception as e:
@@ -1007,7 +1007,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             try:
                 fn_html = fn_img + ".html"
                 with open(fn_html, "w", encoding="utf_8") as html_file:
-                    self.mylog(f"Writing {fn_html}. ", end="~~")
+                    self.mylog(f"Writing '{fn_html}'. ", end="~~")
                     html_file.write(self.__browser.page_source)
             except Exception as e:
                 self.mylog(f"Could not dump html {fn_html}: {e}", end="")
@@ -1357,7 +1357,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # Should be logged in here
 
         try:
-            self.mylog("Remove temporary download file", end="")
+            self.mylog("Remove temporary download file. ", end="")
             os.remove(v_file)
         except Exception:
             raise
@@ -1492,7 +1492,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
                 response = urllib.request.urlopen(data)  # nosec
                 self.mylog(
-                    f"Write {v_file}",
+                    f"Write '{v_file}'. ",
                     st="--",
                     end="",
                 )
@@ -3122,14 +3122,13 @@ def doWork():
             # Get data
             try:
                 gazpar_file = crawler.get_gazpar_file()
-            except Exception as exc_get:
+            except Exception:
+                exc_info = " - ".join(traceback.format_exc().splitlines())
                 # Retry once on failure to manage stalement
                 # exception that occurs sometimes
-                o.mylog(traceback.format_exc(), st="WW")
+                o.mylog(exc_info, st="WW")
                 o.mylog(
-                    "Encountered error "
-                    + str(exc_get).rstrip()
-                    + "// -> Retrying once",
+                    "Encountered error -> Retrying once",
                     st="WW",
                 )
                 gazpar_file = crawler.get_gazpar_file()
@@ -3145,7 +3144,10 @@ def doWork():
             try:
                 veolia_idf_file = crawler.get_veolia_idf_file()
                 # veolia_idf_file = "./veolia_test_data.csv"
-            except Exception as exc_get:
+            except Exception:
+                exc_info = " - ".join(traceback.format_exc().splitlines())
+                o.mylog(exc_info, st="WW")
+
                 try:
                     if configuration_json[PARAM_SCREENSHOT]:
                         crawler.get_screenshot("screen_on_exception1.png")
@@ -3155,9 +3157,7 @@ def doWork():
                 # Retry once on failure to manage
                 # stalement exception that occurs sometimes
                 o.mylog(
-                    "Encountered error"
-                    + str(exc_get).rstrip()
-                    + "// -> Retrying once",
+                    "Encountered error -> Retrying once",
                     st="WW",
                 )
                 veolia_idf_file = crawler.get_veolia_idf_file()
@@ -3166,9 +3166,7 @@ def doWork():
         except Exception as exc:
             try:
                 if configuration_json[PARAM_SCREENSHOT]:
-                    crawler.get_screenshot(
-                        "screen_on_exception2.png", dump_html=True
-                    )
+                    crawler.get_screenshot("screen_on_exception2.png", True)
             except Exception:
                 pass
 
