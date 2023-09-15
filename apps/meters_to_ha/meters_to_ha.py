@@ -2277,8 +2277,11 @@ class HomeAssistantInjector(Injector):
                     },
                 }
                 self.open_url(
-                    "/api/states/sensor.veolia_%s_total"
-                    % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+                    HA_API_SENSOR_FORMAT
+                    % (
+                        "sensor.veolia_%s_total"
+                        % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+                    ),
                     data,
                 )
                 data = {
@@ -2291,8 +2294,11 @@ class HomeAssistantInjector(Injector):
                     },
                 }
                 self.open_url(
-                    "/api/states/sensor.veolia_%s_period_total"
-                    % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+                    HA_API_SENSOR_FORMAT
+                    % (
+                        "sensor.veolia_%s_period_total"
+                        % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+                    ),
                     data,
                 )
                 self.mylog(st="OK")
