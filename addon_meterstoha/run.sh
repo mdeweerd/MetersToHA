@@ -8,6 +8,7 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
   cd MetersToHA || exit 255
   git sparse-checkout set apps
   git checkout
+  git rev-parse --short HEAD
 )
 
 echo "Generate configuration file"
