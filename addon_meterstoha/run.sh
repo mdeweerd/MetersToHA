@@ -1,23 +1,36 @@
 #!/usr/bin/with-contenv bashio
 
+
+CONFIG_FILE="$(realpath .)/m2h_config.json"
+RUN_OPT=""
+
+# Defaults
+TYPE="ha"
+HA_SERVER="http://supervisor/core"
+HA_TOKEN="${SUPERVISOR_TOKEN}"
+GIT_VERSION_STR=
+
 #
 # Cloning on each run at this moment for testing
 #
+if bashio::config.has_value git_version ; then
+  GIT_VERSION="$(bashio::config git_version)"
+  # shellcheck disable=SC2089
+  GIT_VERSION_STR="\"${GIT_VERSION/\"/\\\"}\""
+fi
+
 git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout MetersToHA
 (
   cd MetersToHA || exit 255
   git sparse-checkout set apps
-  git checkout
-  git rev-parse --short HEAD
+  echo "git checkout $GIT_VERSION_STR"
+  # shellcheck disable=SC2086,SC2090
+  git checkout $GIT_VERSION_STR
+  echo "Effective GIT version: $(git rev-parse --short HEAD)"
 )
 
+
 echo "Generate configuration file"
-
-CONFIG_FILE="$(realpath .)/m2h_config.json"
-RUN_OPT=""
-TYPE="ha"
-
-# Defaults
 
 keys="veolia_login veolia_password veolia_contract grdf_login grdf_password grdf_pce timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
 event_keys="veolia grdf"
@@ -57,6 +70,14 @@ for key in $event_keys ; do
   fi
 done
 
+
+if bashio::config.has_value ha_server ; then
+  HA_SERVER="$(bashio::config ha_server)"
+fi
+
+if bashio::config.has_value ha_token ; then
+  HA_SERVER="$(bashio::config ha_token)"
+fi
 
 if bashio::config.has_value DISPLAY ; then
   DISPLAY="$(bashio::config DISPLAY)"
@@ -116,11 +137,10 @@ if bashio::config.true keep_output ; then
   RUN_OPT="${RUN_OPT} --keep-output"
 fi
 
-
 cat > "$CONFIG_FILE" <<EOJSON
 {
   $config
-  "ha_server": "http://supervisor/core",
+  "ha_server": "$HA_SERVER",
   "ha_token": "$SUPERVISOR_TOKEN",
   "type": "$TYPE"
 }
@@ -151,6 +171,9 @@ chmod +x "$EXEC_EVENT_SH"
 
 echo "Generated script '$EXEC_EVENT_SH':"
 cat "$EXEC_EVENT_SH"
+
+echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}'"
+curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/"
 
 HAEVENT2EXEC=./haevent2exec.py
 echo "\"${HAEVENT2EXEC}\" --config-json \"$CONFIG_FILE\" --external-program \"$EXEC_EVENT_SH\" --log-level=\"${LOG_LEVEL//\\"/\\\\"}\" $events"

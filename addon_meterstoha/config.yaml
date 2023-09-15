@@ -65,4 +65,5 @@ schema:
   domoticz_password: password?
   domoticz_server: url?
   domoticz_idx: str?
+  git_version: str?
 # image: ghcr.io/mdeweerd/MetersToHA/addon_meterstoha/{arch}
