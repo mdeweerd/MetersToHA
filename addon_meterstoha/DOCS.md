@@ -1,8 +1,6 @@
 # MetersToHA Home Assistant Add-on
 
-|                             |                                                                           |
-| --------------------------- | ------------------------------------------------------------------------- |
-| ![MetersToHA Log](logo.png) | MetersToHA est plus simple à mettre en place avec ce module complémenaire |
+MetersToHA est plus simple à mettre en place avec ce module complémentaire
 
 ## Configuration
 
