@@ -53,6 +53,8 @@ from urllib.parse import urlencode, urlparse
 
 VERSION = "v2.0"
 
+LOGGER = logging.getLogger()
+
 HA_API_SENSOR_FORMAT = "/api/states/%s"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
 PARAM_CAPMONSTER_TOKEN = "capmonster_token"
@@ -258,7 +260,7 @@ class Worker:
                 )
 
             self.mylog(st="OK")
-        # print("%r->%r"%(config_dict,self.configuration))
+        # LOGGER.debug("%r->%r", config_dict, self.configuration)
 
     def default_mylog(self, string="", st=None, end=None):
         st = f"[{st}] " if st else ""
@@ -280,7 +282,6 @@ class Output(Worker):
     def __init__(self, config_dict, debug=False):
         super().__init__(super_print=self.__print_to_console, debug=debug)
 
-        self.__logger = logging.getLogger()
         self.__print_buffer = ""
         logs_folder = (
             config_dict[INSTALL_DIR]
@@ -302,8 +303,8 @@ class Output(Worker):
             file_handler = RotatingFileHandler(logfile, "a", 1000000, 1)
             formatter = logging.Formatter("%(asctime)s : %(message)s")
             file_handler.setFormatter(formatter)
-            self.__logger.setLevel(logging.INFO)
-            self.__logger.addHandler(file_handler)
+            LOGGER.setLevel(logging.INFO)
+            LOGGER.addHandler(file_handler)
             self.mylog = self.__print_to_logfile
 
     def __print_to_console(self, string="", st=None, end=None):
@@ -332,7 +333,7 @@ class Output(Worker):
             self.__print_buffer = self.__print_buffer + string
         else:
             st = st if st else "--"
-            self.__logger.info(
+            LOGGER.info(
                 "%s : %s %s",
                 st.upper().lstrip(),
                 self.__print_buffer.lstrip().rstrip(),
@@ -357,7 +358,7 @@ def print_classes(modulename=__name__):
     """
     for _name, obj in inspect.getmembers(sys.modules[modulename]):
         if inspect.isclass(obj):
-            print(obj)
+            LOGGER.debug(obj)
 
 
 # Source: https://www.novixys.com/blog/python-check-file-can-read-write/
@@ -2354,7 +2355,7 @@ class HomeAssistantInjector(Injector):
         #              'parent_id': None, 'user_id': None}
         # }
         #
-        # print(f"{response!r}")
+        # LOGGER.debug("%r", response)
         current_total_kWh: float = 0
         previous_date = datetime.now(timezone.utc) - dt.timedelta(days=7)
 
@@ -2835,7 +2836,7 @@ def get_state_file(file):
 
 
 def update_state_file(file, data):
-    print(f"Get_state_file {file} {data!r}")
+    LOGGER.info(f"Get_state_file {file} {data!r}")
     state = get_state_file(file)
     # Add CLI arguments to the configuration (CLI has precedence)
     state.update(data)

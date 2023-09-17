@@ -173,7 +173,8 @@ echo "Generated script '$EXEC_EVENT_SH':"
 cat "$EXEC_EVENT_SH"
 
 echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}'"
-curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/"
+curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/" 2>/dev/null
+echo ""
 
 HAEVENT2EXEC=./haevent2exec.py
 echo "\"${HAEVENT2EXEC}\" --config-json \"$CONFIG_FILE\" --external-program \"$EXEC_EVENT_SH\" --log-level=\"${LOG_LEVEL//\\"/\\\\"}\" $events"
