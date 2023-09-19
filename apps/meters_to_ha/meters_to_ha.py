@@ -167,7 +167,7 @@ try:
 
     try:
         # Double check and logging because 'not defined' uc
-        # was observed this protected import.
+        # was observed despite this protected import.
         import undetected_chromedriver as uc
 
         LOGGER.debug("Undetected ChromeDriver import ok")
@@ -496,7 +496,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             return
         try:
             if self.hasFirefox:
-                self.mylog("Try starting Firefox", end="")
+                self.mylog("Try starting Firefox. ", end="")
                 self.init_firefox()
                 self.mylog(st="OK")
                 return
@@ -505,7 +505,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if self.hasChromium:
             # Firefox did not load, try Chromium
-            self.mylog("Try starting Chromium", end="")
+            self.mylog("Try starting Chromium. ", end="")
             self.init_chromium()
             self.mylog(st="OK")
             return
@@ -517,7 +517,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     # INIT DISPLAY & BROWSER
     def init_firefox(self):
-        self.mylog("Start virtual display", end="")
+        self.mylog("Start virtual display (Firefox).", end="")
         # veolia website needs at least 1600x1200 to render all components
         if sys.platform != "win32":
             if self._debug:
@@ -674,7 +674,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
 
         if sys.platform != "win32":
-            self.mylog("Start virtual display (chromium)", end="")
+            self.mylog("Start virtual display (Chromium).", end="")
 
         if self._debug:
             if sys.platform != "win32":
