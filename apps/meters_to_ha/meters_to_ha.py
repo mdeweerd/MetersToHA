@@ -37,6 +37,7 @@ import inspect
 import json
 import logging
 import os
+import platform
 import random
 import re
 import signal
@@ -165,7 +166,13 @@ try:
     from pyvirtualdisplay import Display, xauth
 
     try:
+        # Double check and logging because 'not defined' uc
+        # was observed this protected import.
         import undetected_chromedriver as uc
+
+        LOGGER.debug("Undetected ChromeDriver import ok")
+        _uc_options_test = uc.ChromeOptions()
+        LOGGER.debug("Undetected ChromeDriver Options ok")
 
         hasUndetectedDriver = True
     except ImportError:
@@ -381,8 +388,12 @@ def check_file_writable(fnm):
 ###############################################################################
 class Configuration(Worker):
     def load_configuration_file(self, configuration_file):
+        python_version = platform.python_version()
         self.mylog(
-            f"Loading configuration file : {configuration_file}", end=""
+            f"Using {sys.executable} Version {python_version}", end="--"
+        )
+        self.mylog(
+            f"Loading configuration file : {configuration_file}", end="--"
         )
         try:
             with open(configuration_file, encoding="utf_8") as conf_file:
@@ -822,7 +833,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             or os.access(str(self.configuration[PARAM_CHROMEDRIVER]), os.X_OK)
         ) and os.access(str(self.configuration[PARAM_CHROMIUM]), os.X_OK):
             if hasUndetectedDriver:
-                extraMsg = "with undetected driver"
+                extraMsg = " with undetected driver"
             else:
                 extraMsg = ""
             self.mylog(f"Found chromium binary{extraMsg}", st="OK")
