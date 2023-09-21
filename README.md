@@ -81,7 +81,7 @@ de jouer.
   interactive, ou un service de résolution de captcha payant.
 - Si vous migrez depuis
   [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
-  vous devez désactiver ces automatisations et vos "sensors" de type
+  vous devez desactiver ces automatisations et vos "sensors" de type
   template (dans `configuration.yaml`) - sinon les valeurs écrasent celles
   de MetersToHA.
 
@@ -119,7 +119,7 @@ Ce script fonctionne pour:
   valable pour Veolia en IDF.\
   Vous pouvez trouver votre portail en
   fonction de la ville en visitant
-  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS.
+  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS .
 - [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
 
 ## Le fichier de configuration (`config.json`)
@@ -143,7 +143,7 @@ Exemple de configuration:
   "grdf_pce": "21546000000000",
   "ha_server": "https://MONINSTANCEHA",
   "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
-  "2captcha_token": "XXXXXXXXXXX",
+  "captchaai_token": "XXXXXXXXXXX",
   "type": "ha",
   "timeout": "30"
 }
@@ -151,9 +151,10 @@ Exemple de configuration:
 
 Les fournisseurs consultables dépendent des paramètres renseignés.\
 C.a.d.
-qu'il convient de supprimer les clefs inutiles, remplacer "2captcha_token"
-par "capmonster_token" en fonction de votre service, modifiez la valeur de
-"type" en fonction de votre plateforme.
+qu'il convient de supprimerz les clefs inutiles, remplacer
+"captchaai_token" par "2captcha_token" ou "capmonster_token" en fonction de
+votre service, modifiez la valeur de "type" en fonction de votre
+plateforme.
 
 Explication des champs:
 
@@ -194,21 +195,29 @@ Explication des champs:
   fois par soir (au cas ou le premier appel n'a pas donné de résultat).
   Pour 27% des jours, aucune résolution n'était nécessaire, pour 55% une
   seule résolution, et pour 18%, 2 résolutions.\
-  Deux services sont
+  Trois services sont
   compatibles, ajouté le paramètre du service choisi, les estimations sont
   sur la base des tarifs et observations en aout 2023:
 
-  - `2captcha_token`: 3€ - ±1000 captchas - environ 2.5 ans (choisir
-    Paypal).\
-    [2captcha.com](https://2captcha.com/?from=16639177).\
-    2captcha
-    indique que les captchas sont résolus par des personnes.
-  - `capmonster_token`: $6 - ±10000 captchas - environ 25
-    ans.\
-    [capmonster.cloud](https://capmonster.cloud/SelectPaymentType).\
-    Montant
-    minimum $6 pour environ 10000 captchas (paypal), soit 25 ans. Zennolabs
-    indique que les captchas sont résolus automatiquement (par machine).
+  - <a id="captchaai"></a>`captchaai_token`:\
+    1 Thread (fil de traitement)
+    offert pour les utilisateurs de Meters2HA. Il faaut:
+    1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169)
+       pour s'inscrire.
+    2. Demander de bénéficier de
+       [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
+       à travers un Ticket
+       ([Home>Dashboard>Tickets](https://captchaai.com/tickets.php#?from=151169)>New Ticket):
+    ```plaintext
+    I would like to benefit from the lifetime offer
+      " 1 Free Thread for MetersToHA Users".
+    ```
+    3. Ajouter la clef API à votre configuration (pas besoin d'attendre
+       l'activation).
+    4. Attendre l'activation de l'offre.
+    5. Profitez de la résolution reCAPTCHA 100%, hCaptcha, Solve Media, and
+       27500+ captchas d'image.
+    6. Tester et mettre en route MetersToHA.
 
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
@@ -296,8 +305,8 @@ environnements.
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/) après
 [activation des applications AppDaemon dans HACS](https://hacs.xyz/docs/categories/appdaemon_apps/#enable-appdaemon-apps-in-hacs)
-comme ceci en suivant "Configuration" pour HACS dans
-"Paramètres>Appareils et services":
+comme ceci en suivatn "Configuration" pour HACS dans "Paramètres>Appareils
+et services":
 ![Activate AppDaemon Apps](images/hacs_discover_appdaemon.png).
 
 Les scripts sont placés dans le répertoire
@@ -398,7 +407,7 @@ serveur X actif et disponible sur l'IP indiqué.
 veolia_idf:
   module: meters_to_ha_appdaemon
   class: MetersToHA
-  # optionnel - Par défaut "call_meters_to_ha".
+  # optionnel - Par défault "call_meters_to_ha".
   #     Permet de définir plusieurs lancements distincts, par exemple
   #     pour consulter Veolia à une certaine heure, et GRDF à une autre heure.
   event_name: call_veolia
@@ -489,7 +498,7 @@ Extrait de la fin d'une trace:
 
 #### GRDF (AppDaemon)
 
-La configuration c'est presque comme pour Veolia IDF. Comme la consommation
+La configuration c'est prèsque comme pour Veolia IDF. Comme la consommation
 GAZPAR est plutôt disponible en fin de journée, il est intéressant de
 consulter GRDF vers 21h par exemple.\
 Je recommande donc de personnaliser
@@ -632,11 +641,11 @@ Prérequis :
 
 ### Création du "Virtual Sensor" sur Domoticz :
 
-- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
+- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
 
 - Créer un "Virtual Sensor" de type : "Managed Counter"
 
-- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
+- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
 
   | >                   | Sensor pour conso eau |
   | ------------------- | --------------------- |
@@ -663,7 +672,7 @@ Non testé.
 ### Veolia
 
 Il semblerait que les données restituées par Veolia sont des fois un peu
-"farfelues". La meilleure méthode connue pour éviter cela est de
+"farfelus". La meilleure méthode connue pour éviter cela est de
 contournement c'est de réaliser l'appel entre 1h du matin et minuit.
 
 Le délai variable permet de repartir l'heure d'appel à Veolia entre les
@@ -676,7 +685,7 @@ Voici un exemple d'une récupération pour une journée partielle:
 
 ![](images/PartialDay.png)
 
-Et voici un exemple de données "farfelues" (les 5400L de conso journalière
+Et voici un exemple de données "farfelus" (les 5400L de conso journalière
 sont inexactes).
 
 ![](images/BadWaterDaily.png)
