@@ -78,7 +78,7 @@ de jouer.
 - GRDF n'est pas encore compatible avec Domoticz;
 - GRDF utilise un captcha. Il peut être validé "tout seul" dans certains
   cas (si peu de requêtes par jour), ou nécessiter une résolution
-  interactive, ou un service de résolution de captcha payant.
+  interactive, ou un [service de résolution de captcha](#captcha).
 - Si vous migrez depuis
   [frtz13/homeassistant_gazpar_cl_sensor](https://github.com/frtz13/homeassistant_gazpar_cl_sensor),
   vous devez désactiver ces automatisations et vos "sensors" de type
@@ -143,7 +143,7 @@ Exemple de configuration:
   "grdf_pce": "21546000000000",
   "ha_server": "https://MONINSTANCEHA",
   "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
-  "captchaai_token": "XXXXXXXXXXX",
+  "2captcha_token": "XXXXXXXXXXX",
   "type": "ha",
   "timeout": "30"
 }
@@ -151,8 +151,8 @@ Exemple de configuration:
 
 Les fournisseurs consultables dépendent des paramètres renseignés.\
 C.a.d.
-qu'il convient de supprimer les clefs inutiles, remplacer "captchaai_token"
-par "2captcha_token" ou "capmonster_token" en fonction de votre service,
+qu'il convient de supprimer les clefs inutiles, remplacer "2captcha_token"
+par "capmonster_token" ou "captchaai_token" en fonction de votre service,
 modifiez la valeur de "type" en fonction de votre plateforme.
 
 Explication des champs:
@@ -194,29 +194,33 @@ Explication des champs:
   fois par soir (au cas ou le premier appel n'a pas donné de résultat).
   Pour 27% des jours, aucune résolution n'était nécessaire, pour 55% une
   seule résolution, et pour 18%, 2 résolutions.\
-  Trois services sont
-  compatibles, ajouté le paramètre du service choisi, les estimations sont
-  sur la base des tarifs et observations en aout 2023:
+  <a id="captcha"></a>Trois
+  services sont compatibles, ajouté le paramètre du service choisi, les
+  estimations sont sur la base des tarifs et observations en aout 2023:
 
-  - <a id="captchaai"></a>`captchaai_token`:\
-    1 Thread (fil de traitement)
-    offert pour les utilisateurs de Meters2HA. Il faaut:
-    1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169)
-       pour s'inscrire.
-    2. Demander de bénéficier de
-       [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
-       à travers un Ticket
-       ([Home>Dashboard>Tickets](https://captchaai.com/tickets.php#?from=151169)>New Ticket):
-    ```plaintext
-    I would like to benefit from the lifetime offer
-      " 1 Free Thread for MetersToHA Users".
-    ```
-    3. Ajouter la clef API à votre configuration (pas besoin d'attendre
-       l'activation).
-    4. Attendre l'activation de l'offre.
-    5. Profitez de la résolution reCAPTCHA 100%, hCaptcha, Solve Media, and
-       27500+ captchas d'image.
-    6. Tester et mettre en route MetersToHA.
+  - <a id="2captcha"></a>`2captcha_token`: 3€ - ±1000 captchas - environ
+    2.5 ans (choisir
+    Paypal).\
+    [2captcha.com](https://2captcha.com/?from=16639177).\
+    2captcha
+    indique que les captchas sont résolus par des personnes.
+  - <a id="captchamonster"></a>`capmonster_token`: $6 - ±10000 captchas -
+    environ 25
+    ans.\
+    [capmonster.cloud](https://capmonster.cloud/SelectPaymentType).\
+    Montant
+    minimum $6 pour environ 10000 captchas (paypal), soit 25 ans. Zennolabs
+    indique que les captchas sont résolus automatiquement (par machine).
+  - <a id="captchaai"></a>`captchaai_token`: Offert (demande mensuelle) ou
+    $15/mois soit $180/an.\
+    [CaptchaAI](https://captchaai.com/?from=151169)
+    vous permet de
+    [renouveler sur demande mensuel un token valable un mois après chaque activation](.github/miscdoc/CapthaAI.md).\
+    Cela
+    semble contraignant mais vous permets de démarrer.\
+    Bien suivre
+    <a href=".github/miscdoc/CapthaAI.md" target="_blank">la procédure</a>
+    à chaque fois.
 
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
@@ -507,8 +511,8 @@ Pour GRDF un captcha est présent sur la page et depuis Janvier 2023 les
 scripts "simples" ne suffisent plus.
 
 La résolution du captcha se fait soit manuellement (avec débugue actif et
-configuration de DISPLAY), soit en s'appuyant sur
-[2captcha.com](https://2captcha.com/?from=16639177).
+configuration de DISPLAY), soit en s'appuyant sur un
+[service de résolution de captchas](#captcha).
 
 ```yaml
 grdf:
