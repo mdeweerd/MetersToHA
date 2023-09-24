@@ -215,7 +215,7 @@ Explication des champs:
     $15/mois soit $180/an.\
     [CaptchaAI](https://captchaai.com/?from=151169)
     vous permet de
-    [renouveler sur demande mensuel un token valable un mois après chaque activation](.github/miscdoc/CapthaAI.md).\
+    [renouveler sur demande mensuel un token valable un mois après chaque activation](.github/miscdoc/CaptchaAI.md).\
     Cela
     semble contraignant mais vous permet de démarrer.\
     Bien suivre
