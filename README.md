@@ -217,7 +217,7 @@ Explication des champs:
     vous permet de
     [renouveler sur demande mensuel un token valable un mois après chaque activation](.github/miscdoc/CapthaAI.md).\
     Cela
-    semble contraignant mais vous permets de démarrer.\
+    semble contraignant mais vous permet de démarrer.\
     Bien suivre
     <a href=".github/miscdoc/CaptchaAI.md" target="_blank">la procédure</a>
     à chaque fois.
