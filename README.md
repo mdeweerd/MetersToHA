@@ -219,7 +219,7 @@ Explication des champs:
     Cela
     semble contraignant mais vous permets de démarrer.\
     Bien suivre
-    <a href=".github/miscdoc/CapthaAI.md" target="_blank">la procédure</a>
+    <a href=".github/miscdoc/CaptchaAI.md" target="_blank">la procédure</a>
     à chaque fois.
 
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
