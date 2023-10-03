@@ -64,7 +64,7 @@ for key in $event_keys ; do
     value="$(bashio::config "${key}_event")"
     event_conf="$key:$value"
     event_matching="$event_matching""[[ \"\$1\" == \"${value/\"/\\\"}\" ]] && TARGET_OPT=--$key
-"
+    "
     # shellcheck disable=SC2089
     events="$events ${value//\"/\\\"}"
   fi
@@ -137,6 +137,16 @@ if bashio::config.true keep_output ; then
   RUN_OPT="${RUN_OPT} --keep-output"
 fi
 
+function debug_output
+{
+  # command 3>&1 1>&2 2>&3 | debug_output to show stderr only when debugging
+  if [ "${LOG_LEVEL}" == "debug" ] ; then
+    cat
+  else
+    cat > /dev/null
+  fi
+}
+
 cat > "$CONFIG_FILE" <<EOJSON
 {
   $config
@@ -173,7 +183,7 @@ echo "Generated script '$EXEC_EVENT_SH':"
 cat "$EXEC_EVENT_SH"
 
 echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}'"
-curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/" 2>/dev/null
+curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/"  3>&1 1>&2 2>&3 | debug_output
 echo ""
 
 HAEVENT2EXEC=./haevent2exec.py
