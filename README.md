@@ -303,11 +303,18 @@ déclencher l'événement.
 #### Home Assistant Add-On - méthode manuelle
 
 Ajouter https://github.com/mdeweerd/MetersToHA comme Dépôt à travers le
-menu Modules Complémentaires>Boutique des modules complémentaires>⋮(en haut
-à droite)>Dépots>Remplir "Ajouter", puis cliquer "Ajouter". Ensuite:
-attendre un peu, recharger la page de la Boutique des modules
-complémentaires ou "MetersToHA" devrait apparaître. Puis le cliquer,
-Installer, Configurer et Démarrer.
+menu:
+
+- Aller vers Modules Complémentaires>Boutique des modules complémentaires>⋮
+  (en haut à droite)>Dépots ;
+- Puis Remplir "Ajouter", puis cliquer "Ajouter";
+- Ensuite: attendre un peu, recharger la page de la Boutique des modules;
+  complémentaires ou "MetersToHA" devrait apparaître;
+- Puis cliquer "MetersToHA";
+- Installer, Configurer et Démarrer. (Voir ci-dessous à partir de
+  [Installer](#install_addon);
+- [définir un automatisme](#automatisation-home-assistant-appdaemon) pour
+  le(s) événement(s) choisi(s).
 
 #### Home Assistant Add-On - méthode aidé par lien spécial
 
@@ -324,9 +331,9 @@ Après cela cliquer sur "Open Link".
 
 Ensuite dans Home Assistant j'ai cliqué "Confirmer" et été redirigé vers:
 
-Ensuite, cliquer "Installer":
+<a id="install_addon"></a>![image|400x356](images/add_on_click_install.png)
 
-![image|400x356](images/add_on_click_install.png)
+Ensuite, cliquer "Installer":
 
 Après cela, dans "Configuration", définir les champs nécessaires et puis
 démarrer le Add-On. Vérifier dans l'onglet Journal de l'Add-on le
@@ -341,6 +348,10 @@ pouvez vérifier.
 ```plaintext
 {"message":"API running."}"./haevent2exec.py" --config-json "//m2h_config.json" --external-program "//execEvent.sh" --log-level="debug"  call_veolia call_grdf
 ```
+
+Pour finir,
+[définir un automatisme](#automatisation-home-assistant-appdaemon) pour
+le(s) événement(s) choisi(s). Et tester.
 
 ### Configuration
 
