@@ -36,6 +36,9 @@ de jouer.
   - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
   - [Les paramètres du script](#les-param%C3%A8tres-du-script)
   - [Home Assistant](#home-assistant)
+    - [Add-on MetersToHA (Module complémentaire)](#add-on-meterstoha-module-compl%C3%A9mentaire)
+      - [Home Assistant Add-On - méthode manuelle](#home-assistant-add-on---m%C3%A9thode-manuelle)
+      - [Home Assistant Add-On - méthode aidé par lien spécial](#home-assistant-add-on---m%C3%A9thode-aid%C3%A9-par-lien-sp%C3%A9cial)
     - [Configuration](#configuration)
     - [AppDaemon](#appdaemon)
       - [Installation AppDaemon](#installation-appdaemon)
@@ -286,9 +289,63 @@ En sus des informations qui suivent,
 [Le forum HACF](https://forum.hacf.fr/t/veolia-idf-sedif-consommation-eau-potable-suivi-consommation/11492)
 peut également vous aider.
 
+### Add-on MetersToHA (Module complémentaire)
+
+Deux méthodes:
+
+- Ajout de l'Add-on "à la main"
+- Ajout aidé par un lien spécial.
+
+Dans les 2 cas, il faudra configurer l'Add-on, le démarrer, et
+[définir un automatisme](#automatisation-home-assistant-appdaemon) pour
+déclencher l'événement.
+
+#### Home Assistant Add-On - méthode manuelle
+
+Ajouter https://github.com/mdeweerd/MetersToHA comme Dépôt à travers le
+menu Modules Complémentaires>Boutique des modules complémentaires>⋮(en haut
+à droite)>Dépots>Remplir "Ajouter", puis cliquer "Ajouter". Ensuite:
+attendre un peu, recharger la page de la Boutique des modules
+complémentaires ou "MetersToHA" devrait apparaître. Puis le cliquer,
+Installer, Configurer et Démarrer.
+
+#### Home Assistant Add-On - méthode aidé par lien spécial
+
+Un clic sur le bouton suivant va vous ouvrir une page de redirection de HA.
+
+[![Ouvrir votre instance Home Assistant et afficher la page de configuration du add-on.](https://my.home-assistant.io/badges/supervisor_addon.svg)](https://my.home-assistant.io/redirect/supervisor_addon/?addon=9120b5c7_meterstoha&repository_url=https%3A%2F%2Fgithub.com%2Fmdeweerd%2FMetersToHA)
+
+Ensuite un click sur le crayon (si c'est la première fois) pour mettre
+votre domaine (enregistré en local):
+
+![image|671x391](images/add_on_edit_instance.png)
+
+Après cela cliquer sur "Open Link".
+
+Ensuite dans Home Assistant j'ai cliqué "Confirmer" et été redirigé vers:
+
+Ensuite, cliquer "Installer":
+
+![image|400x356](images/add_on_click_install.png)
+
+Après cela, dans "Configuration", définir les champs nécessaires et puis
+démarrer le Add-On. Vérifier dans l'onglet Journal de l'Add-on le
+démarrage.
+
+![image|639x209](images/add_on_verify_journal.png)
+
+Quand il y a une ligne similaire à la suivante, l'Add-on a bien démarré.
+Dans le journal il y a aussi les informations de configuration que vous
+pouvez vérifier.
+
+```plaintext
+{"message":"API running."}"./haevent2exec.py" --config-json "//m2h_config.json" --external-program "//execEvent.sh" --log-level="debug"  call_veolia call_grdf
+```
+
 ### Configuration
 
-La valeur pour `ha_token` est nécessaire et peut être obtenu dans
+La valeur pour `ha_token` est nécessaire si on utilise pas la méthode
+"Add-on MetersToHA" et peut être obtenu dans
 [son profil Home Assistant](https://my.home-assistant.io/redirect/profile/).
 Cette fonctionnalité est disponible tout en bas de la page en question ou
 il faut cliquer "Créer un jeton":
