@@ -86,6 +86,7 @@ fi
 
 LOG_LEVEL=info
 TRACE_OPT=""
+CURL_OPT=""
 if bashio::config.has_value log_level ; then
   LOG_LEVEL="$(bashio::config log_level)"
   if [ "${LOG_LEVEL}" == "trace" ] ; then
@@ -93,6 +94,10 @@ if bashio::config.has_value log_level ; then
      LOG_LEVEL="debug"
      # Enable tracing python
      TRACE_OPT="-m trace --ignore-dir=/usr/lib -t"
+  fi
+  if [ "${LOG_LEVEL}" == "debug" ] ; then
+     # shellcheck disable=SC2034
+     CURL_OPT_dis="-v"  # Only shows [xx bytes data]
   fi
 fi
 
@@ -182,8 +187,12 @@ chmod +x "$EXEC_EVENT_SH"
 echo "Generated script '$EXEC_EVENT_SH':"
 cat "$EXEC_EVENT_SH"
 
-echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}'"
-curl -X GET -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/"  3>&1 1>&2 2>&3 | debug_output
+echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}')"
+echo curl -H "'Authorization: Bearer ${HA_TOKEN}'" -H "'Content-Type: application/json'" "${HA_SERVER}/api/" | debug_output
+API_OUT=/tmp/ha_api.out
+# shellcheck disable=SC2086
+curl ${CURL_OPT} -o "${API_OUT}" -H "Authorization: Bearer ${HA_TOKEN}" -H "Content-Type: application/json" "${HA_SERVER}/api/"  3>&1 1>&2 2>&3 | debug_output
+cat "${API_OUT}"
 echo ""
 
 HAEVENT2EXEC=./haevent2exec.py
