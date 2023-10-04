@@ -76,7 +76,7 @@ if bashio::config.has_value ha_server ; then
 fi
 
 if bashio::config.has_value ha_token ; then
-  HA_SERVER="$(bashio::config ha_token)"
+  HA_TOKEN="$(bashio::config ha_token)"
 fi
 
 if bashio::config.has_value DISPLAY ; then
@@ -156,7 +156,7 @@ cat > "$CONFIG_FILE" <<EOJSON
 {
   $config
   "ha_server": "$HA_SERVER",
-  "ha_token": "$SUPERVISOR_TOKEN",
+  "ha_token": "$HA_TOKEN",
   "type": "$TYPE"
 }
 EOJSON

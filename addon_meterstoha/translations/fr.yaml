@@ -27,11 +27,17 @@ configuration:
     example: "21546020012301"
   ha_server:
     name: Seveur Home Assistant
-    description: Serveur Home Assistant vers lequel envoyer les données
+    description:
+      Laisser vide si le Module Complémentaire (Add-on) sert à Home Assistant
+      sur la même machine.  Utile seulement en cas d'un serveur distant.  Dans ce
+      cas c'est l'adresse du serveur distant.
     example: https://subdomain.domain.name
   ha_token:
     name: Clé API Home Assistant
-    description: Long Lived Token created on your Home Assistant Server for MetersToHA
+    description:
+      Laisser vide si le Module Complémentaire (Add-on) sert à Home Assistant
+      sur la même machine.  Sinon si c'est le Jeton d'accès longue durée à créer sous
+      Compte>Profil>Jetons d'accès longue durée.
     example: WViNTMzMjAyM2RkMiIsIm-OvEn0_QKLscaKcXVA_ecQoHVwRVYYv5pzA0eyJ0eXAiOiJKV1QiLCJ.eyJpc3MiOiI1OhbGciOiJIUzI1NiJ9WNjODg5NjRjMGI0YzM5OGZhOlhdCI6MTY1Mzg1MDY0OSwiZXhwIjoxOTY5MjEwNjQ5fQ.jkOiQUi
   timeout:
     name: Délai d'expiration

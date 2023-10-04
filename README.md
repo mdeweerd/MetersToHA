@@ -300,6 +300,10 @@ Dans les 2 cas, il faudra configurer l'Add-on, le démarrer, et
 [définir un automatisme](#automatisation-home-assistant-appdaemon) pour
 déclencher l'événement.
 
+Note: Les paramètres `ha_server` et `ha_token` ne doivent pas être
+renseignés lorsque l'add-on doit alimenter le Home Assistant de la même
+installation.
+
 #### Home Assistant Add-On - méthode manuelle
 
 Ajouter https://github.com/mdeweerd/MetersToHA comme Dépôt à travers le

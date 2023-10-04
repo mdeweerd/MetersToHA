@@ -24,11 +24,16 @@ configuration:
     example: "21546020012301"
   ha_server:
     name: Home Assistant Server
-    description: Home Asistant Server to send data to
+    description:
+      Do not fill when Add-on is installed on the same server as Home Asistant.  Only
+      needed for remote servers in Add-on mode, in which case this is the url of the
+      remote server.
     example: https://subdomain.domain.name
   ha_token:
     name: Home Assistant Token
-    description: Long Lived Token created on your Home Assistant Server for MetersToHA
+    description:
+      Do not fill when Add-on is installed on the same server as Home Asistant.  Long
+      Lived Token created on your Home Assistant Server for MetersToHA.
     example: WViNTMzMjAyM2RkMiIsIm-OvEn0_QKLscaKcXVA_ecQoHVwRVYYv5pzA0eyJ0eXAiOiJKV1QiLCJ.eyJpc3MiOiI1OhbGciOiJIUzI1NiJ9WNjODg5NjRjMGI0YzM5OGZhOlhdCI6MTY1Mzg1MDY0OSwiZXhwIjoxOTY5MjEwNjQ5fQ.jkOiQUi
   timeout:
     name: Connection/Step Timeout
