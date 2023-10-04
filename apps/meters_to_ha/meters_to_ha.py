@@ -47,7 +47,6 @@ import sys
 import time
 import traceback
 import urllib
-from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from shutil import which
 from typing import Any
@@ -57,6 +56,7 @@ VERSION = "v2.0"
 
 LOGGER = logging.getLogger()
 
+HA_API_STATISTICS = "/api/services/recorder/import_statistics"
 HA_API_SENSOR_FORMAT = "/api/states/%s"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
 PARAM_CAPMONSTER_TOKEN = "capmonster_token"
@@ -75,10 +75,14 @@ PARAM_USER_NONE_VALUE = (
 PARAM_DOWNLOAD_FOLDER = "download_folder"
 PARAM_TIMEOUT = "timeout"
 PARAM_VEOLIA = "veolia"
+PARAM_VEOLIA_WEBSITE = (
+    "veolia_website"  # Supported value "IDF","service.eau.veolia.fr"
+)
 PARAM_GRDF = "grdf"
 PARAM_VEOLIA_LOGIN = "veolia_login"
 PARAM_VEOLIA_PASSWORD = "veolia_password"
 PARAM_VEOLIA_CONTRACT = "veolia_contract"
+PARAM_VEOLIA_LOAD_HISTORICAL_DATA = "veolia_load_historical_data"
 PARAM_GRDF_LOGIN = "grdf_login"
 PARAM_GRDF_PASSWORD = "grdf_password"
 PARAM_GRDF_PCE = "grdf_pce"
@@ -112,11 +116,21 @@ PARAM_INSECURE = "insecure"
 
 PARAM_URL = "url"
 
+SERVICE_EAU_VEOLIA_FR = "service.eau.veolia.fr"
+
 # Name for parameter where local state is stored
 STATE_FILE = "state_file"
 INSTALL_DIR = "install_dir"
 
 REPO_BASE = "s0nik42/veolia-idf"
+
+USER_AGENT_CHROME = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+    " (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+)
+USER_AGENT_FF = (
+    "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/118.0"
+)
 
 # Script provided by 2captcha to identify captcha information on the page
 SCRIPT_2CAPTCHA = r"""
@@ -418,6 +432,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
     # Go to login page directly only when not logged in
     site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+    site_service_eau_veolia_fr = (
+        "https://www.service.eau.veolia.fr/home"
+        "/eau-dans-la-ville/accueil_eau.html"
+    )
     download_veolia_filename = "historique_jours_litres.csv"
     glob_download_veolia_filename = "historique_jours_litres*.csv"
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
@@ -442,6 +460,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_VEOLIA_LOGIN: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_PASSWORD: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
+            PARAM_VEOLIA_WEBSITE: PARAM_OPTIONAL_VALUE,
+            PARAM_VEOLIA_LOAD_HISTORICAL_DATA: PARAM_OPTIONAL_VALUE,
             # Config values (gazpar)
             PARAM_GRDF: False,
             PARAM_GRDF_LOGIN: PARAM_OPTIONAL_VALUE,
@@ -493,6 +513,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.__glob_path_download_veolia_idf_file = os.path.join(
             self.configuration[PARAM_DOWNLOAD_FOLDER],
             self.glob_download_veolia_filename,
+        )
+        self.__full_path_download_veolia_service_eau_veolia_file = (
+            os.path.join(
+                self.configuration[PARAM_DOWNLOAD_FOLDER],
+                self.download_veolia_filename,
+            )
         )
         self.__full_path_download_grdf_file = os.path.join(
             self.configuration[PARAM_DOWNLOAD_FOLDER],
@@ -612,6 +638,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Replaced maximize_window by set_window_size
             # to get the window full screen
             browser.set_window_size(1600, 1200)
+            # Avoid to be recognized as a bot by anti-bot website
+            #   (useful for service.eau.veolia.fr)
+            browser.execute_cdp_cmd(
+                "Network.setUserAgentOverride",
+                {
+                    "userAgent": USER_AGENT_FF,
+                    "platform": "Linux",
+                },
+            )
+
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
             self.__wait = WebDriverWait(browser, timeout=timeout)
         except Exception:
@@ -789,8 +825,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     service=chromeService,
                     options=options,
                 )
-
-            browser.maximize_window()
+            # Avoid to be recognized as a bot by anti-bot website
+            #   (useful for service.eau.veolia.fr)
+            browser.execute_cdp_cmd(
+                "Network.setUserAgentOverride",
+                {
+                    "userAgent": USER_AGENT_CHROME,
+                    "platform": "Linux",
+                },
+            )
+            browser.set_window_size(1600, 1200)
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
             self.__wait = WebDriverWait(browser, timeout)
         except AttributeError:
@@ -808,7 +852,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         reason = " (Missing Veolia or GRDF or Unknown reason)"
         if self.configuration[PARAM_VEOLIA]:
             # Getting Veolia data
-            v_file = self.__full_path_download_veolia_idf_file
+            if (
+                self.configuration[PARAM_VEOLIA_WEBSITE]
+                == SERVICE_EAU_VEOLIA_FR
+            ):
+                v_file = (
+                    self.__full_path_download_veolia_service_eau_veolia_file
+                )
+            else:
+                v_file = self.__full_path_download_veolia_idf_file
+
             self.mylog("Check download location integrity", end="")
 
             if os.path.exists(v_file):
@@ -987,6 +1040,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
 
         self.mylog(st="OK")
+
+    def rename_last_downloaded_file(
+        self, save_folder: str, new_filename: str
+    ) -> str:
+        """Find last file and rename it to the targeted filename"""
+        files = glob.glob(save_folder + "/*")
+        max_file = max(files, key=os.path.getctime)
+        filename = max_file.split("/")[-1].split(".")[0]
+        new_path = max_file.replace(filename, new_filename)
+        os.rename(max_file, new_path)
+        return new_path
 
     def click_in_view(  # pylint: disable=R0913
         self,
@@ -1689,6 +1753,216 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.files_to_cleanup.append(v_file)
         return v_file
 
+    def get_service_eau_veolia_fr(self):
+        """
+        Get Veolia Service Eau Veolia FR water consumption 'interactively'
+        """
+        self.mylog("Begin Veolia  Parsing")
+        v_file = self.__full_path_download_veolia_service_eau_veolia_file
+
+        if self.configuration[PARAM_SKIP_DOWNLOAD]:
+            return v_file
+
+        # Wait for Connexion #####
+        self.mylog(
+            "Connect to Veolia www.service.eau.veolia.fr website", end=""
+        )
+
+        self.__browser.get(self.__class__.site_service_eau_veolia_fr)
+        time.sleep(0.5)  # Small wait after submit
+        self.__wait.until(document_initialised)
+
+        self.mylog(st="OK")
+
+        ep = EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, r'input[type="password"],.block-bienvenue')
+        )
+        self.__wait.until(
+            ep,
+            message="Failed, page timeout (timeout="
+            + str(self.configuration[PARAM_TIMEOUT])
+            + ")",
+        )
+
+        try:
+            # If profile element is present, likely already logged in
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("check_profile.png")
+            profile_el = self.__browser.find_element(
+                By.CLASS_NAME, "block-bienvenue"
+            )
+            if profile_el is not None:
+                isLoggedIn = True
+        except Exception:
+            isLoggedIn = False
+
+        if not isLoggedIn:
+            # Wait for Password ######
+            # More than one email element on the page,
+            # visibility depends on screen size.
+            self.mylog("Waiting for Password", end="")
+
+            ep = EC.visibility_of_any_elements_located(
+                (By.XPATH, r"//input[@id='veolia_password']")
+            )
+            el_password = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            # Get first (and normally only) visible element
+            el_password = el_password[0]
+            self.mylog(st="OK")
+
+            # Wait for Email ########
+            # More than one email element on the page,
+            # visibility depends on screen size.
+            self.mylog("Waiting for Email", end="")
+            ep = EC.visibility_of_any_elements_located(
+                (By.XPATH, r"//input[@id='veolia_username']")
+            )
+            el_email = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            # Get first (and normally only) visible element
+            el_email = el_email[0]
+            self.mylog(st="OK")
+
+            # Type Email ###########
+            self.mylog("Type Email", end="")
+            el_email.clear()
+            el_email.send_keys(self.configuration[PARAM_VEOLIA_LOGIN])
+            self.mylog(st="OK")
+
+            # Type Password ########
+            self.mylog("Type Password", end="")
+            el_password.clear()
+            el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+            self.mylog(st="OK")
+
+            self.get_screenshot("1-credential.png")
+            # Click Submit #########
+            self.click_in_view(
+                By.CLASS_NAME,
+                "btSubmit",
+                wait_message="Waiting for submit button",
+                click_message="Click on submit button",
+                delay=1,
+            )
+            time.sleep(0.5)  # Small wait after submit
+            self.__wait.until(document_initialised)
+
+        # Should be logged in here
+        if os.path.exists(v_file):
+            try:
+                self.mylog("Remove temporary download file. ", end="")
+                os.remove(v_file)
+            except Exception:
+                raise
+            else:
+                self.mylog(st="OK")
+
+        # Wait until element is at least visible
+        self.get_screenshot("2-logged.png")
+        ep = EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, r".block-bienvenue")
+        )
+        self.__wait.until(
+            ep,
+            message="Failed, page timeout (timeout="
+            + str(self.configuration[PARAM_TIMEOUT])
+            + ")",
+        )
+
+        self.__browser.switch_to.default_content()
+
+        self.mylog("Connect to Veolia  my consumption", end="")
+        self.__browser.get(
+            "https://www.service.eau.veolia.fr/home/espace-client"
+            "/votre-consommation.html?vueConso=historique"
+        )
+        time.sleep(5)  # Small wait after submit
+        self.__wait.until(document_initialised)
+
+        self.mylog(st="OK")
+        self.mylog("Consumption printed")
+
+        self.get_screenshot("3-myconso.png")
+        ep = EC.visibility_of_any_elements_located(
+            (By.CLASS_NAME, "btnAfficher_histo")
+        )
+        self.__wait.until(
+            ep,
+            message="Failed, page timeout (timeout="
+            + str(self.configuration[PARAM_TIMEOUT])
+            + ")",
+        )
+        self.mylog(st="OK")
+
+        # Download the file
+        self.click_in_view(
+            By.XPATH,
+            r"//a[@id='btnExport_histo']",
+            wait_message="Wait for button Telechargement",
+            click_message="Click on button Telechargement",
+            delay=10,
+        )
+        self.mylog("Rename downloaded file")
+
+        # Rename the downloaded file
+        time.sleep(5)
+        self.rename_last_downloaded_file(
+            self.configuration[PARAM_DOWNLOAD_FOLDER],
+            self.download_veolia_filename.split(".", maxsplit=1)[0],
+        )
+        time.sleep(10)  # Small wait
+
+        t = int(str(self.configuration[PARAM_TIMEOUT]))
+        while t > 0 and not os.path.exists(v_file):
+            time.sleep(1)
+            t -= 1
+            try:
+                # For some reason (possibly Security setting),
+                # the CSV file is not written to disk in Chrome 110.
+                #
+                # After the click on HISTORIQUE, the data is provided
+                # in a hidden link as a data link.
+                #
+                # This code gets that data link, decodes it and saves
+                # the data so that it is available at the expected
+                # location.
+                csvDataLink = self.__browser.find_element(
+                    By.XPATH,
+                    r"//a[@id='btnExport_histo']",
+                )
+                data = csvDataLink.get_attribute("href")
+
+                response = urllib.request.urlopen(data)  # nosec
+                self.mylog(
+                    f"Write '{v_file}'. ",
+                    st="--",
+                    end="",
+                )
+                with open(v_file, "wb") as f:
+                    f.write(response.file.read())
+
+            except Exception:
+                pass
+
+        if os.path.exists(v_file):
+            self.mylog(st="OK")
+        else:
+            self.get_screenshot("error.png")
+            raise RuntimeError("File download timeout")
+
+        if not self.configuration[PARAM_KEEP_OUTPUT]:
+            self.files_to_cleanup.append(v_file)
+        return v_file
+
     def get_gazpar_file(self):
         """
         Get consumption from GRDF for GazPar meter
@@ -2019,8 +2293,8 @@ class Injector(Worker):
             # Check line integrity (Date starting with 2 (Year))
             if date[0] == "2":
                 # Verify data integrity :
-                d1 = datetime.strptime(date, "%Y-%m-%d")
-                d2 = datetime.now()
+                d1 = dt.datetime.strptime(date, "%Y-%m-%d")
+                d2 = dt.datetime.now()
                 if abs((d2 - d1).days) > 30:
                     raise RuntimeError(
                         f"File contains too old data (monthly?!?): {row!r}"
@@ -2048,6 +2322,58 @@ class Injector(Worker):
 
                 return data
         return None
+
+    def parse_veolia_historical_data(self, csv_file, website):
+        self.mylog("Parsing csv file")
+        stats_array = []
+        with open(csv_file, encoding="utf_8") as f:
+            rows = list(csv.reader(f, delimiter=";"))
+
+            # Remove the first row (header) from the list that is not useful
+            rows = rows[1:]
+            last_total = 0
+
+            # Set date format for service (IDF || service.eau.veolia.fr)
+            if website == SERVICE_EAU_VEOLIA_FR:
+                date_format = "%d/%m/%Y"
+            else:
+                date_format = "%Y-%m-%d"
+            # Iterate through each row in  order, skipping the csv header line
+            for row in rows:
+                method = row[3]  # "Mesuré" or "Estimé"
+                if method in ("E", "Estimé"):
+                    # Ignore estimated index (we use the last total)
+                    meter_total = last_total + int(row[2])
+                else:
+                    meter_total = int(row[1]) + int(row[2])
+
+                date_obj = dt.datetime.strptime(row[0], date_format)
+
+                date_with_timezone = date_obj.replace(tzinfo=dt.timezone.utc)
+
+                date_formatted = date_with_timezone.strftime(
+                    "%Y-%m-%dT%H:%M:%S%z"
+                )
+
+                stat = {
+                    "start": date_formatted,  # formatted date
+                    "state": int(row[2]),
+                    "sum": meter_total,
+                }
+                # Add the stat to the array
+                stats_array.append(stat)
+                last_total = meter_total
+
+        self.mylog(st="OK")
+        return stats_array
+
+    def update_veolia_service_eau_veolia_fr_device(self, stats_array):
+        raise NotImplementedError(f"{self.WORKER_DESC}/Veolia_Device")
+
+    def update_veolia_historical_data(self, stats_array):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/Veolia_Update_Hist_Data"
+        )
 
 
 ###############################################################################
@@ -2287,8 +2613,8 @@ class DomoticzInjector(Injector):
                 # Check line integrity (Date starting by 2 or 1)
                 if date[0] == "2" or date[0] == "1":
                     # Verify data integrity :
-                    d1 = datetime.strptime(date, "%Y-%m-%d")
-                    d2 = datetime.now()
+                    d1 = dt.datetime.strptime(date, "%Y-%m-%d")
+                    d2 = dt.datetime.now()
                     if abs((d2 - d1).days) > 30:
                         raise RuntimeError(
                             "File contains too old data (monthly?!?): "
@@ -2421,6 +2747,44 @@ class HomeAssistantInjector(Injector):
                     )
                 )
 
+    def update_veolia_historical_data(self, stats_array):
+        # Prepare the statistics that need to be sent
+        data = {
+            "has_mean": False,
+            "has_sum": True,
+            "statistic_id": (
+                "sensor.veolia_%s_total"
+                % self.configuration[PARAM_VEOLIA_CONTRACT]
+            ),
+            "unit_of_measurement": "L",
+            "source": "recorder",
+            "stats": stats_array,
+        }
+        self.mylog("Publish all the historical data in the statistics")
+        self.open_url(HA_API_STATISTICS, data)
+        self.mylog(st="OK")
+
+    def update_veolia_service_eau_veolia_fr_device(self, stats_array):
+        self.mylog("Update the sensor with the most up to date info")
+        sensor_data = {
+            "state": stats_array[0]["sum"],
+            "attributes": {
+                "date_time": stats_array[0]["start"],
+                "unit_of_measurement": "L",
+                "device_class": "water",
+                "state_class": "total_increasing",
+            },
+        }
+        self.open_url(
+            HA_API_SENSOR_FORMAT
+            % (
+                "sensor.veolia_%s_total"
+                % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+            ),
+            sensor_data,
+        )
+        self.mylog(st="OK")
+
     def update_veolia_device(self, csv_file):
         """
         Inject Veolia Data into Home Assistant.
@@ -2465,8 +2829,8 @@ class HomeAssistantInjector(Injector):
             # Check line integrity (Date starting with 2 (Year))
             if date[0] == "2":
                 # Verify data integrity :
-                d1 = datetime.strptime(date, "%Y-%m-%d")
-                d2 = datetime.now()
+                d1 = dt.datetime.strptime(date, "%Y-%m-%d")
+                d2 = dt.datetime.now()
                 if abs((d2 - d1).days) > 30:
                     raise RuntimeError(
                         f"File contains too old data (monthly?!?): {row!r}"
@@ -2545,7 +2909,7 @@ class HomeAssistantInjector(Injector):
             data = json.load(f)
 
         pce = list(data.keys())[0]
-        now_isostr = datetime.now(timezone.utc).isoformat()
+        now_isostr = dt.datetime.now(dt.timezone.utc).isoformat()
 
         # M3 TOTAL
         sensor_name_generic_m3 = "sensor.gas_consumption_m3"
@@ -2571,7 +2935,7 @@ class HomeAssistantInjector(Injector):
         #
         # LOGGER.debug("%r", response)
         current_total_kWh: float = 0
-        previous_date = datetime.now(timezone.utc) - dt.timedelta(days=7)
+        previous_date = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=7)
 
         previous_m3 = None
         previous_kWh = None
@@ -2698,7 +3062,10 @@ class HomeAssistantInjector(Injector):
                 # Use the most recent data.
                 continue
 
-            if abs((row_date_time - datetime.now(timezone.utc)).days) > 30:
+            if (
+                abs((row_date_time - dt.datetime.now(dt.timezone.utc)).days)
+                > 30
+            ):
                 raise RuntimeError(
                     f"File contains too old data (monthly?!?): {row}"
                 )
@@ -2891,6 +3258,14 @@ class MqttInjector(Injector):
     def cleanup(self, keep_output=False):
         pass
 
+    def update_veolia_service_eau_veolia_fr_device(self, stats_array):
+        raise NotImplementedError(f"{self.WORKER_DESC}/Veolia_Device")
+
+    def update_veolia_historical_data(self, stats_array):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/Veolia_Update_Hist_Data"
+        )
+
 
 class UrlInjector(Injector):
     WORKER_DESC = "URL Destination"
@@ -2993,6 +3368,14 @@ class UrlInjector(Injector):
 
     def cleanup(self, keep_output=False):
         pass
+
+    def update_veolia_service_eau_veolia_fr_device(self, stats_array):
+        raise NotImplementedError(f"{self.WORKER_DESC}/Veolia_Device")
+
+    def update_veolia_historical_data(self, stats_array):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/Veolia_Update_Hist_Data"
+        )
 
 
 def exit_on_error(
@@ -3365,7 +3748,13 @@ def doWork():
     if args.veolia:
         try:
             try:
-                veolia_idf_file = crawler.get_veolia_idf_file()
+                if (
+                    configuration_json.get(PARAM_VEOLIA_WEBSITE)
+                    == SERVICE_EAU_VEOLIA_FR
+                ):
+                    veolia_file = crawler.get_service_eau_veolia_fr()
+                else:
+                    veolia_file = crawler.get_veolia_idf_file()
                 # veolia_idf_file = "./veolia_test_data.csv"
             except Exception:
                 exc_info = " - ".join(traceback.format_exc().splitlines())
@@ -3383,9 +3772,34 @@ def doWork():
                     "Encountered error -> Retrying once",
                     st="WW",
                 )
-                veolia_idf_file = crawler.get_veolia_idf_file()
+                if (
+                    configuration_json.get(PARAM_VEOLIA_WEBSITE)
+                    == SERVICE_EAU_VEOLIA_FR
+                ):
+                    veolia_file = crawler.get_service_eau_veolia_fr()
+                else:
+                    veolia_file = crawler.get_veolia_idf_file()
 
-            injector.update_veolia_device(veolia_idf_file)
+            # Parse the CSV file
+            array_stats = injector.parse_veolia_historical_data(
+                veolia_file, configuration_json.get(PARAM_VEOLIA_WEBSITE)
+            )
+
+            # Update the sensor
+            if (
+                configuration_json.get(PARAM_VEOLIA_WEBSITE)
+                == SERVICE_EAU_VEOLIA_FR
+            ):
+                injector.update_veolia_service_eau_veolia_fr_device(
+                    array_stats
+                )
+            else:
+                injector.update_veolia_device(veolia_file)
+
+            # Push historical data
+            if configuration_json.get(PARAM_VEOLIA_LOAD_HISTORICAL_DATA):
+                injector.update_veolia_historical_data(array_stats)
+
         except Exception as exc:
             try:
                 if configuration_json[PARAM_SCREENSHOT]:

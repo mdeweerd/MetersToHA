@@ -27,7 +27,9 @@ de jouer.
 ## Fonctionnalités :
 
 - Récupération des valeurs de consommation au fil du temps;
+- Récupération des données historiques
 - Gestion multi-contrat (veolia-idf)
+- Gestion unicontrat (www.service.eau.veolia.fr)
 - Vérification de l'intégrité de l'environnement (prérequis / configuration
   sur serveur domotique)
 - Mode débogue graphique
@@ -55,6 +57,7 @@ de jouer.
     - [AppDaemon](#appdaemon)
       - [Installation AppDaemon](#installation-appdaemon)
       - [Ajouter `MetersToHA` à l'AppDaemon avec HACS](#ajouter-meterstoha-%C3%A0-lappdaemon-avec-hacs)
+    - [(Optionel) pour la gestion des historiques pour Veolia](#optionel-pour-la-gestion-des-historiques-pour-veolia)
       - [Configuration MetersToHA sous AppDaemon](#configuration-meterstoha-sous-appdaemon)
       - [Débogue avec AppDaemon](#d%C3%A9bogue-avec-appdaemon)
       - [Lancer un appel à Veolia (AppDaemon)](#lancer-un-appel-%C3%A0-veolia-appdaemon)
@@ -99,6 +102,7 @@ de jouer.
   vous devez désactiver ces automatisations et vos "sensors" de type
   template (dans `configuration.yaml`) - sinon les valeurs écrasent celles
   de MetersToHA.
+- Dépendance externe avec spook pour le chargement des données historiques.
 
 ## Informations générales
 
@@ -187,6 +191,8 @@ Exemple de configuration:
   "veolia_login": "MON_LOGIN_VEOLIA@mon.domaine",
   "veolia_password": "MONPASSEVEOLIA",
   "veolia_contract": "MONCONTRATVEOLIA",
+  "veolia_website": "IDF",
+  "veolia_load_historical_data": false,
   "grdf_login": "MON_LOGIN_GRDF@mon.domaine",
   "grdf_password": "XXXXXXXXXXXX",
   "grdf_pce": "21546000000000",
@@ -206,11 +212,20 @@ modifiez la valeur de "type" en fonction de votre plateforme.
 
 Explication des champs:
 
-- `veolia_login`, `veolia_password`: `veolia_contract`:\
+- `veolia_login`, `veolia_password`: `veolia_contract` :\
   Les informations
-  de login sur le site de Veolia IDF, et le numéro de votre
-  contrat.\
-  Seulement pour Veolia Ile-de-France.
+  de login sur le site de Veolia, et le numéro de votre contrat.
+
+- `veolia_website` :\
+  Le site web de veolia qui vous concerne.\
+  Par défaut
+  "IDF"\
+  Valeurs acceptées : "IDF" ou "service.eau.veolia.fr".
+
+- `veolia_load_historical_data` :\
+  Chargement des données historiques de
+  Veolia\
+  :warning: : dépendance avec spook.
 
 - `grdf_login`, `grdf_password`, `grdf_pce`: Les informations de login sur
   le site de GRDF. L'identification du Point de Comptage et Estimation
@@ -238,7 +253,7 @@ Explication des champs:
   alternative s'appuyant (moins) sur l'humain.\
   Pour Veolia, vous n'avez
   pas besoin de ce type de service.\
-  1,07 capthas/jour ont du être résolus
+  1,07 captchas/jour ont du être résolus
   en moyenne dans une configuration ou Meters2HA est exécuté jusqu'à deux
   fois par soir (au cas ou le premier appel n'a pas donné de résultat).
   Pour 27% des jours, aucune résolution n'était nécessaire, pour 55% une
@@ -292,6 +307,7 @@ avec Home Assistant, ceci suffit:
   "veolia_login": "MON_LOGIN_VEOLIA@mon.domaine",
   "veolia_password": "MONPASSEVEOLIA",
   "veolia_contract": "MONCONTRATVEOLIA",
+  "veolia_website": "IDF",
   "ha_server": "https://MONINSTANCEHA",
   "ha_token": "MONTOKEN.XXXXXXX.XXXXX-XXXXXXX",
   "type": "ha",
@@ -312,7 +328,7 @@ complémentaire MetersToHA sous HAOS.
 | -r, --run                                     | Exécute le script                                                                                                                                      |
 | --version                                     | Affiche la version du programme                                                                                                                        |
 | --version-check                               | Vérifie s'il y a une nouvelle version du script (inactif)                                                                                              |
-| --veolia                                      | Récupère les données de Veolia IDF                                                                                                                     |
+| --veolia                                      | Récupère les données de Veolia                                                                                                                         |
 | --grdf                                        | Récupère les données auprès de GRDF                                                                                                                    |
 | -d, --debug                                   | Active l'interface graphique interactif (Serveur X nécessaire)                                                                                         |
 | --screenshot                                  | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                                                                   |
@@ -361,7 +377,7 @@ Ajouter https://github.com/mdeweerd/MetersToHA comme Dépôt à travers le
 menu:
 
 - Aller vers Modules Complémentaires>Boutique des modules complémentaires>⋮
-  (en haut à droite)>Dépots ;
+  (en haut à droite)>Dépôts ;
 - Puis Remplir "Ajouter", puis cliquer "Ajouter";
 - Ensuite: attendre un peu, recharger la page de la Boutique des modules;
   complémentaires ou "MetersToHA" devrait apparaître;
@@ -510,6 +526,11 @@ Cette procédure suppose que HACS est déjà actif et configuré pour
    ![](images/HADownload.png)
 
 Les scripts sont ainsi disponibles pour AppDaemon.
+
+### (Optionel) pour la gestion des historiques pour Veolia
+
+Dans HACS installer spook (https://github.com/frenck/spook) Sans cette
+intégration le chargement des historiques n'est pas fonctionnel.
 
 #### Configuration MetersToHA sous AppDaemon
 
@@ -988,6 +1009,8 @@ Un exemple d'un fichier de configuration est:
   "veolia_login": "monm\u00e9l@mon.domaine",
   "veolia_password": "mot de passe",
   "veolia_contract": "5453325",
+  "veolia_website": "IDF",
+  "veolia_load_historical_data": false,
   "grdf_login": "monm\u00e9l@mon.domaine",
   "grdf_password": "mot de passe",
   "grdf_pce": "21546000000000",
@@ -1278,4 +1301,5 @@ A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
 - [s0nik42](https://github.com/s0nik42)
 - [k20human](https://github.com/k20human)
 - [guillaumezin](https://github.com/guillaumezin)
+- [rbalmes](https://github.com/rbalmes)
 - [mdeweerd](https://github.com/mdeweerd)
