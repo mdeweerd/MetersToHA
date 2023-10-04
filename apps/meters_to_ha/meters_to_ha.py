@@ -2316,6 +2316,85 @@ class HomeAssistantInjector(Injector):
                 )
                 self.mylog(st="OK")
 
+    def update_veolia_service_eau_veolia_fr(self, csv_file):
+        self.mylog("Parsing csv file")
+        stats_array = []
+        with open(csv_file, encoding="utf_8") as f:
+            rows = list(csv.reader(f, delimiter=";"))
+
+            # Remove the first row (header) from the list that is not useful
+            rows = rows[1:]
+
+            # Iterate through each row in reverse order,
+            #   skipping the csv header line
+            for row_idx, row in enumerate(reversed(rows)):
+                method = row[3]  # "Mesuré" or "Estimé"
+                # skip if estimated
+                if method in ("E",):
+                    self.mylog(f"Skip estimated data at row[{row_idx}].")
+                    continue
+
+                # Assuming the original date format is "%d/%m/%Y"
+                date_obj = datetime.strptime(row[0], "%d/%m/%Y")
+                # Convert to ISO 8601 format with timezone and add 6h
+                date_with_timezone = date_obj.replace(
+                    tzinfo=timezone.utc
+                ).astimezone(timezone(dt.timedelta(hours=6)))
+                # Format the date as a string
+                date_formatted = date_with_timezone.strftime(
+                    "%Y-%m-%dT%H:%M:%S%z"
+                )
+
+                stat = {
+                    "start": date_formatted,  # formatted date
+                    "state": int(row[2]),
+                    "sum": int(row[1]),
+                }
+                # Add the stat to the array
+                stats_array.append(stat)
+
+        # DEBUG - Print the data array
+        # for item in stats_array:
+        #    self.mylog(
+        #        f"{item['start']} state:{item['state']} sum:{item['sum']}"
+        #    )
+
+        # Publish the most recent statistics to the sensor
+        self.mylog("Update the sensor with the most up to date info")
+        sensor_data = {
+            "state": stats_array[0]["state"],
+            "attributes": {
+                "date_time": stats_array[0]["start"],
+                "unit_of_measurement": "L",
+                "device_class": "water",
+                "state_class": "total_increasing",
+            },
+        }
+        self.open_url(
+            HA_API_SENSOR_FORMAT
+            % (
+                "sensor.veolia_%s_total"
+                % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+            ),
+            sensor_data,
+        )
+        self.mylog(st="OK")
+        # Prepare the statistics that need to be sent
+        data = {
+            "has_mean": False,
+            "has_sum": True,
+            "statistic_id": (
+                "sensor.veolia_%s_total"
+                % self.configuration[PARAM_VEOLIA_CONTRACT]
+            ),
+            "unit_of_measurement": "L",
+            "source": "recorder",
+            "stats": stats_array,
+        }
+        self.mylog("Publish all the historical data in the statistics")
+        self.open_url("/api/services/recorder/import_statistics", data)
+        self.mylog(st="OK")
+
     def get_date_from_ha_state(self, response):
         if "date_time" in response["attributes"]:
             previous_date_str = response["attributes"]["date_time"]
