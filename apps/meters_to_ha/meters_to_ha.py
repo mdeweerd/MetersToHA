@@ -679,8 +679,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         if self._debug:
             if sys.platform != "win32":
                 self.__display = Display(visible=1, size=(1280, 1024))
+            if getattr(options, "headless", "_DUMMY_") == "_DUMMY_":
+                # Workaround breaking change selenium 4.13.0
+                options.headless = False
         else:
             options.add_argument("--headless")
+            if getattr(options, "headless", "_DUMMY_") == "_DUMMY_":
+                # Workaround breaking change selenium 4.13.0
+                options.headless = True
             if sys.platform != "win32":
                 try:
                     options.add_argument("--disable-gpu")
@@ -1702,7 +1708,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # "view-source:"
                 r"https://monespace.grdf.fr/api"
                 r"/e-conso/pce/consommation/informatives"
-                r"?dateDebut={}&dateFin={}&pceList[]={}"
+                # r"/telecharger"
+                r"?dateDebut={}&dateFin={}&frequence=Journalier&pceList[]={}"
             ).format(
                 (dt.datetime.now() - dt.timedelta(days=14)).strftime(
                     "%Y-%m-%d"

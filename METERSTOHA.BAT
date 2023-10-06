@@ -9,11 +9,14 @@ SET CHROME_VERSION=%RESULT:~0,3%
 
 REM Démarre meters_to_ha.py pour GRDF.
 REM Suppose la présence de 'winconfig.json' pour la configuration.
+REM
+python -m pip install pyvirtualdisplay selenium undetected-chromedriver
 
 REM Décommenté le GOTO vers le mode de fonctionnement retenu
 GOTO INTERACTIF
 REM GOTO NONINTERACTIF
 REM GOTO TRACE
+
 
 :INTERACTIF
 REM Interactif:
