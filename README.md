@@ -1,6 +1,11 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
+:warning: Le PCE/n° de contract est désormais une chaine de caractères pour
+accepter les nombres qui commencent par 0. Si vous avez une erreur de
+configuration au redémarrage, vérifiez en mode YAML que vous avez bien
+`"21365464"` avec guillement pour les n° de contrat (Veolia) et PCE (GRDF).
+
 # Meters To Home Automation (MetersToHA / Meters2HA / M2HA)
 
 Ce script automatise le transfert de l'information de consommation d'eau et
