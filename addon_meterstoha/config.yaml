@@ -38,12 +38,12 @@ schema:
   token_captchaservice: password?
   grdf_login: email?
   grdf_password: password?
-  grdf_pce: int?
+  grdf_pce: str?
   grdf_event: str?
   ha_server: url?
   ha_token: password?
   timeout: int(1,300)
-  veolia_contract: int?
+  veolia_contract: str?
   veolia_login: email?
   veolia_password: password?
   veolia_event: str?
