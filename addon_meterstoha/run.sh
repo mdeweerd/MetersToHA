@@ -26,7 +26,7 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
   echo "git checkout $GIT_VERSION_STR"
   # shellcheck disable=SC2086,SC2090
   git checkout $GIT_VERSION_STR
-  echo "Effective GIT version: $(git rev-parse --short HEAD)"
+  git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad"
 )
 
 
