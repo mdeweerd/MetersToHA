@@ -536,6 +536,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         self.mylog("Setup Firefox profile", end="")
         try:
+            accept_types = ",".join(["text/csv", "application/json"])
             # Enable Download
             opts = webdriver.FirefoxOptions()
             opts.set_preference(
@@ -544,13 +545,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             opts.set_preference("browser.download.folderList", 2)
             opts.set_preference(
-                "browser.helperApps.neverAsk.saveToDisk", "text/csv"
+                "browser.helperApps.neverAsk.saveToDisk", accept_types
             )
             opts.set_preference(
                 "browser.download.manager.showWhenStarting", False
             )
             opts.set_preference(
-                "browser.helperApps.neverAsk.openFile", "text/csv"
+                "browser.helperApps.neverAsk.openFile", accept_types
             )
             opts.set_preference("browser.helperApps.alwaysAsk.force", False)
 
@@ -621,12 +622,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             options.add_argument("--disable-modal-animations")
             options.add_argument("--disable-login-animations")
             options.add_argument("--disable-renderer-backgrounding")
-            options.add_argument("--disable-background-timer-throttling")
-            options.add_argument("--disable-backgrounding-occluded-wndows")
-            options.add_argument("--disable-translate")
-            options.add_argument("--disable-popup-blocking")
-            options.add_argument("--disable-notifications")
-            options.add_argument("--disable-infobars")
             options.add_argument("--disable-dev-shm-usage")
 
         local_dir = str(self.configuration[PARAM_DOWNLOAD_FOLDER])
@@ -654,15 +649,24 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 "download.default_directory": self.configuration[
                     PARAM_DOWNLOAD_FOLDER
                 ],
-                "profile.default_content_settings.popups": 0,
+                "profile.default_content_settings.popups": 1,
                 "profile.password_manager_enabled": False,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
-                "extensions_to_open": "text/csv",
-                "safebrowsing.enabled": True,
+                "extensions_to_open": ",".join(
+                    ["text/csv", "application/json"]
+                ),
+                "safebrowsing.enabled": False,
             },
         )
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-wndows")
+        options.add_argument("--disable-translate")
+        options.add_argument("--disable-notifications")
+        options.add_argument("--disable-infobars")
 
         if not hasUndetectedDriver:
             options.add_experimental_option("useAutomationExtension", False)
@@ -931,7 +935,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if timeout is None:
             # No timeout provided, default timeout
-            timeout = self.configuration[PARAM_TIMEOUT]
+            timeout = int(self.configuration[PARAM_TIMEOUT])
 
         ep = EC.visibility_of_element_located(
             (
@@ -1149,7 +1153,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             while max_loops > 0:
                 max_loops -= 1
                 self.mylog(
-                    f"Sleeping for {timeout} seconds to wait for {service}",
+                    f"Wait {timeout}s for {service}",
                     st="~~",
                 )
                 time.sleep(timeout)
@@ -1209,18 +1213,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             captcha_results = None
             while max_loops > 0:
                 max_loops -= 1
-                self.mylog(
-                    "Sleeping for 10 seconds to wait for CapMonster", st="~~"
-                )
+                self.mylog(f"Wait 10s for {service}", st="~~")
                 time.sleep(10)
                 response = requests.post(
                     token_url, headers=headers, json=token_data, timeout=10
                 )
 
-                self.mylog(
-                    f"{service} Service response {response.text}", st="~~"
-                )
-                resp_data = response.json()
                 if response.status_code != 200:
                     self.mylog(
                         f"{service} status {response.status_code}"
@@ -1229,6 +1227,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     )
                     # Try again - we've successfully requested a task
                     continue
+
+                resp_data = response.json()
                 if "errorId" in resp_data and resp_data["errorId"] != 0:
                     self.mylog(
                         f"{service} error {resp_data['errorId']}:"
@@ -1270,6 +1270,80 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             return captcha_results
 
         # time.sleep(120)  # For inspection
+        return None
+
+    def getDownloadedFileName(self, waitTime: float) -> str | None:
+        """Get downloaded filename in browser, wait for end of download"""
+        if isinstance(self.__browser, webdriver.Firefox):
+            return self.ff_getDownloadedFileName(waitTime)
+
+        return self.chrome_getDownloadedFileName(waitTime)
+
+    def chrome_getDownloadedFileName(self, waitTime: float) -> str | None:
+        """Get downloaded filename in chrome"""
+        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/
+        self.__browser.execute_script("window.open()")
+        time.sleep(20)
+        # switch to new tab
+        self.__browser.switch_to.window(self.__browser.window_handles[-1])
+        # navigate to chrome downloads
+        self.__browser.get("chrome://downloads")
+        # define the endTime
+        endTime = time.time() + waitTime
+        while True:
+            try:
+                # get downloaded percentage
+                downloadPercentage = self.__browser.execute_script(
+                    "return document.querySelector('downloads-manager')"
+                    " .shadowRoot"
+                    " .querySelector('#downloadsList downloads-item')"
+                    " .shadowRoot.querySelector('#progress').value"
+                )
+
+                # Wait until if downloadPercentage is 100, or timeout
+                if downloadPercentage == 100:
+                    # return the file name once the download is completed
+                    return self.__browser.execute_script(
+                        "return document.querySelector('downloads-manager')"
+                        " .shadowRoot"
+                        " .querySelector('#downloadsList downloads-item')"
+                        " .shadowRoot.querySelector('div#content  #file-link')"
+                        " .text"
+                    )
+            except:  # noqa: B001,E722
+                pass
+            time.sleep(1)
+            if time.time() > endTime:
+                break
+        return None
+
+    def ff_getDownloadedFileName(self, waitTime: float) -> str | None:
+        """Wait and get last downloaded file"""
+        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/
+        self.__browser.execute_script("window.open()")
+        WebDriverWait(self.__browser, 10).until(EC.new_window_is_opened)
+        self.__browser.switch_to.window(self.__browser.window_handles[-1])
+        self.__browser.get("about:downloads")
+
+        endTime = time.time() + waitTime
+        while True:
+            try:
+                fileName = self.__browser.execute_script(
+                    """
+                    return document.querySelector(
+                    '#contentAreaDownloadsView .downloadMainArea
+                    .downloadContainer description:nth-of-type(1)')
+                    .value
+                    """
+                )
+                if fileName:
+                    return fileName
+            except:  # noqa: B001, E722
+                pass
+            time.sleep(1)
+            if time.time() > endTime:
+                break
+
         return None
 
     def get_veolia_idf_file(self):
@@ -1536,6 +1610,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         """
         Get consumption from GRDF for GazPar meter
         """
+        # pylint: disable=too-many-locals
         g_file = self.__full_path_download_grdf_file
 
         if self.configuration[PARAM_SKIP_DOWNLOAD]:
@@ -1721,8 +1796,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Log URL while hiding personal information
             self.mylog(
                 r"Get Data URL {}".format(
-                    data_url.removesuffix(self.configuration[PARAM_GRDF_PCE])
-                    + "<PCE> . "
+                    data_url
+                    # .removesuffix(self.configuration[PARAM_GRDF_PCE])
+                    # + "<PCE> . "
                 ),
                 end="~~",
             )
@@ -1731,21 +1807,51 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # self.mylog(r"Get Data URL {}".format(data_url), end="~~")
 
             # Go to the URL.
+            dl_starttime = time.time()
             self.__browser.get(data_url)
+
+            try:
+                content = self.__browser.find_element(By.TAG_NAME, "pre").text
+            except selenium.common.exceptions.NoSuchElementException:
+                self.mylog("Get data url second time in 5 seconds", end="~~")
+                time.sleep(5)
+                self.__browser.get(data_url)
 
             self.mylog("Get Data Content. ", end="~~")
             # result = self.__browser.page_source
             try:
                 content = self.__browser.find_element(By.TAG_NAME, "pre").text
             except selenium.common.exceptions.NoSuchElementException:
-                self.mylog(
+                msg = (
                     "<pre> Element not found."
                     " This may be due to an issue with the captcha resolution."
                     " Check the log for other errors and"
-                    " check your captcha solver configuration",
-                    end="EE",
+                    " check your captcha solver configuration"
                 )
                 content = None
+
+                try:
+                    filename = self.getDownloadedFileName(
+                        int(self.configuration[PARAM_TIMEOUT])
+                    )
+                    if filename is None:
+                        msg = f"No downloaded File. {msg}"
+                    else:
+                        f_mtime = os.path.getmtime(filename)
+                        if f_mtime < dl_starttime:
+                            msg = (
+                                f"File {filename}@{f_mtime}"
+                                f" older than {dl_starttime}. {msg}"
+                            )
+                        else:
+                            self.mylog(f"Got {filename}", end="~~")
+                            with open(filename, encoding="utf_8") as file:
+                                content = file.read()
+                except Exception as e:
+                    msg = f"{e} {traceback.format_exc()}. {msg}"
+
+            if content is None:
+                self.mylog(msg, end="EE")
             # result = json.loads(content)
             # r=self.__browser.requests[-1:][0]
             # self.__browser(self.__browser.wait_for_request(r.path))
