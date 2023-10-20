@@ -506,6 +506,8 @@ veolia_idf:
   keep_output: true
   # optionnel (Par défaut: false) - add --debug option - nécessite DISPLAY & serveur X!!
   debug: true
+  # optionnel (Par défaut: false) - Enable line by line trace output (also add outfile/errfile options to send the output to a file)
+  trace: true
   # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when debug is true)
   DISPLAY: 192.1.0.52:0
   # optionnel (Par défaut: None) - Fichier pour la sortie STDOUT du script

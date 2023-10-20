@@ -618,6 +618,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             and hasattr(os, "geteuid")
             and os.geteuid() == 0  # pylint: disable=no-member
         ):
+            self.mylog("Add nix root user options.")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-modal-animations")
             options.add_argument("--disable-login-animations")
@@ -635,7 +636,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             datadir = os.path.expanduser(f"{local_dir}.config/google-chrome")
             os.makedirs(datadir, exist_ok=True)
             options.add_argument(f"--user-data-dir={datadir}")
-            self.mylog(f"Use {datadir} for Google Chrome user data")
+            self.mylog(f"Use {datadir} for Google Chrome user data.")
 
         # options.add_argument('--user-data-dir=~/.config/google-chrome')
         options.add_argument("--mute-audio")
