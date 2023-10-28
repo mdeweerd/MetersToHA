@@ -1785,7 +1785,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 r"https://monespace.grdf.fr/api"
                 r"/e-conso/pce/consommation/informatives"
                 # r"/telecharger"
-                r"?dateDebut={}&dateFin={}&frequence=Journalier&pceList[]={}"
+                # r"?dateDebut={}&dateFin={}&frequence=Journalier&pceList[]={}"
+                r"?dateDebut={}&dateFin={}&pceList[]={}"
             ).format(
                 (dt.datetime.now() - dt.timedelta(days=14)).strftime(
                     "%Y-%m-%d"
