@@ -2588,7 +2588,7 @@ class HomeAssistantInjector(Injector):
                 # - "Absence de Données"
                 #    -> Seems to be updated later, so wait for it.
                 self.mylog(
-                    f"    Got Quality {row_data_qual}"
+                    f"    Got Quality '{row_data_qual}@{row_date}'"
                     " -> Wait until backlog retrieved"
                 )
                 break
