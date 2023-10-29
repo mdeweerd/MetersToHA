@@ -1194,6 +1194,16 @@ A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
   - Vérifiez que la résulution du captcha se fait correctement. Cette
     erreur a été constaté lorsque cet autre message apparaissait:
     `capmonster status 402{"errorId":1,"errorCode":"ERROR_ZERO_BALANCE","errorDescription":"Account has zero balance"}`
+- #13 "int is not subscriptable". Constaté lorsque GRDF retourne
+  `{"code":500,"message":"Internal Server Error"}` (visible dans
+  `historique_gazpar.json`).
+- Absence de données (GRDF) :
+  - Parfois c'est le message interne trouvé dans `historique_gazpar.json`.
+    Du coup, les données ultérieures ne sont pas interprétées car il a été
+    observé qu'un rattrapage a lieux chez GRDF, rendant ces informations
+    disponibles ultérieurement.
+  - Peut aussi être dû à une erreur dans les données restituées (comme pour
+    le #13). Vérifiez dans les traces si cela perdure.
 
 ## Remerciements/Contributeurs
 
