@@ -1,10 +1,11 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-:warning: Le PCE/n° de contract est désormais une chaine de caractères pour
-accepter les nombres qui commencent par 0. Si vous avez une erreur de
-configuration au redémarrage, vérifiez en mode YAML que vous avez bien
-`"21365464"` avec guillement pour les n° de contrat (Veolia) et PCE (GRDF).
+:warning: Les n° de contract, et PCE sont désormais des chaine de
+caractères afin d'accepter les nombres qui commencent par 0. Si vous avez
+une erreur de configuration au redémarrage, vérifiez en mode YAML que vous
+avez bien `"21365464"` avec guillemets pour les n° de contrat (Veolia) et
+PCE (GRDF).
 
 # Meters To Home Automation (MetersToHA / Meters2HA / M2HA)
 
@@ -76,7 +77,7 @@ de jouer.
     - [Paramétrer votre système pour le mode débogue (optionnel, mais recommandé)](#param%C3%A9trer-votre-syst%C3%A8me-pour-le-mode-d%C3%A9bogue-optionnel-mais-recommand%C3%A9)
   - [Principe de fonctionnement](#principe-de-fonctionnement)
   - [Environnements testés:](#environnements-test%C3%A9s)
-  - [Cas de figure:](#cas-de-figure)
+  - [Dépannage:](#d%C3%A9pannage)
   - [Remerciements/Contributeurs](#remerciementscontributeurs)
 
 <!-- mdformat-toc end -->
@@ -1187,16 +1188,20 @@ Anciens (plus testés avec les versions récentes):
 
 A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
 
-## Cas de figure:
+## Dépannage:
 
 - #9 NoSuchElementException pour `find_element(By.TAG_NAME, "pre")`. Le
-  processus pense avoir attînt l'étape du résultat.
+  processus pense avoir atteînt l'étape du résultat.
   - Vérifiez que la résulution du captcha se fait correctement. Cette
     erreur a été constaté lorsque cet autre message apparaissait:
     `capmonster status 402{"errorId":1,"errorCode":"ERROR_ZERO_BALANCE","errorDescription":"Account has zero balance"}`
 - #13 "int is not subscriptable". Constaté lorsque GRDF retourne
   `{"code":500,"message":"Internal Server Error"}` (visible dans
   `historique_gazpar.json`).
+  - Que faire?\
+    Vérifiez `historique_gazpar.json` et si le problème n'est
+    pas ponctuel, vérifiez d'abord sur votre compte GRDF. Sinon ouvrir un
+    ticket avec les informations.
 - Absence de données (GRDF) :
   - Parfois c'est le message interne trouvé dans `historique_gazpar.json`.
     Du coup, les données ultérieures ne sont pas interprétées car il a été
@@ -1204,6 +1209,9 @@ A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
     disponibles ultérieurement.
   - Peut aussi être dû à une erreur dans les données restituées (comme pour
     le #13). Vérifiez dans les traces si cela perdure.
+  - Que faire?\
+    Patienter/vérifier le contenu de `historique_gazpar.json`.
+    Vérifier que c'est cohérent avec votre compte GRDF.
 
 ## Remerciements/Contributeurs
 
