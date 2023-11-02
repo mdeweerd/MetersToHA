@@ -1,5 +1,8 @@
 #!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
 
+# Do not require that bash variables are set before use:
+set +u
 
 CONFIG_FILE="$(realpath .)/m2h_config.json"
 RUN_OPT=""
