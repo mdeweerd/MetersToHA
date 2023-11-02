@@ -88,6 +88,9 @@ fi
 if bashio::config.has_value DISPLAY ; then
   DISPLAY="$(bashio::config DISPLAY)"
   export DISPLAY
+else
+  # Must define variable to avoid script error
+  DISPLAY=""
 fi
 
 LOG_LEVEL=info
@@ -190,8 +193,10 @@ echo "Done \$(date)"
 SCRIPT
 chmod +x "$EXEC_EVENT_SH"
 
-echo "Generated script '$EXEC_EVENT_SH':"
+echo "=== Generated script '$EXEC_EVENT_SH': =========="
 cat "$EXEC_EVENT_SH"
+echo "=== End of Generated script '$EXEC_EVENT_SH': ==="
+echo
 
 echo "Test access to Home Assistant API (should show '{\"message\":\"API running.\"}')"
 echo curl -H "'Authorization: Bearer ${HA_TOKEN}'" -H "'Content-Type: application/json'" "${HA_SERVER}/api/" | debug_output
