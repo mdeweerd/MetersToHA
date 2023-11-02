@@ -32,7 +32,7 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
     git checkout $GIT_VERSION_STR
   fi
   echo "MetersToHA Container version: $(bashio::addon.version)"
-  git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad\n"
+  git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad%n"
 )
 
 
