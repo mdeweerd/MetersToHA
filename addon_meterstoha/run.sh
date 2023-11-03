@@ -3,8 +3,9 @@
 
 # Do not require that bash variables are set before use:
 set +u
-
-CONFIG_FILE="$(realpath .)/m2h_config.json"
+MYDIR="$(realpath .)"
+MYDIR="${MYDIR%/}/"
+CONFIG_FILE="${MYDIR}m2h_config.json"
 RUN_OPT=""
 
 # Defaults
@@ -16,7 +17,7 @@ GIT_VERSION_STR=
 #
 # Cloning on each run at this moment for testing
 #
-if bashio::config.has_value git_version ; then
+if bashio::config.has_value "git_version" ; then
   GIT_VERSION="$(bashio::config git_version)"
   # shellcheck disable=SC2089
   GIT_VERSION_STR="\"${GIT_VERSION/\"/\\\"}\""
@@ -26,19 +27,19 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
 (
   cd MetersToHA || exit 255
   git sparse-checkout set apps
-  if [ "$GIT_VERSION_STR" != "" ] ; then
-    echo "git checkout $GIT_VERSION_STR"
-    # shellcheck disable=SC2086,SC2090
-    git checkout $GIT_VERSION_STR
-  fi
-  echo "MetersToHA Container version: $(bashio::addon.version).002"
+
+  # GIT_VERSION_STR is allowed to be empty
+  echo "git checkout $GIT_VERSION_STR"
+  # shellcheck disable=SC2086,SC2090
+  git checkout $GIT_VERSION_STR
+
+  echo "MetersToHA Container version: $(bashio::addon.version).006"
   git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad%n"
 )
 
-
 echo "Generate configuration file"
 
-keys="veolia_login veolia_password veolia_contract grdf_login grdf_password grdf_pce timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
+keys="logs_folder veolia_login veolia_password veolia_contract grdf_login grdf_password grdf_pce timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
 event_keys="veolia grdf"
 event_conf=""
 events=""
@@ -119,6 +120,7 @@ if bashio::config.has_value logs_folder ; then
   # shellcheck disable=SC2089
   RUN_OPT="${RUN_OPT} -l $(bashio::config logs_folder)"
   LOGS_FOLDER="$(bashio::config logs_folder)"
+  LOGS_FOLDER="${LOGS_FOLDER%/}"
   mkdir -p "${LOGS_FOLDER}"
 fi
 
@@ -177,7 +179,7 @@ echo "EVENT CONF:$event_conf"
 
 # ls -lRrt /MetersToHA
 
-EXEC_EVENT_SH="$(realpath .)/execEvent.sh"
+EXEC_EVENT_SH="${MYDIR}execEvent.sh"
 cat > "$EXEC_EVENT_SH" <<SCRIPT
 #!/bin/bash
 #!/usr/bin/with-contenv bashio
