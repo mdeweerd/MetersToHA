@@ -165,10 +165,9 @@ function debug_output
 
 cat > "$CONFIG_FILE" <<EOJSON
 {
-  $config
-  "ha_server": "$HA_SERVER",
-  "ha_token": "$HA_TOKEN",
-  "type": "$TYPE"
+    $config"ha_server": "$HA_SERVER",
+    "ha_token": "$HA_TOKEN",
+    "type": "$TYPE"
 }
 EOJSON
 
