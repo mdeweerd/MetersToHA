@@ -733,9 +733,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
 
         self.mylog(
-            f"LOG {self.configuration[PARAM_LOG_LEVEL]}"
-            f":{log_level}:{logging.INFO}",
-            end="",
+            f"LOG LEVEL {self.configuration[PARAM_LOG_LEVEL]}"
+            f":{log_level}:{logging.INFO}"
+            f" {chromium_service_args!r}",
+            st="~~",
         )
         self.mylog("Start the browser", end="")
         try:
