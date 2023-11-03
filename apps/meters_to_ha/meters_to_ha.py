@@ -90,6 +90,8 @@ PARAM_SCREENSHOT = "screenshot"
 PARAM_SKIP_DOWNLOAD = "skip_download"
 PARAM_KEEP_OUTPUT = "keep_output"
 PARAM_CHROME_VERSION = "chrome_version"
+PARAM_LOG_LEVEL = "log_level"
+
 
 PARAM_SERVER_TYPE = "type"
 PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
@@ -470,6 +472,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPMONSTER_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPTCHAAI_TOKEN: PARAM_OPTIONAL_VALUE,
+            PARAM_LOG_LEVEL: "INFO",  # error, warning, info, debug
         }
 
         self.mylog("Start loading configuration")
@@ -513,6 +516,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         raise Exception(
             "No browser could be started with selenium"
             f" {self.hasFirefox}-{self.hasChromium}"
+        )
+
+    def get_log_level(self) -> int:
+        """Get numeric value for logging level in configuration"""
+        return logging.getLevelName(
+            self.configuration[PARAM_CHROMEDRIVER].upper()
         )
 
     # INIT DISPLAY & BROWSER
@@ -714,25 +723,27 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # print_classes("selenium.webdriver") ; sys.exit()
         # print_classes("selenium.webdriver.chrome.service") ; sys.exit()
 
+        chromedriver_log = os.path.join(
+            self.configuration[PARAM_LOGS_FOLDER],
+            "chromedriver.log",
+        )
+        chromium_service_args = (
+            ["--verbose"] if self.get_log_level() < logging.INFO else None
+        )
+
         self.mylog("Start the browser", end="")
         try:
             if "chromium" in inspect.getmembers(webdriver):
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    # service_args=["--verbose"],  # More debug info
-                    log_path=os.path.join(
-                        self.configuration[PARAM_LOGS_FOLDER],
-                        "chromedriver.log",
-                    ),
+                    service_args=chromium_service_args,  # More debug info
+                    log_path=chromedriver_log,
                 )
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    # service_args=["--verbose"],  # More debug info
-                    log_path=os.path.join(
-                        self.configuration[PARAM_LOGS_FOLDER],
-                        "chromedriver.log",
-                    ),
+                    service_args=chromium_service_args,  # More debug info
+                    log_path=chromedriver_log,
                 )
             if hasUndetectedDriver:
                 sys.path.append(
