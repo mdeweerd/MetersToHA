@@ -744,13 +744,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
                     service_args=chromium_service_args,  # More debug info
-                    log_path=chromedriver_log,
+                    log_output=chromedriver_log,
                 )
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
                     service_args=chromium_service_args,  # More debug info
-                    log_path=chromedriver_log,
+                    log_output=chromedriver_log,
                 )
             if hasUndetectedDriver:
                 sys.path.append(
