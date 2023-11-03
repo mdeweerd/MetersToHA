@@ -727,10 +727,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.configuration[PARAM_LOGS_FOLDER],
             "chromedriver.log",
         )
+        log_level = self.get_log_level()
         chromium_service_args = (
-            ["--verbose"] if self.get_log_level() < logging.INFO else None
+            ["--verbose"] if log_level < logging.INFO else None
         )
 
+        self.mylog(
+            f"LOG {self.configuration[PARAM_LOG_LEVEL]}"
+            f":{log_level}:{logging.INFO}",
+            end="",
+        )
         self.mylog("Start the browser", end="")
         try:
             if "chromium" in inspect.getmembers(webdriver):
