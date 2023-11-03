@@ -521,7 +521,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     def get_log_level(self) -> int:
         """Get numeric value for logging level in configuration"""
         return logging.getLevelName(
-            self.configuration[PARAM_CHROMEDRIVER].upper()
+            self.configuration[PARAM_LOG_LEVEL].upper()
         )
 
     # INIT DISPLAY & BROWSER
