@@ -33,13 +33,13 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
   # shellcheck disable=SC2086,SC2090
   git checkout $GIT_VERSION_STR
 
-  echo "MetersToHA Container version: $(bashio::addon.version).006"
+  echo "MetersToHA Container version: $(bashio::addon.version).007"
   git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad%n"
 )
 
 echo "Generate configuration file"
 
-keys="logs_folder veolia_login veolia_password veolia_contract grdf_login grdf_password grdf_pce timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
+keys="log_level logs_folder veolia_login veolia_password veolia_contract grdf_login grdf_password grdf_pce timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
 event_keys="veolia grdf"
 event_conf=""
 events=""
