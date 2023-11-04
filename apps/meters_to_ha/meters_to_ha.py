@@ -621,6 +621,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         else:
             options = webdriver.ChromeOptions()
 
+        log_level = self.get_log_level()
+
         # Set Chrome options
         if (
             sys.platform != "win32"
@@ -673,7 +675,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--disable-background-timer-throttling")
-        options.add_argument("--disable-backgrounding-occluded-wndows")
+        options.add_argument("--disable-backgrounding-occluded-windows")
         options.add_argument("--disable-translate")
         options.add_argument("--disable-notifications")
         options.add_argument("--disable-infobars")
@@ -689,6 +691,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if sys.platform != "win32":
             self.mylog("Start virtual display (Chromium).", end="")
+
+        if log_level < logging.INFO:
+            options.add_argument("--log-level=1")
+            options.add_argument("--enable-logging")
+            options.add_argument("--v=1")
+        if log_level < logging.WARNING:
+            options.add_argument("--enable-logging")
+            options.add_argument("--log-level=0")
+            options.add_argument("--v=0")
 
         if self._debug:
             if sys.platform != "win32":
@@ -727,7 +738,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.configuration[PARAM_LOGS_FOLDER],
             "chromedriver.log",
         )
-        log_level = self.get_log_level()
         chromium_service_args = (
             ["--verbose"] if log_level < logging.INFO else None
         )
