@@ -9,6 +9,7 @@ map:
   - config:rw
 # codenotary: dummyaddress@example.com
 init: false
+host_dbus: true
 arch:
   - aarch64
   - amd64
