@@ -685,6 +685,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             options.add_experimental_option(
                 "excludeSwitches", ["enable-automation"]
             )
+        if log_level >= logging.WARNING:
             options.add_experimental_option(
                 "excludeSwitches", ["enable-logging"]
             )
@@ -693,10 +694,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog("Start virtual display (Chromium).", end="")
 
         if log_level < logging.INFO:
-            options.add_argument("--log-level=1")
             options.add_argument("--enable-logging")
+            options.add_argument("--log-level=1")
             options.add_argument("--v=1")
-        if log_level < logging.WARNING:
+        elif log_level < logging.WARNING:
             options.add_argument("--enable-logging")
             options.add_argument("--log-level=0")
             options.add_argument("--v=0")

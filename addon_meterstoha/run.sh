@@ -20,7 +20,7 @@ GIT_VERSION_STR=
 if bashio::config.has_value "git_version" ; then
   GIT_VERSION="$(bashio::config git_version)"
   # shellcheck disable=SC2089
-  GIT_VERSION_STR="\"${GIT_VERSION/\"/\\\"}\""
+  GIT_VERSION_STR="${GIT_VERSION/\"/\\\"}"
 fi
 
 git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout MetersToHA
@@ -28,12 +28,18 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
   cd MetersToHA || exit 255
   git sparse-checkout set apps
 
+  if [ "$GIT_VERSION_STR" != "" ] ; then
+    # Make sure we have copy of branches
+    git remote set-branches origin '*'
+    git fetch -v --depth=1
+  fi
+
   # GIT_VERSION_STR is allowed to be empty
   echo "git checkout $GIT_VERSION_STR"
   # shellcheck disable=SC2086,SC2090
   git checkout $GIT_VERSION_STR
 
-  echo "MetersToHA Container version: $(bashio::addon.version).008 @$(stat -c '%y' "${MYDIR}run.sh")"
+  echo "MetersToHA Container version: $(bashio::addon.version).014 #$(md5sum "${MYDIR}run.sh")"
   git show -s --pretty=format:"MetersToHA Python GIT version: %h on %ad%n"
 )
 
@@ -179,18 +185,25 @@ echo "EVENT CONF:$event_conf"
 # ls -lRrt /MetersToHA
 
 EXEC_EVENT_SH="${MYDIR}execEvent.sh"
+
 cat > "$EXEC_EVENT_SH" <<SCRIPT
 #!/bin/bash
-#!/usr/bin/with-contenv bashio
 {
-TARGET_OPT=""
-$event_matching
-[[ "\$TARGET_OPT" == "" ]] && ( echo "Unrecognized event '\$1'" ; exit 1 )
-date
-echo "python3 $TRACE_OPT MetersToHA/apps/meters_to_ha/meters_to_ha.py $RUN_OPT -c \"$CONFIG_FILE\" \$TARGET_OPT -r"
-python3 $TRACE_OPT MetersToHA/apps/meters_to_ha/meters_to_ha.py $RUN_OPT -c "$CONFIG_FILE" \$TARGET_OPT -r
-echo "Done \$(date)"
-} >> "$LOGS_FOLDER/m2h_exec.log" 2>&1
+  TARGET_OPT=""
+  $event_matching
+  [[ "\$TARGET_OPT" == "" ]] && ( echo "Unrecognized event '\$1'" ; exit 1 )
+  date
+  echo "python3 $TRACE_OPT MetersToHA/apps/meters_to_ha/meters_to_ha.py $RUN_OPT -c \"$CONFIG_FILE\" \$TARGET_OPT -r"
+  python3 $TRACE_OPT MetersToHA/apps/meters_to_ha/meters_to_ha.py $RUN_OPT -c "$CONFIG_FILE" \$TARGET_OPT -r
+  # Copy chrome logs
+  for i in ~/.config/*/chrome_debug.log ; do
+    [[ -r "\$i" ]] || continue
+    SUBDIR="${LOGS_FOLDER}/\$(basename "\$(dirname "\$i")")"
+    mkdir -p "\${SUBDIR}"
+    cp -p "\$i" "\${SUBDIR}"
+  done
+  echo "Done \$(date)"
+} >> "${LOGS_FOLDER}/m2h_exec.log" 2>&1
 SCRIPT
 chmod +x "$EXEC_EVENT_SH"
 
