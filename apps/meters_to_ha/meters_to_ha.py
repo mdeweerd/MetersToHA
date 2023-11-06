@@ -2537,10 +2537,11 @@ class HomeAssistantInjector(Injector):
             if isinstance(response, dict) and "state" in response:
                 entity_data = response
                 previous_kWh = response["state"]
-                try:
-                    current_total_kWh = float(previous_kWh)
-                except ValueError:
-                    pass
+                if previous_kWh is not None:
+                    try:
+                        previous_kWh = float(previous_kWh)
+                    except ValueError:
+                        pass
 
                 attributes = response["attributes"]
                 if "meter_m3" in attributes:
@@ -2581,9 +2582,6 @@ class HomeAssistantInjector(Injector):
             except (ValueError, RuntimeError):
                 sensor = "None"  # For log message just below
 
-        state = get_state_file(self.configuration[STATE_FILE])
-        self.mylog(f"state: {state!r}", "~~")
-        previous_kWh = None
         if previous_kWh is None:
             state = get_state_file(self.configuration[STATE_FILE])
             if "grdf" in state:
@@ -2599,6 +2597,9 @@ class HomeAssistantInjector(Injector):
             f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
             f" from {sensor}"
         )
+
+        if previous_kWh is not None:
+            current_total_kWh = previous_kWh
 
         # sys.exit()   # For debug
         date_time = None
