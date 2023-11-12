@@ -85,7 +85,7 @@ configuration:
     name: Valeur DISPLAY pour l'affichage X
     description:
       Specification complète de l'adresse du terminal X accessible depuis
-      votre instance Home Assistance.  Par exemple, vous lancez MobiXterm sur votre
+      votre instance Home Assistance.  Par exemple, vous lancez MobaXterm sur votre
       PC qui a comme IP 10.33.2.69, et les connexions depuis votre réseau privé vers
       ce serveur sont autorisés.  La valeur "10.33.2.69:0.0" est en principe la bonne.
   insecure:
