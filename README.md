@@ -39,13 +39,16 @@ de jouer.
   - [Table des Matières](#table-des-mati%C3%A8res)
   - [:warning: Limitations](#warning-limitations)
   - [Informations générales](#informations-g%C3%A9n%C3%A9rales)
-  - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
+  - [Installation](#installation)
+    - [Installation sous Linux ou Windows](#installation-sous-linux-ou-windows)
+  - [Configuration](#configuration)
+    - [Le fichier de configuration (`config.json`)](#le-fichier-de-configuration-configjson)
   - [Les paramètres du script](#les-param%C3%A8tres-du-script)
-  - [Home Assistant](#home-assistant)
+  - [Installation avec Home Assistant OS](#installation-avec-home-assistant-os)
     - [Add-on MetersToHA (Module complémentaire)](#add-on-meterstoha-module-compl%C3%A9mentaire)
       - [Home Assistant Add-On - méthode manuelle](#home-assistant-add-on---m%C3%A9thode-manuelle)
       - [Home Assistant Add-On - méthode aidé par lien spécial](#home-assistant-add-on---m%C3%A9thode-aid%C3%A9-par-lien-sp%C3%A9cial)
-    - [Configuration](#configuration)
+    - [Configuration](#configuration-1)
     - [AppDaemon](#appdaemon)
       - [Installation AppDaemon](#installation-appdaemon)
       - [Ajouter `MetersToHA` à l'AppDaemon avec HACS](#ajouter-meterstoha-%C3%A0-lappdaemon-avec-hacs)
@@ -96,9 +99,41 @@ de jouer.
 
 ## Informations générales
 
-En résumé, il y a 4 étapes pour la mise en place:
+MetersToHA fonctionne pour:
 
-1. a. Installation sur Linux ou Windows
+- [Veolia IDF - https://www.vedif.eau.veolia.fr](https://www.vedif.eau.veolia.fr/)
+  valable pour Veolia en IDF.\
+  Vous pouvez trouver votre portail en
+  fonction de la ville en visitant
+  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS.
+- [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
+
+Il y a différentes options pour mettre en place MetersToHA:
+
+- Installation directe sous Linux ou Windows;
+- Avec Home Assistant:
+  - Comme 'add-on'/Module Complémentaire - le plus simple;
+  - Avec 'AppDaemon', comme 'composant'.
+
+Après l'installation proprement dit, il faudra configurer MetersToHA.\
+Cela
+implique soit la création d'un fichier de configuration JSON, soit - avec
+le add-on MetersToHA sous Home Assistant OS - le remplissage de la
+configuration dans l'interface.
+
+Et "enfin", il faudra provoquer l'exécution de MetersToHA.
+
+- Soit en exécution directe du script `meters_to_ha.py` (Linux, Windows);
+- Soit en émettant un événement sous Home Assistant (méthode add-on ou
+  Appdaemon).
+
+Un peu de débogue peut être nécessaire lors les premières exécutions.
+
+## Installation
+
+### Installation sous Linux ou Windows
+
+Systèmes soutenus:
 
 - Distribution classique: Debian, Ubuntu, Alpine, etc. - physique ou
   Machine Virtuelle (VM);
@@ -115,30 +150,31 @@ En résumé, il y a 4 étapes pour la mise en place:
 
 4. Automatisation (exécution régulière du script).
 
-Ce document continue avec l'explication de la configuration: c'est commun à
-toutes les installations.\
-Ensuite il explique comment l'utiliser avec le
-système domotique.\
-Et au final il aborde les environnements
-d'exécution/installation.
+## Configuration
 
-Ce script fonctionne pour:
+Le script `meters_to_ha.json` utilise un fichier de configuration au format
+json.
 
-- [Veolia IDF - https://www.vedif.eau.veolia.fr](https://www.vedif.eau.veolia.fr/)
-  valable pour Veolia en IDF.\
-  Vous pouvez trouver votre portail en
-  fonction de la ville en visitant
-  [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS.
-- [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
+Quand MetersToHA est mis en place sous Home Assistant OS (HAOS), vous devez
+remplir la configuration dans l'interface du Module Complémentaire
+MetersToHA. Le fichier de configuration json sera généré avec cette
+configuration.
 
-## Le fichier de configuration (`config.json`)
+Pour les autres méthodes, vous créez le fichier `config.json` manuellement.
 
-Dans tous les cas il faut un fichier de configuration. Pour Home Assistant,
-le point de départ peut être `config.json.exemple.home-assistant` que vous
-renommez en `config.json` (ou autre).
+La documentation du fichier de configuration ci-dessous peut vous aider
+également à comprendre les options du module complémentaire MetersToHA sous
+HAOS.
 
-Attention, AppDaemon efface le répertoire "MetersToHA" lors de la mise à
-jour - vous devez donc obligatoirement loger ce fichier ailleurs.
+### Le fichier de configuration (`config.json`)
+
+Pour Home Assistant, le point de départ peut être
+`config.json.exemple.home-assistant` que vous copiez en `config.json` par
+exemple.
+
+L'emplacement est libre, mais avec AppDaemon évitez le répertoire
+`MetersToHA` qui est supprimé lors de la mise à jour du composant
+MetersToHA.
 
 Exemple de configuration:
 
@@ -261,6 +297,11 @@ avec Home Assistant, ceci suffit:
 
 ## Les paramètres du script
 
+Les paramèters du script sont directement accessible avec l'installation
+sous Linux ou Windows, partiellement accessibles avec la configuration
+AppDaemon, et modifiables pour la plupart dans la configuration du Module
+complémentaire MetersToHA sous HAOS.
+
 | option(s)                                     | Description                                                                                                                                            |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | -h, --help                                    | Affiche l'aide                                                                                                                                         |
@@ -289,7 +330,7 @@ le fichier de configuration. Ce qui permet par exemple d'effectuer un
 transfert vers un web service en spécifiant
 `--server-type url --url https://mon-service.web --skip-download`.
 
-## Home Assistant
+## Installation avec Home Assistant OS
 
 En sus des informations qui suivent,
 [Le forum HACF](https://forum.hacf.fr/t/veolia-idf-sedif-consommation-eau-potable-suivi-consommation/11492)
@@ -306,9 +347,9 @@ Dans les 2 cas, il faudra configurer l'Add-on, le démarrer, et
 [définir un automatisme](#automatisation-home-assistant-appdaemon) pour
 déclencher l'événement.
 
-Note: Les paramètres `ha_server` et `ha_token` ne doivent pas être
-renseignés lorsque l'add-on doit alimenter le Home Assistant de la même
-installation.
+Note: Les paramètres `ha_server` et `ha_token` ne sont pas nécessaires
+lorsque l'add-on doit alimenter le Home Assistant de la même installation
+(donc pas besoin de générer un token soi-même).
 
 #### Home Assistant Add-On - méthode manuelle
 
@@ -339,7 +380,7 @@ votre domaine (enregistré en local):
 
 Après cela cliquer sur "Open Link".
 
-Ensuite dans Home Assistant j'ai cliqué "Confirmer" et été redirigé vers:
+Ensuite dans Home Assistant un clic sur "Confirmer" rediriga vers:
 
 <a id="install_addon"></a>![image|400x356](images/add_on_click_install.png)
 
@@ -360,13 +401,13 @@ pouvez vérifier.
 ```
 
 Pour finir,
-[définir un automatisme](#automatisation-home-assistant-appdaemon) pour
-le(s) événement(s) choisi(s). Et tester.
+[définir un automatisme comme pour la méthode AppDaemon](#automatisation-home-assistant-appdaemon)
+pour le(s) événement(s) choisi(s). Et tester.
 
 ### Configuration
 
-La valeur pour `ha_token` est nécessaire si on utilise pas la méthode
-"Add-on MetersToHA" et peut être obtenu dans
+La valeur pour `ha_token` est seulement nécessaire si on utilise pas la
+méthode "Add-on MetersToHA" et peut être obtenu dans
 [son profil Home Assistant](https://my.home-assistant.io/redirect/profile/).
 Cette fonctionnalité est disponible tout en bas de la page en question ou
 il faut cliquer "Créer un jeton":
@@ -376,12 +417,12 @@ il faut cliquer "Créer un jeton":
 ### AppDaemon
 
 L'installation avec
-[AppDaemon](https://appdaemon.readthedocs.io/en/latest/INSTALL.html) semble
-le plus approprié si vous avez HomeAssistant OS (HAOS) puisque tout
-tournera sur la même machine (moyennant à peu près 500Mo pour installer
-AppDaemon et les paquets).\
-Vous pouvez tout aussi bien utiliser les autres
-environnements.
+[AppDaemon](https://appdaemon.readthedocs.io/en/latest/INSTALL.html) permet
+d'utiliser la même machine que celle de HomeAssistant OS (HAOS) et
+nécessite environ 500Mo pour l'installation de AppDaemon et les
+paquets.\
+C'est un peu plus complexe à mettre en place que la methode
+"Module Complémentaire".
 
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/) après
