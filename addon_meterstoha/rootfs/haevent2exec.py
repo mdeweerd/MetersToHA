@@ -12,6 +12,7 @@ import asyncio
 import functools
 import json
 import logging
+import os
 import time
 from collections import defaultdict
 
@@ -174,9 +175,12 @@ VALID_LOGGING_LEVELS = ["debug", "info", "warning", "error"]
 
 
 async def main():
-    logging.basicConfig(
-        format="%(asctime)s %(message)s", datefmt="[%Y/%m/%d %H:%M:%S]"
-    )
+    PROGRAM = os.path.basename(__file__)
+    logConfig = {
+        "format": f"%(asctime)s ({PROGRAM}) %(levelname)-7s %(message)s",
+        "datefmt": "[%Y/%m/%d %H:%M:%S]",
+    }
+    logging.basicConfig(force=True, **logConfig)
 
     parser = argparse.ArgumentParser(
         description="Home Assistant Event Listener"
@@ -204,7 +208,8 @@ async def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=args.log_level.upper())
+    logConfig["level"] = args.log_level.upper()
+    logging.basicConfig(force=True, **logConfig)
     event_filter = args.events
     external_program = args.external_program
     execution_timeout = args.timeout
