@@ -1,18 +1,21 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-:warning: Les n° de contract, et PCE sont désormais des chaine de
-caractères afin d'accepter les nombres qui commencent par 0. Si vous avez
-une erreur de configuration au redémarrage, vérifiez en mode YAML que vous
-avez bien `"21365464"` avec guillemets pour les n° de contrat (Veolia) et
-PCE (GRDF).
+**Mettez à jour automatiquement vos consommations d'eau et de gaz dans
+votre système domotique**
 
 # Meters To Home Automation (MetersToHA / Meters2HA / M2HA)
 
-Ce script automatise le transfert de l'information de consommation d'eau et
-de gaz vers des systèmes domotiques tels que
-[Home Assistant](https://www.home-assistant.io/) et
-[Domoticz](https://domoticz.com/) et d'autres en MQTT.
+MetersToHA est un script qui permet de récupérer automatiquement les
+données de consommation d'eau et de gaz de différents fournisseurs, et de
+les mettre à jour dans votre système domotique:
+
+- [Home Assistant](https://www.home-assistant.io/) et
+- [Domoticz](https://domoticz.com/), et
+- d'autres en MQTT.
+
+Avec MetersToHA, vous pouvez suivre votre consommation d'eau et de gaz, et
+en fonction prendre des mesures pour réduire vos dépenses.
 
 C'est un fork de [veolia-idf](https://github.com/s0nik42/veolia-idf) déjà
 connu et accélérant le développement.
@@ -99,7 +102,8 @@ de jouer.
 
 ## Informations générales
 
-MetersToHA fonctionne pour:
+MetersToHA peut récupérer les données de consommation d'eau et de gaz des
+fournisseurs suivants :
 
 - [Veolia IDF - https://www.vedif.eau.veolia.fr](https://www.vedif.eau.veolia.fr/)
   valable pour Veolia en IDF.\
