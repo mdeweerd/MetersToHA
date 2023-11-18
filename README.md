@@ -450,8 +450,20 @@ Les scripts sont placés dans le répertoire
 2. Pour HAOS (et peut-être d’autres), configurer `AppDaemon` au moins avec
    ces paquets (configuration au format `yaml` pour HAOS):
 
+:warning: Si vous aviez une installation d'avant 2023.11, le chemin
+`/config` a changé en `/homeassistant` - d'ou l'ajout des `init_commands`
+et la modification de la configuration `apps.yaml`.\
+La configuration de
+appdaemon est sous `/addon_configs/a0d7b954_appdaemon`. Suite à ce
+déplacement de répertoire (/config -> /homeassistant), il faut mettre le
+bon chemin vers les ssecrets dans
+`/addon_configs/a0d7b954_appdaemon/appdaemon.yaml`:
+`secrets: /homeassistant/secrets.yaml`.
+
 ```yaml
-init_commands: []
+init_commands:
+  - '[ -r /config ] || ln -s /homeassistant /config'
+  - mkdir -p /config/MetersToHA
 python_packages:
   - selenium
   - PyVirtualDisplay
@@ -514,8 +526,8 @@ sous `/config`. Le fichier `/config/veolia.log` pourra aider à identifier
 des causes de dysfonctionnement.
 
 Voici un exemple d'une configuration minimale à ajouter à
-`/config/appdaemon/apps/apps.yaml` - l'événement déclencheur est par défaut
-`call_meters_to_ha`:
+`/addon_configs/a0d7b954_appdaemon/apps/apps.yaml` - l'événement
+déclencheur est par défaut `call_meters_to_ha`:
 
 ```yaml
 meters_to_ha:
@@ -557,9 +569,9 @@ veolia_idf:
   # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when debug is true)
   DISPLAY: 192.1.0.52:0
   # optionnel (Par défaut: None) - Fichier pour la sortie STDOUT du script
-  outfile: /config/appdaemon/apps/meters_to_ha_script.log
+  outfile: /config/MetersToHA/meters_to_ha_script.log
   # optionnel (Par défaut: None) - Fichier pour la sortie STDERR du script
-  errfile: /config/appdaemon/apps/meters_to_ha_err.log
+  errfile: /config/MetersToHA/apps/meters_to_ha_err.log
 ```
 
 L'option `debug` peut être intéressant lors de la mise en place en cas de
