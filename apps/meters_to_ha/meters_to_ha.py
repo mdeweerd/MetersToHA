@@ -2536,7 +2536,7 @@ class HomeAssistantInjector(Injector):
 
             if isinstance(response, dict) and "state" in response:
                 entity_data = response
-                previous_kWh = response["state"]
+                previous_kWh = float(response["state"])
                 if previous_kWh is not None:
                     try:
                         previous_kWh = float(previous_kWh)
@@ -2587,11 +2587,11 @@ class HomeAssistantInjector(Injector):
             if "grdf" in state:
                 grdf_state = state["grdf"]
                 self.mylog(f"grdf_state: {grdf_state!r}", "~~")
-                previous_kWh = grdf_state["state"]
+                previous_kWh = float(grdf_state["state"])
                 previous_date_str = grdf_state["attributes"]["date_time"]
                 previous_date = dt.datetime.fromisoformat(previous_date_str)
                 if "m3" in grdf_state:
-                    previous_m3 = grdf_state["m3"]
+                    previous_m3 = float(grdf_state["m3"])
 
         self.mylog(
             f"Previous {previous_m3} m3 {previous_kWh} kWh {previous_date}"
