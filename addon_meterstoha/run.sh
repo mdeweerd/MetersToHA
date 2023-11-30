@@ -70,18 +70,32 @@ for key in $keys ; do
   fi
 done
 
+# Shell command that checks the matched event and translates to the option
+# to pass to meters_to_ha
+# [[ "$1" == "<EVENT_NAME>" ]] && TARGET_OPT=--EVENTOPT
 event_matching=""
+# Event configuration to report in log
+event_conf=""
+# Options for homeassistant_started event
+startup_conf=""
 # shellcheck disable=SC2086
 for key in $event_keys ; do
   if bashio::config.has_value "${key}_event"; then
     value="$(bashio::config "${key}_event")"
-    event_conf="$key:$value"
+    event_conf="$event_conf $key:$value"
     event_matching="$event_matching""[[ \"\$1\" == \"${value/\"/\\\"}\" ]] && TARGET_OPT=--$key
     "
+    startup_conf="$startup_conf --$key"
     # shellcheck disable=SC2089
     events="$events ${value//\"/\\\"}"
   fi
 done
+
+# Execute meters_to_ha.py when homeassistant start to reload entity values.
+event_matching="$event_matching""[[ \"\$1\" == \"homeassistant_started\" ]] && TARGET_OPT=\"-k --skip-download $startup_conf\"
+"
+
+# TODO: Execute meters_to_ha.py when addon starts (special option to create: --restore-state)
 
 
 if bashio::config.has_value ha_server ; then
