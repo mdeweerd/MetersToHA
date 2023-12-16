@@ -1561,14 +1561,35 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         time.sleep(10)
 
-        # Click Litres #####
-        self.click_in_view(
-            By.XPATH,
-            r"//span[contains(text(), 'Litres')]/parent::node()",
-            wait_message="Wait for button Litres",
-            click_message="Click on button Litres",
-            delay=2,
-        )
+        try:
+            # Click Litres #####
+            self.click_in_view(
+                By.XPATH,
+                r"//span[contains(text(), 'Litres')]/parent::node()",
+                wait_message="Wait for button Litres",
+                click_message="Click on button Litres",
+                delay=2,
+            )
+        except selenium.common.exceptions.TimeoutException:
+            self.mylog("Veolia bug, trying workaround", end="")
+            self.click_in_view(
+                By.XPATH,
+                r"//a[contains(@class,'cICL_Tab')]"
+                r"//span[contains(text(), 'Alertes de consommation')]"
+                r"/parent::node()",
+                wait_message="Wait Alertes de consommation",
+                click_message="Click on Alertes de consommation",
+                delay=2,
+            )
+            time.sleep(5)
+            self.click_in_view(
+                By.XPATH,
+                r"//a[contains(@class,'cICL_Tab')]"
+                r"//span[contains(text(), 'Historique')]/parent::node()",
+                wait_message="Wait Historique",
+                click_message="Click on Historique",
+                delay=2,
+            )
 
         time.sleep(2)
 
@@ -1581,6 +1602,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             delay=2,
         )
 
+        time.sleep(2)
         # Click Telechargement #####
         self.click_in_view(
             By.XPATH,
