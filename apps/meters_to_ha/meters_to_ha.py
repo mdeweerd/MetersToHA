@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import glob
 import inspect
 import json
 import logging
@@ -418,6 +419,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # Go to login page directly only when not logged in
     site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     download_veolia_filename = "historique_jours_litres.csv"
+    glob_download_veolia_filename = "historique_jours_litres*.csv"
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
     # site_grdf_url = "ttps://login.monespace.grdf.fr/mire/connexion"
     download_grdf_filename = "historique_gazpar.json"
@@ -487,6 +489,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.__full_path_download_veolia_idf_file = os.path.join(
             self.configuration[PARAM_DOWNLOAD_FOLDER],
             self.download_veolia_filename,
+        )
+        self.__glob_path_download_veolia_idf_file = os.path.join(
+            self.configuration[PARAM_DOWNLOAD_FOLDER],
+            self.glob_download_veolia_filename,
         )
         self.__full_path_download_grdf_file = os.path.join(
             self.configuration[PARAM_DOWNLOAD_FOLDER],
@@ -1380,7 +1386,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         """
         Get Veolia IDF water consumption 'interactively'
         """
+        # pylint: disable=too-many-locals
+
         v_file = self.__full_path_download_veolia_idf_file
+        v_file_glob = self.__glob_path_download_veolia_idf_file
 
         if self.configuration[PARAM_SKIP_DOWNLOAD]:
             return v_file
@@ -1479,10 +1488,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         # Should be logged in here
 
-        if os.path.exists(v_file):
+        # for filename in glob.glob(v_file_glob):
+        for filename in (v_file,):  # Loop to replace the above alternative
             try:
-                self.mylog("Remove temporary download file. ", end="")
-                os.remove(v_file)
+                self.mylog(
+                    f"Remove temporary download file '{filename}'. ", end=""
+                )
+                os.remove(filename)
             except Exception:
                 raise
             else:
@@ -1581,13 +1593,21 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 click_message="Click on Alertes de consommation",
                 delay=2,
             )
-            time.sleep(5)
+            time.sleep(2)
             self.click_in_view(
                 By.XPATH,
                 r"//a[contains(@class,'cICL_Tab')]"
                 r"//span[contains(text(), 'Historique')]/parent::node()",
                 wait_message="Wait Historique",
                 click_message="Click on Historique",
+                delay=2,
+            )
+            time.sleep(2)
+            self.click_in_view(
+                By.XPATH,
+                r"//span[contains(text(), 'Litres')]/parent::node()",
+                wait_message="Wait for button Litres",
+                click_message="Click on button Litres",
                 delay=2,
             )
 
@@ -1613,13 +1633,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         )
 
         self.mylog(
-            f"Wait for end of download to {v_file}",
+            f"Wait for end of download to '{v_file_glob}'",
             end="",
         )
+
         t = int(str(self.configuration[PARAM_TIMEOUT]))
-        while t > 0 and not os.path.exists(v_file):
+        elapsed = 0
+        while t > 0 and not glob.glob(v_file_glob):
             time.sleep(1)
             t -= 1
+            elapsed += 1
+            if elapsed < 2:
+                # Do not try alternative until some time passed
+                continue
             try:
                 # For some reason (possibly Security setting),
                 # the CSV file is not written to disk in Chrome 110.
@@ -1648,8 +1674,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             except Exception:
                 pass
 
-        if os.path.exists(v_file):
+        found = glob.glob(v_file_glob)
+        # Most recent first in list
+        found.sort(key=os.path.getmtime, reverse=True)
+        if found and os.path.exists(found[0]):
             self.mylog(st="OK")
+            if found[0] != v_file:
+                os.rename(found[0], v_file)
         else:
             self.get_screenshot("error.png")
             raise RuntimeError("File download timeout")
