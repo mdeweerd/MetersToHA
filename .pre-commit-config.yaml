@@ -24,6 +24,7 @@ repos:
           - mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
+          - setuptools
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -109,8 +110,8 @@ repos:
     hooks:
       - id: codespell
         exclude: (\.md|apps.yaml|translations/.*.yaml)$
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a5
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.0.3
     hooks:
       - id: pylint
         # exclude: ^$
@@ -145,6 +146,8 @@ repos:
     hooks:
       - id: beautysh
         exclude: (run.sh)$
+        additional_dependencies:
+          - setuptools
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.5
     hooks:
