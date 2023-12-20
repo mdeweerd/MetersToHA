@@ -134,6 +134,8 @@ repos:
           - --show-error-context
         additional_dependencies:
           - paho-mqtt
+          - types-requests
+          - urllib3
   - repo: https://github.com/IamTheFij/docker-pre-commit
     rev: v3.0.1
     hooks:
