@@ -519,7 +519,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
             return
 
-        raise Exception(
+        raise RuntimeError(
             "No browser could be started with selenium"
             f" {self.hasFirefox}-{self.hasChromium}"
         )
@@ -1942,7 +1942,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # print(f"Url {data_url} -> R:{result!r}\n")
 
         if content is None:
-            raise Exception("No content")
+            raise ValueError("No content")
 
         if not self.configuration[PARAM_KEEP_OUTPUT]:
             self.files_to_cleanup.append(g_file)

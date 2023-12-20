@@ -15,6 +15,7 @@ import logging
 import os
 import time
 from collections import defaultdict
+from typing import Dict
 
 from aiohttp import ClientSession, WSMsgType
 
@@ -70,7 +71,7 @@ async def connect_to_hass(  # pylint: disable=too-many-locals
                     msg = await ws.receive_json()
 
                     if msg.get("type") != "auth_ok":
-                        raise Exception("Authentication failed")
+                        raise PermissionError("Authentication failed")
 
                 logging.info("Connected")
 
@@ -176,11 +177,14 @@ VALID_LOGGING_LEVELS = ["debug", "info", "warning", "error"]
 
 async def main():
     PROGRAM = os.path.basename(__file__)
-    logConfig = {
+    logConfig: Dict[str, str] = {
         "format": f"%(asctime)s ({PROGRAM}) %(levelname)-7s %(message)s",
         "datefmt": "[%Y/%m/%d %H:%M:%S]",
     }
-    logging.basicConfig(force=True, **logConfig)
+    logging.basicConfig(
+        force=True,
+        **logConfig,  # type: ignore
+    )
 
     parser = argparse.ArgumentParser(
         description="Home Assistant Event Listener"
@@ -209,7 +213,7 @@ async def main():
     args = parser.parse_args()
 
     logConfig["level"] = args.log_level.upper()
-    logging.basicConfig(force=True, **logConfig)
+    logging.basicConfig(force=True, **logConfig)  # type: ignore
     event_filter = args.events
     external_program = args.external_program
     execution_timeout = args.timeout
