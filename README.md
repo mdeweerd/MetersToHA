@@ -781,11 +781,14 @@ Prérequis :
 
 ### Création du "Virtual Sensor" sur Domoticz :
 
-- Créer un Matériel de Type "Dummy": Domoticz> Setup> Hardware> Dummy
+- Créer un Matériel de Type "Dummy" depuis Domoticz> Setup> Hardware
 
-- Créer un "Virtual Sensor" de type : "Managed Counter"
+- Créer un "Virtual Sensor" de type : "Managed Counter".\
+  Pour cela, depuis
+  la ligne du Matériel Dummy, cliquer sur le bouton dédié.
 
-- Configurer le sensor: Domoticz> Utility> `Bouton "edit" de votre sensor`
+- Configurer le sensor depuis Domoticz> Utility. Utiliser le bouton "Edit"
+  de votre sensor dans l'onglet devices.
 
   | >                   | Sensor pour conso eau |
   | ------------------- | --------------------- |
