@@ -105,6 +105,11 @@ services:
     extends: meters-to-ha-alpine
     command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output
 
+  # Target to debug decoding and upload to server without getting new data.
+  meters-to-ha-veolia-skip-download:
+    extends: meters-to-ha-alpine
+    command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output --skip-download
+
   meters-to-ha-veolia-file:
     extends: meters-to-ha-alpine
     command: ./apps/meters_to_ha/meters_to_ha.py --veolia -c ./config.json --run --keep-output --url=file://./veolia_data.csv --server-type=url

@@ -1963,10 +1963,6 @@ class Injector(Worker):
             config_dict=config_dict, super_print=super_print, debug=debug
         )
 
-        self._http = urllib3.PoolManager(
-            retries=1, timeout=int(str(self.configuration[PARAM_TIMEOUT]))
-        )
-
     def sanity_check(self):
         pass
 
@@ -2077,60 +2073,58 @@ class DomoticzInjector(Injector):
         super().__init__(
             config_dict=config_dict, super_print=super_print, debug=debug
         )
-
-        self.headers = urllib3.make_headers()
+        self.revision: int = 0
 
     def open_url(self, uri, data=None):  # pylint: disable=unused-argument
         # Generate URL
-        url_test = str(self.configuration[PARAM_DOMOTICZ_SERVER]) + uri
+        url = str(self.configuration[PARAM_DOMOTICZ_SERVER]) + uri
 
         # Add Authentication Items if needed
         if (
             self.configuration[PARAM_DOMOTICZ_LOGIN] != ""
             and self.configuration[PARAM_DOMOTICZ_PASSWORD] != ""
         ):
-            http_auth = ":".join(
-                (
-                    self.configuration[PARAM_DOMOTICZ_LOGIN],
-                    self.configuration[PARAM_DOMOTICZ_PASSWORD],
-                )
+            http_auth = (
+                self.configuration[PARAM_DOMOTICZ_LOGIN],
+                self.configuration[PARAM_DOMOTICZ_PASSWORD],
             )
 
-            self.headers.update(urllib3.make_headers(basic_auth=http_auth))
+        else:
+            http_auth = None
 
         try:
-            response = self._http.request(
-                "GET",
-                url_test,
-                headers=self.headers,
+            response = requests.get(
+                url,
                 verify=not (self.configuration[PARAM_INSECURE]),
+                auth=http_auth,
+                timeout=30,
             )
-        except urllib3.exceptions.MaxRetryError as e:
+        except Exception as e:
             # HANDLE CONNECTIVITY ERROR
-            raise RuntimeError(f"url={url_test} : {e}")
+            raise RuntimeError(f"url={url} : {e}")
 
         # HANDLE SERVER ERROR CODE
-        if not response.status == 200:
+        if not response.status_code == 200:
             raise RuntimeError(
                 "url="
-                + url_test
+                + url
                 + " - (code = "
-                + str(response.status)
+                + str(response.status_code)
                 + ")\ncontent="
-                + str(response.data)
+                + str(response.content)
             )
 
         try:
-            j = json.loads(response.data.decode("utf-8"))
+            j = json.loads(response.content.decode("utf_8"))
         except Exception as e:
             # Handle JSON ERROR
             raise RuntimeError(f"Unable to parse the JSON : {e}")
 
         if j["status"].lower() != "ok":
             raise RuntimeError(
-                f"url={url_test}\n"
-                f"response={response.status}\n"
-                f"content={j}"
+                f"url={url}\n"
+                f"response={response.status_code}\n"
+                f"content={response.text}"
             )
 
         return j
@@ -2140,13 +2134,24 @@ class DomoticzInjector(Injector):
         response = self.open_url("/json.htm?type=command&param=getversion")
         if response["status"].lower() == "ok":
             self.mylog(st="OK")
+            if "Revision" in response:
+                self.revision = response["Revision"]
+            else:
+                result = re.findall(r"\(build (\d+)\)", response["version"])
+                if len(result) > 0:
+                    self.revision = int(result[0])
+                else:
+                    self.revision = 0
+
+        rid = str(self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX])
+        if self.revision < 15457:
+            url = f"/json.htm?type=devices&rid={rid}"
+        else:
+            url = f"/json.htm?type=command&param=getdevices&rid={rid}"
 
         self.mylog("Check domoticz Device", end="")
         # generate 2 urls, one for historique, one for update
-        response = self.open_url(
-            "/json.htm?type=devices&rid="
-            + str(self.configuration[PARAM_DOMOTICZ_VEOLIA_IDX])
-        )
+        response = self.open_url(url)
 
         if "result" not in response:
             raise RuntimeError(
@@ -2304,7 +2309,7 @@ class DomoticzInjector(Injector):
                     url_daily = "/json.htm?" + urlencode(url_args)
 
                     # Current
-                    url_args["svalue"] = conso
+                    url_args["nvalue"] = conso
                     url_current = "/json.htm?" + urlencode(url_args)
 
                     # Send historical data.
