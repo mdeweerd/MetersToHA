@@ -1544,7 +1544,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         if menu_type == "HISTORIQUE":
             # Click on HISTORIQUE does not always work, go to page #####
-            self.site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
             self.__browser.get(self.__class__.site_url + "historique")
             self.mylog(st="OK")
             time.sleep(0.5)  # Small wait after submit
