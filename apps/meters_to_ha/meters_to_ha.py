@@ -1542,10 +1542,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         menu_type = str(el.get_attribute("innerHTML"))
 
         # Click on Menu #####
-        self.mylog(f"Click on menu : {menu_type}", end="")
 
-        el.click()
-
+        self.click_in_view(
+            By.XPATH,
+            r"//span[contains(text(), 'CONTRATS')"
+            r" or contains(text(), 'HISTORIQUE')]",
+            wait_message="Wait again for button HISTORIQUE/CONTRATS",
+            click_message="Click on button HISTORIQUE/CONTRACTS",
+            delay=2,
+        )
         self.mylog(st="OK")
 
         # GESTION DU PARCOURS MULTICONTRATS
