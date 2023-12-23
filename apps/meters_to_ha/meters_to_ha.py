@@ -1541,20 +1541,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         menu_type = str(el.get_attribute("innerHTML"))
 
-        # Click on Menu #####
-
-        self.click_in_view(
-            By.XPATH,
-            r"//span[contains(text(), 'CONTRATS')"
-            r" or contains(text(), 'HISTORIQUE')]",
-            wait_message="Wait again for button HISTORIQUE/CONTRATS",
-            click_message="Click on button HISTORIQUE/CONTRACTS",
-            delay=2,
-        )
-        self.mylog(st="OK")
-
-        # GESTION DU PARCOURS MULTICONTRATS
-        if menu_type == "CONTRATS":
+        if menu_type == "HISTORIQUE":
+            # Click on HISTORIQUE does not always work, go to page #####
+            self.site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+            self.__browser.get(self.__class__.site_url + "historique")
+            self.mylog(st="OK")
+            time.sleep(0.5)  # Small wait after submit
+            self.__wait.until(document_initialised)
+        elif menu_type == "CONTRATS":
+            # GESTION DU PARCOURS MULTICONTRATS
             time.sleep(2)
             contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
             self.click_in_view(
@@ -1564,6 +1559,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 click_message="Click on contract",
                 delay=0,
             )
+            time.sleep(0.5)  # Small wait after submit
+            self.__wait.until(document_initialised)
 
         time.sleep(2)
 
