@@ -417,7 +417,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # Go to login page directly
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
     # Go to login page directly only when not logged in
-    site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+    # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+    site_url = "https://espace-client.vedif.eau.veolia.fr/ICL/s/"
     download_veolia_filename = "historique_jours_litres.csv"
     glob_download_veolia_filename = "historique_jours_litres*.csv"
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
