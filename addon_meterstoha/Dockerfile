@@ -19,6 +19,7 @@ RUN \
         git \
         py-urllib3 \
         py3-colorama \
+        mesa-dev \
         xvfb \
         py3-pip \
         xorg-server-xephyr \
