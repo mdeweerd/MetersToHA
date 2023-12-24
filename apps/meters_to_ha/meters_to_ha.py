@@ -723,8 +723,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if sys.platform != "win32":
                 try:
                     options.add_argument("--disable-gpu")
-                    options.add_argument("--use-gl=angle")
-                    options.add_argument("--use-angle=swiftshader")
+                    # Next options may help with issues for graphics drive.
+                    # options.add_argument("--use-gl=angle")
+                    # options.add_argument("--use-angle=swiftshader")
                     self.__display = Display(visible=0, size=(1280, 1024))
                 except Exception:
                     raise
