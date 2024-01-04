@@ -120,6 +120,7 @@ repos:
           - pyflakes
           - paho-mqtt
           - aiohttp
+          - pylint
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy
