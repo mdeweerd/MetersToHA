@@ -120,7 +120,7 @@ repos:
           - pyflakes
           - paho-mqtt
           - aiohttp
-          - pylint
+          - regex
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -138,6 +138,7 @@ repos:
           - paho-mqtt
           - types-requests
           - urllib3
+          - regex
   - repo: https://github.com/IamTheFij/docker-pre-commit
     rev: v3.0.1
     hooks:
