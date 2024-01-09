@@ -20,7 +20,7 @@ REM GOTO TRACE
 
 :INTERACTIF
 REM Interactif:
-python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --grdf -r --keep-output --debug --screenshot --chrome-version %CHROME_VERSION%
+python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --grdf -r --keep-output --display --screenshot --chrome-version %CHROME_VERSION%
 GOTO END
 
 :NONINTERACTIF
@@ -33,7 +33,7 @@ GOTO END:
 REM Avec trace détaillée
 for /f %%i in ('python -c "import sys ; print(';'.join(sys.path)[1:])"') do SET PY_PATH=%%i
 python -m trace "--ignore-dir=%PY_PATH%" -t ^
-apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --debug --grdf -r --keep-output --screenshot --chrome-version %CHROME_VERSION% 
+apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --display --grdf -r --keep-output --screenshot --chrome-version %CHROME_VERSION% 
 
 :END
 

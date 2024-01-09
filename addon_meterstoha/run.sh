@@ -150,8 +150,8 @@ if bashio::config.has_value type ; then
   TYPE="${TYPE//\"/\\\"}"
 fi
 
-if bashio::config.true debug ; then
-  RUN_OPT="${RUN_OPT} --debug"
+if bashio::config.true display ; then
+  RUN_OPT="${RUN_OPT} --display"
 fi
 
 if bashio::config.true local_config ; then

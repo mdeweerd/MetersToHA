@@ -201,11 +201,11 @@ class Worker:
     install_dir = os.path.dirname(os.path.realpath(__file__))
     configuration: dict[str, Any] = {}
     files_to_cleanup: list[str] = []
-    _debug = False
+    _use_display = False
     WORKER_DESC = "Worker"
 
-    def __init__(self, config_dict=None, super_print=None, debug=False):
-        self._debug = debug
+    def __init__(self, config_dict=None, super_print=None, use_display=False):
+        self._use_display = use_display
 
         # Supersede local print function if provided as an argument
         self.mylog = super_print if super_print else self.default_mylog
@@ -289,8 +289,10 @@ class Worker:
 # Output Class in charge of managing all script output to file or console
 ###############################################################################
 class Output(Worker):
-    def __init__(self, config_dict, debug=False):
-        super().__init__(super_print=self.__print_to_console, debug=debug)
+    def __init__(self, config_dict, use_display=False):
+        super().__init__(
+            super_print=self.__print_to_console, use_display=use_display
+        )
 
         self.__print_buffer = ""
         logs_folder = (
@@ -302,7 +304,7 @@ class Output(Worker):
         logfile = os.path.join(logs_folder, "service.log")
 
         # In standard mode log to a file
-        if self._debug is False:
+        if self._use_display is False:
             # Check if we can create logfile
             try:
                 open(logfile, "a+", encoding="utf_8").close()
@@ -427,9 +429,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     hasChromium = False
 
     def __init__(
-        self, config_dict, super_print=None, debug=False, local_config=False
+        self,
+        config_dict,
+        super_print=None,
+        use_display=False,
+        local_config=False,
     ):
-        super().__init__(super_print=super_print, debug=debug)
+        super().__init__(super_print=super_print, use_display=use_display)
 
         self.__local_config = local_config
 
@@ -535,7 +541,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.mylog("Start virtual display (Firefox).", end="")
         # veolia website needs at least 1600x1200 to render all components
         if sys.platform != "win32":
-            if self._debug:
+            if self._use_display:
                 self.__display = Display(visible=1, size=(1600, 1200))
             else:
                 self.__display = Display(visible=0, size=(1600, 1200))
@@ -544,7 +550,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             except Exception as e:
                 raise RuntimeError(
                     f"{e} if you launch the script through a ssh connection"
-                    " with '--debug' ensure X11 forwarding is activated"
+                    " with '--display' ensure X11 forwarding is activated"
                 )
             else:
                 self.mylog(st="OK")
@@ -596,9 +602,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             except Exception as e:
                 raise RuntimeError(
                     f"{e} If you launch the script through a ssh connection"
-                    " with '--debug' ensure X11 forwarding is activated,"
+                    " with '--display' ensure X11 forwarding is activated,"
                     " and that you have a working X environment."
-                    " debug mode starts Firefox on X Display "
+                    " '--display' starts Firefox on X Display "
                     " and shows dynamic evolution of the website"
                 )
         except Exception:
@@ -657,7 +663,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         # options.add_argument('--user-data-dir=~/.config/google-chrome')
         options.add_argument("--mute-audio")
-        # if self._debug:
+        # if self._use_display:
         #     Does not work well with veolia due to multiple "same" elements
         #     options.add_argument("--auto-open-devtools-for-tabs")
         options.add_experimental_option(
@@ -708,7 +714,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             options.add_argument("--log-level=0")
             options.add_argument("--v=0")
 
-        if self._debug:
+        if self._use_display:
             if sys.platform != "win32":
                 self.__display = Display(visible=1, size=(1280, 1024))
             if getattr(options, "headless", "_DUMMY_") == "_DUMMY_":
@@ -950,7 +956,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # Remove downloaded files
         for fn in self.files_to_cleanup:
             try:
-                if not self._debug and not keep_output and os.path.exists(fn):
+                if (
+                    not self._use_display
+                    and not keep_output
+                    and os.path.exists(fn)
+                ):
                     # Remove file
                     self.mylog(f"Remove downloaded file {fn}", end="")
                     os.remove(fn)
@@ -1817,14 +1827,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         pass
 
                 waitUntilConnexionGone = 2
-                if self._debug:
+                if self._use_display:
                     # Allow some some time to resolve captcha, and connect
                     self.mylog("Waiting 30 seconds for the user. ", end="~~")
                     waitUntilConnexionGone = 30
                 else:
-                    # Not in debug mode, only wait a bit
+                    # Not using display, only wait a bit
                     self.mylog(
-                        "No debug interface, proceed (delay 2s). ", end="~~"
+                        "Not using external display, proceed (delay 2s). ",
+                        end="~~",
                     )
 
                 try:
@@ -1958,9 +1969,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 class Injector(Worker):
     WORKER_DESC = "Injector"
 
-    def __init__(self, config_dict=None, super_print=None, debug=False):
+    def __init__(self, config_dict=None, super_print=None, use_display=False):
         super().__init__(
-            config_dict=config_dict, super_print=super_print, debug=debug
+            config_dict=config_dict,
+            super_print=super_print,
+            use_display=use_display,
         )
 
     def sanity_check(self):
@@ -2056,7 +2069,7 @@ class Injector(Worker):
 class DomoticzInjector(Injector):
     WORKER_DESC = "Domoticz"
 
-    def __init__(self, config_dict, super_print, debug=False):
+    def __init__(self, config_dict, super_print, use_display=False):
         self.configuration = {
             # Mandatory config values
             PARAM_DOMOTICZ_VEOLIA_IDX: None,
@@ -2071,7 +2084,9 @@ class DomoticzInjector(Injector):
         }
 
         super().__init__(
-            config_dict=config_dict, super_print=super_print, debug=debug
+            config_dict=config_dict,
+            super_print=super_print,
+            use_display=use_display,
         )
         self.revision: int = 0
 
@@ -2338,7 +2353,7 @@ class DomoticzInjector(Injector):
 class HomeAssistantInjector(Injector):
     WORKER_DESC = "Home Assistant"
 
-    def __init__(self, config_dict, super_print, debug=False):
+    def __init__(self, config_dict, super_print, use_display=False):
         self.configuration = {
             # Mandatory config values
             PARAM_HA_SERVER: None,
@@ -2350,7 +2365,9 @@ class HomeAssistantInjector(Injector):
             PARAM_INSECURE: False,
             STATE_FILE: PARAM_OPTIONAL_VALUE,
         }
-        super().__init__(config_dict, super_print=super_print, debug=debug)
+        super().__init__(
+            config_dict, super_print=super_print, use_display=use_display
+        )
 
     def open_url(self, uri, data=None):
         """
@@ -2824,7 +2841,7 @@ class HomeAssistantInjector(Injector):
 class MqttInjector(Injector):
     WORKER_DESC = "MQTT"
 
-    def __init__(self, config_dict, super_print, debug=False):
+    def __init__(self, config_dict, super_print, use_display=False):
         self.configuration = {
             # Mandatory config values
             PARAM_URL: None,
@@ -2838,7 +2855,9 @@ class MqttInjector(Injector):
             PARAM_TIMEOUT: "30",
             PARAM_INSECURE: False,
         }
-        super().__init__(config_dict, super_print=super_print, debug=debug)
+        super().__init__(
+            config_dict, super_print=super_print, use_display=use_display
+        )
 
     def sanity_check(self):
         pass
@@ -2895,7 +2914,7 @@ class MqttInjector(Injector):
 class UrlInjector(Injector):
     WORKER_DESC = "URL Destination"
 
-    def __init__(self, config_dict, super_print, debug=False):
+    def __init__(self, config_dict, super_print, use_display=False):
         self.configuration = {
             # Mandatory config values
             PARAM_URL: None,
@@ -2905,7 +2924,9 @@ class UrlInjector(Injector):
             PARAM_TIMEOUT: "30",
             PARAM_INSECURE: False,
         }
-        super().__init__(config_dict, super_print=super_print, debug=debug)
+        super().__init__(
+            config_dict, super_print=super_print, use_display=use_display
+        )
 
     def open_url(self, api_url, data=None, content_type=None):
         """
@@ -2998,7 +3019,7 @@ class UrlInjector(Injector):
 def exit_on_error(
     workers: list[Worker] | None = None,
     string="",
-    debug=False,
+    use_display=False,
     o: Output | None = None,
 ):
     if o is None:
@@ -3009,15 +3030,15 @@ def exit_on_error(
     if workers is not None:
         for w in workers:
             if w is not None:
-                w.cleanup(debug)
+                w.cleanup(use_display)
 
     if o is None:
         print(
             "Ended with error%s"
             % (
                 ""
-                if debug
-                else " : // re-run the program with '--debug' option",
+                if use_display
+                else " : // re-run with '--display' option if you can",
             )
         )
     else:
@@ -3025,8 +3046,8 @@ def exit_on_error(
             "Ended with error%s"
             % (
                 ""
-                if debug
-                else " : // re-run the program with '--debug' option",
+                if use_display
+                else " : // re-run with '--display' option if you can",
             ),
             st="EE",
         )
@@ -3124,10 +3145,9 @@ def doWork():
         help="Query GRDF",
     )
     parser.add_argument(
-        "-d",
-        "--debug",
+        "--display",
         action="store_true",
-        help="active graphical debug mode (only for troubleshooting)",
+        help="active graphical display mode (only for troubleshooting)",
     )
     parser.add_argument(
         "--screenshot",
@@ -3227,25 +3247,25 @@ def doWork():
     # Init output
     try:
         d = {PARAM_LOGS_FOLDER: args.logs_folder, INSTALL_DIR: install_dir}
-        o = Output(d, debug=args.debug)
+        o = Output(d, use_display=args.display)
     except Exception as exc:
-        exit_on_error(string=f"Init output - {exc}", debug=args.debug)
+        exit_on_error(string=f"Init output - {exc}", use_display=args.display)
 
     # Print debug message
-    if args.debug:
-        o.mylog("DEBUG MODE ACTIVATED", end="")
-        o.mylog("only use '--debug' for troubleshooting", st="WW")
+    if args.display:
+        o.mylog("DISPLAY DEBUG MODE ACTIVATED", end="")
+        o.mylog("Only use '--display' with X Server display", st="WW")
 
     # New version checking
     if args.version_check:
         try:
             check_new_script_version(o)
         except Exception as exc:
-            exit_on_error(string=str(exc), debug=args.debug, o=o)
+            exit_on_error(string=str(exc), use_display=args.display, o=o)
 
     # Load configuration
     try:
-        c = Configuration(debug=args.debug, super_print=o.mylog)
+        c = Configuration(use_display=args.display, super_print=o.mylog)
         configuration_json = c.load_configuration_file(
             str(args.config).strip("[]'")
         )
@@ -3253,7 +3273,7 @@ def doWork():
             "[]'"
         )
     except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug, o=o)
+        exit_on_error(string=str(exc), use_display=args.display, o=o)
 
     configuration_json.update({INSTALL_DIR: install_dir})
     if PARAM_DOWNLOAD_FOLDER not in configuration_json:
@@ -3272,7 +3292,7 @@ def doWork():
     if not (args.grdf or args.veolia):
         exit_on_error(
             string="Must select/configure at least one contract",
-            debug=args.debug,
+            use_display=args.display,
         )
 
     # Add CLI arguments to the configuration (CLI has precedence)
@@ -3300,7 +3320,7 @@ def doWork():
         crawler = ServiceCrawler(
             configuration_json,
             super_print=o.mylog,
-            debug=args.debug,
+            use_display=args.display,
             local_config=args.local_config,
         )
         workers.append(crawler)
@@ -3308,26 +3328,34 @@ def doWork():
         injector: Injector
         if server_type == "ha":
             injector = HomeAssistantInjector(
-                configuration_json, super_print=o.mylog, debug=args.debug
+                configuration_json,
+                super_print=o.mylog,
+                use_display=args.display,
             )
             workers.append(injector)
         elif server_type == "url":
             injector = UrlInjector(
-                configuration_json, super_print=o.mylog, debug=args.debug
+                configuration_json,
+                super_print=o.mylog,
+                use_display=args.display,
             )
             workers.append(injector)
         elif server_type == "mqtt":
             injector = MqttInjector(
-                configuration_json, super_print=o.mylog, debug=args.debug
+                configuration_json,
+                super_print=o.mylog,
+                use_display=args.display,
             )
             workers.append(injector)
         else:
             injector = DomoticzInjector(
-                configuration_json, super_print=o.mylog, debug=args.debug
+                configuration_json,
+                super_print=o.mylog,
+                use_display=args.display,
             )
             workers.append(injector)
     except Exception as exc:
-        exit_on_error(string=str(exc), debug=args.debug, o=o)
+        exit_on_error(string=str(exc), use_display=args.display, o=o)
 
     # Check requirements
     try:
@@ -3336,7 +3364,7 @@ def doWork():
         crawler.init()
 
     except Exception as exc:
-        exit_on_error(workers, str(exc), debug=args.debug, o=o)
+        exit_on_error(workers, str(exc), use_display=args.display, o=o)
 
     # Do actual work
 
@@ -3360,7 +3388,7 @@ def doWork():
             injector.update_grdf_device(gazpar_file)
 
         except Exception as exc:
-            exit_on_error(workers, str(exc), debug=args.debug, o=o)
+            exit_on_error(workers, str(exc), use_display=args.display, o=o)
 
     if args.veolia:
         try:
@@ -3393,7 +3421,7 @@ def doWork():
             except Exception:
                 pass
 
-            exit_on_error(workers, str(exc), debug=args.debug, o=o)
+            exit_on_error(workers, str(exc), use_display=args.display, o=o)
 
     o.mylog("Finished on success, cleaning up", st="OK")
 

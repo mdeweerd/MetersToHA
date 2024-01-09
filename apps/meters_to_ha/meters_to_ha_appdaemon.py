@@ -76,8 +76,8 @@ class MetersToHA(hass.Hass):
                 "keep_csv" in self.args and self.args["keep_csv"]
             ):
                 script_args.append("--keep-output")
-            if "debug" in self.args and self.args["debug"]:
-                script_args.append("--debug")
+            if "display" in self.args and self.args["display"]:
+                script_args.append("--display")
             if "DISPLAY" in self.args and self.args["DISPLAY"]:
                 os.environ["DISPLAY"] = self.args["DISPLAY"]
             if "extra_opts" in self.args and isinstance(

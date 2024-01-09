@@ -78,7 +78,7 @@ configuration:
     description:
       Impacte les messages remonté.  Le niveau "trace" entraine la présence
       de chaque ligne exécutée dans 'service.log'
-  debug:
+  display:
     name: Activation Débogue sur Terminal X
     description: Ouvrira le navigateur sur le terminal X spécifié dans DISPLAY
   DISPLAY:

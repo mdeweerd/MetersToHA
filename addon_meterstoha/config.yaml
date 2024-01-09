@@ -30,7 +30,7 @@ options:
   veolia_event: call_veolia
   keep_output: true
   screenshot: true
-  debug: false
+  display: false
   skip_download: false
 schema:
   log_level: list(error|warning|info|debug|trace)?
@@ -56,7 +56,7 @@ schema:
   local_config: bool?
   insecure: bool?
   skip_download: bool?
-  debug: bool?
+  display: bool?
   # item: match(regex)
   mqtt_login: str?
   mqtt_password: password?
