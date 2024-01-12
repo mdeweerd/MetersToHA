@@ -2873,7 +2873,7 @@ class MqttInjector(Injector):
         if data is not None:
             state_topic = f"veolia/{data['contract']}/last_data"
             mqtt_server = self.configuration[PARAM_MQTT_SERVER]
-            mqtt_port = self.configuration[PARAM_MQTT_PORT]
+            mqtt_port = int(self.configuration[PARAM_MQTT_PORT])
             mqtt_login = self.configuration[PARAM_MQTT_LOGIN]
             mqtt_password = self.configuration[PARAM_MQTT_PASSWORD]
             auth = {"username": mqtt_login, "password": mqtt_password}
