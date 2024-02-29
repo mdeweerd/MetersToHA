@@ -3,15 +3,31 @@ config.json
 error.png
 .config
 *.swp
+chromedriver.exe
+*.stackdump
 
 # Local config/data files
+**/*.docx
+**/*.md.*
 **/config.json
+**/winconfig.json
 **/historique_gazpar.json*
 **/historique_jours_litres.csv*
+**/screen_before_connection.png
+**/meters2ha_state.json
 *.zip
 demo
 support
+veolia_data.csv
+veolia_test_data.csv
+getData
+getDataHeadless
+node_modules/
+package-lock.json
+package.json
 
+
+**/attic
 # Local script
 do[A-Z]*
 run[A-Z]*

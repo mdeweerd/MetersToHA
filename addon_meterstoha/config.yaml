@@ -1,0 +1,70 @@
+---
+name: MetersToHA
+version: dev
+slug: meterstoha
+description: MetersToHA add-on for Home Assistant
+url: https://github.com/mdeweerd/MetersToHA
+homeassistant_api: true
+map:
+  - config:rw
+# codenotary: dummyaddress@example.com
+init: false
+host_dbus: true
+arch:
+  - aarch64
+  - amd64
+  - armv7
+  # Next architectures are missing the chromium-browser
+  # Need to check for firefox availability
+  # - armhf
+  # - i386
+options:
+  log_level: info
+  timeout: "30"
+  type: ha
+  # logs_folder: /config/MetersToHA
+  # download_folder: /config/MetersToHA
+  logs_folder: /config
+  download_folder: /config
+  grdf_event: call_grdf
+  veolia_event: call_veolia
+  keep_output: true
+  screenshot: true
+  display: false
+  skip_download: false
+schema:
+  log_level: list(error|warning|info|debug|trace)?
+  type: list(ha|mqtt|url|domoticz)
+  captchaservice: list(2captcha|capmonster|captchaai)?
+  token_captchaservice: password?
+  grdf_login: email?
+  grdf_password: password?
+  grdf_pce: "match(^\\d+$)?"
+  grdf_event: str?
+  ha_server: url?
+  ha_token: password?
+  timeout: int(1,300)
+  veolia_contract: "match(^\\d+$)?"
+  veolia_login: email?
+  veolia_password: password?
+  veolia_event: str?
+  download_folder: str?
+  DISPLAY: str?
+  logs_folder: str?
+  keep_output: bool?
+  screenshot: bool?
+  local_config: bool?
+  insecure: bool?
+  skip_download: bool?
+  display: bool?
+  # item: match(regex)
+  mqtt_login: str?
+  mqtt_password: password?
+  mqtt_server: url?
+  mqtt_port: port?
+  domoticz_login: str?
+  domoticz_password: password?
+  domoticz_server: url?
+  domoticz_idx: str?
+  git_version: str?
+# image: ghcr.io/mdeweerd/MetersToHA/addon_meterstoha/{arch}

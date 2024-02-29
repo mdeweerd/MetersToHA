@@ -43,7 +43,27 @@ class MetersToHA(hass.Hass):
             else:
                 mydir = os.path.dirname(os.path.realpath(__file__))
                 script = os.path.join(mydir, METERS_TO_HA_SCRIPT)
-            script_args = ["python3", script, "-r"]
+
+            trace = False
+            if "trace" in self.args:
+                # Get truthy value of argument
+                trace = bool(self.args["trace"])
+
+            if not trace:
+                # Standard execution
+                script_args = ["python3", script, "-r"]
+            else:
+                # Enable detailed trace
+                script_args = [
+                    "python3",
+                    "-m",
+                    "trace",
+                    "--ignore-dir=/usr/lib",
+                    "-t",
+                    script,
+                    "-r",
+                ]
+
             if "config_file" in self.args:
                 cfg = self.args["config_file"]
                 script_args.append("-c")
@@ -56,8 +76,8 @@ class MetersToHA(hass.Hass):
                 "keep_csv" in self.args and self.args["keep_csv"]
             ):
                 script_args.append("--keep-output")
-            if "debug" in self.args and self.args["debug"]:
-                script_args.append("--debug")
+            if "display" in self.args and self.args["display"]:
+                script_args.append("--display")
             if "DISPLAY" in self.args and self.args["DISPLAY"]:
                 os.environ["DISPLAY"] = self.args["DISPLAY"]
             if "extra_opts" in self.args and isinstance(

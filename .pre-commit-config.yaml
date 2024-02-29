@@ -1,30 +1,38 @@
 ---
-files: ^(.*\.(py|json|md|sh|yaml|cfg|txt))$
-exclude: ^(\.[^/]*cache/.*)$
+files: ^(.*\.(py|json|md|sh|yaml|yml|cfg|txt))$
+exclude: ^(\.[^/]*cache/.*|demo/.*|debug/.*)$
 repos:
+  # Disable because this does not work for the main author.
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: "v2.7.1"
+  #   stages: [manual]
+  #   hooks:
+  #     - id: prettier
   - repo: https://github.com/executablebooks/mdformat
     # Do this before other tools "fixing" the line endings
-    rev: 0.7.16
+    rev: 0.7.17
     hooks:
       - id: mdformat
         name: Format Markdown
-        entry: mdformat  # Executable to run, with fixed options
+        entry: mdformat # Executable to run, with fixed options
         language: python
         types: [markdown]
-        args: [--wrap, '75', --number]
+        args: [--wrap, "75", --number]
         # files: ^HomeAssistant.md$
         additional_dependencies:
           - mdformat-toc
           - mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
+          - setuptools
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
       - id: no-commit-to-branch
         args: [--branch, main]
       - id: check-yaml
-        args: [--unsafe]
+        # Exclude because of bug in checker
+        exclude: ^(docker-compose\.yml|.*/release-drafter\.yml)$
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -38,21 +46,29 @@ repos:
       - id: check-docstring-first
       - id: fix-byte-order-marker
       - id: check-case-conflict
-      # - id: check-toml
+      - id: pretty-format-json
+        exclude: ^(.vscode|.devcontainer)
+        args:
+          # order of keys in manifest.json is "special"
+          - --no-sort-keys
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.29.0
+    rev: v1.32.0
     hooks:
       - id: yamllint
         args:
           - --no-warnings
           - -d
-          - '{extends: relaxed, rules: {line-length: {max: 90}}}'
+          - "{extends: relaxed, rules: {line-length: {max: 90}}}"
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.10.1
     hooks:
       - id: pyupgrade
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.7.0
     hooks:
       - id: black
         args:
@@ -63,10 +79,9 @@ repos:
     rev: v1.0.6
     hooks:
       - id: python-bandit-vulnerability-check
-        args: [--skip, 'B105,B110,B311,B404,B603', --recursive, .]
-
+        args: [--skip, "B105,B110,B311,B404,B603", --recursive, apps]
   - repo: https://github.com/fsouza/autoflake8
-    rev: v0.4.0
+    rev: v0.4.1
     hooks:
       - id: autoflake8
         args:
@@ -75,7 +90,7 @@ repos:
           - --expand-star-imports
           - .
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:
@@ -91,22 +106,25 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.2.5
     hooks:
       - id: codespell
-        exclude: (\.md|apps.yaml)$
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a5
+        exclude: (\.md|apps.yaml|translations/.*.yaml)$
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.0.3
     hooks:
       - id: pylint
+        # exclude: ^$
         additional_dependencies:
-        - hassapi
-        - pyflakes
+          - hassapi
+          - pyflakes
+          - paho-mqtt
+          - aiohttp
+          - regex
         args:
           - --reports=no
-        #exclude: ^$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.5.1
     hooks:
       - id: mypy
         args:
@@ -116,3 +134,25 @@ repos:
           - --check-untyped-defs
           - --show-error-codes
           - --show-error-context
+        additional_dependencies:
+          - paho-mqtt
+          - types-requests
+          - urllib3
+          - regex
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v3.0.1
+    hooks:
+      - id: docker-compose-check
+  - repo: https://github.com/lovesegfault/beautysh.git
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
+        exclude: (run.sh)$
+        additional_dependencies:
+          - setuptools
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.5
+    hooks:
+      - id: shellcheck
+        files: ^[^\.].*\.sh$
+        args: [--shell, bash]

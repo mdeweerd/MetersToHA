@@ -10,7 +10,7 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Might benefit from `mesa-dri-swrast` module
 
-RUN apk add \
+RUN apk add --no-cache \
         py-urllib3 \
         py3-colorama \
         xvfb \
@@ -28,6 +28,7 @@ RUN apk add \
         py3-attrs \
         py3-outcome \
         py3-trio \
+        py3-paho-mqtt \
   && pip install \
         'urllib3>=1.24.2' \
         'colorama>=0.3.7' \

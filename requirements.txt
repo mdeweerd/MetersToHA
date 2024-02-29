@@ -3,3 +3,4 @@ colorama>=0.3.7
 selenium>=3.14.1
 PyVirtualDisplay>=0.2.4
 requests>=2.23.0
+paho-mqtt

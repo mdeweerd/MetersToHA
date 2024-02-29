@@ -1,0 +1,7 @@
+{
+  "name": "Meters To Home Automation (MetersToHA/Meters2HA)",
+  "content_in_root": false,
+  "zip_release": false,
+  "render_readme": true,
+  "homeassistant": "2023.1"
+}

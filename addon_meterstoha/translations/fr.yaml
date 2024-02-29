@@ -1,0 +1,132 @@
+---
+configuration:
+  captchaservice:
+    name: Résolveur de Captcha
+    description: Le service de résolution de captcha
+    example: 2captcha
+  token_captchaservice:
+    name: Token du Résolveur de Captcha
+    description: La clef API (Token) nécessaire pour le service de résolution de captcha.
+    example: ba48563e215a579d25f5d5b76ad7a018
+  grdf_event:
+    name: Déclencheur GRDF
+    description:
+      Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
+      pour GRDF
+  grdf_login:
+    name: Identifiant GRDF
+    description: Identification pour le site GRDF (adresse mél.)
+    example: user.name@example.com
+  grdf_password:
+    name: Mot de passe GRDF
+    description: Mot de passe pour le site GRDF
+    example: VotreSecret'Q
+  grdf_pce:
+    name: GRDF PCE
+    description: GRDF Numéro du Point de Comptage et d'Estimation (PCE)
+    example: "21546020012301"
+  ha_server:
+    name: Seveur Home Assistant
+    description:
+      Laisser vide si le Module Complémentaire (Add-on) se connecte à Home Assistant
+      sur la même machine.  Utile seulement en cas d'un serveur distant.  Dans ce
+      cas c'est l'adresse du serveur distant.
+    example: https://subdomain.domain.name
+  ha_token:
+    name: Clé API Home Assistant
+    description:
+      Laisser vide si le Module Complémentaire (Add-on) se connecte à Home Assistant
+      sur la même machine.  Sinon si c'est le Jeton d'accès longue durée à créer sous
+      Compte>Profil>Jetons d'accès longue durée.
+    example: WViNTMzMjAyM2RkMiIsIm-OvEn0_QKLscaKcXVA_ecQoHVwRVYYv5pzA0eyJ0eXAiOiJKV1QiLCJ.eyJpc3MiOiI1OhbGciOiJIUzI1NiJ9WNjODg5NjRjMGI0YzM5OGZhOlhdCI6MTY1Mzg1MDY0OSwiZXhwIjoxOTY5MjEwNjQ5fQ.jkOiQUi
+  timeout:
+    name: Délai d'expiration
+    description:
+      Un délai en secondes utilisé comme délai d'expiration pour diverses
+      de Meters2HA
+    example: "30"
+  type:
+    name: Type de Serveur
+    description: Le type de votre serveur ('ha'=Home Assistant, mqtt, ...)
+    example: ha
+  veolia_event:
+    name: Déclencheur Veolia
+    description:
+      Nom de l'événement Home Assistant qui permet de déclencher MetersToHA
+      pour Veolia
+  veolia_contract:
+    name: Veolia Contract
+    description: veolia_contract
+    example: "6400002"
+  veolia_login:
+    name: Identifiant Veolia
+    description: Identifiant (email) pour le site Veolia (email)
+    example: user.name@example.com
+  veolia_password:
+    name: Mot de passe Veolia
+    description: Mot de passe pour le site veolia
+    example: YourSecret'Q
+  skip_download:
+    name: Ne pas télécharger
+    description:
+      Ne télécharge pas les données, mais utilisera les données déjà présentes
+      localement.  Utile lors de la mise au point de la configuration, pendant le
+      débogue, ou lorsque vous téléchargez le fichier par d'autre moyens (car les
+      données sont quand même interprétées et envoyées vers votre système Domotique).
+  log_level:
+    name: Niveau de débogue
+    description:
+      Impacte les messages remonté.  Le niveau "trace" entraine la présence
+      de chaque ligne exécutée dans 'service.log'
+  display:
+    name: Activation Débogue sur Terminal X
+    description: Ouvrira le navigateur sur le terminal X spécifié dans DISPLAY
+  DISPLAY:
+    name: Valeur DISPLAY pour l'affichage X
+    description:
+      Specification complète de l'adresse du terminal X accessible depuis
+      votre instance Home Assistance.  Par exemple, vous lancez MobaXterm sur votre
+      PC qui a comme IP 10.33.2.69, et les connexions depuis votre réseau privé vers
+      ce serveur sont autorisés.  La valeur "10.33.2.69:0.0" est en principe la bonne.
+  insecure:
+    name: Accepter les certificats SSL "insécures"
+    description:
+      Accepte les certificats autosignés.  Utile seulement lorsque ce n'est
+      pas le serveur Home Assistant du module complémentaire ("add-on") est utilisé.
+  local_config:
+    name: Configuration Chrome "Locale"
+    description:
+      Lorsque actif, maintient les données de configuration de chrome entre
+      les lancements.
+  screenshot:
+    name: Prendre des captures d'écran
+    description: Prend des captures d'écran qui peuvent être utiles au débogue.
+  keep_output:
+    name: Garder les fichiers intermédiaires
+    description:
+      Si active, la suppression des fichiers intermédiaires et de données
+      n'est pas effectuée.
+  mqtt_login:
+    name: Identifiant pour Serveur mqtt
+    description: Identifiant pour Serveur mqtt
+  mqtt_password:
+    name: Mot de passe pour Serveur mqtt
+    description: Mot de passe pour Serveur mqtt
+  mqtt_server:
+    name: Nom/IP du serveur mqtt
+    description: Mot de passe pour Serveur mqtt
+  mqtt_port:
+    name: Port de connexion du service mqtt
+    description:
+  domoticz_login:
+    name: Identifiant du serveur Domoticz
+    description: Identifiant du serveur Domoticz
+  domoticz_password:
+    name: Mot de passe du serveur Domoticz
+    description: Mot de passe du serveur Domoticz
+  domoticz_server:
+    name: Nom/IP du serveur Domoticz
+    description: Nom/IP du serveur Domoticz
+  domoticz_idx:
+    name: Index pour l'enregistrement sous Domoticz
+    description: Index pour l'enregistrement sous Domoticz
