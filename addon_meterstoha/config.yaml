@@ -6,7 +6,7 @@ description: MetersToHA add-on for Home Assistant
 url: https://github.com/mdeweerd/MetersToHA
 homeassistant_api: true
 map:
-  - config:rw
+  - addon_config:rw
 # codenotary: dummyaddress@example.com
 init: false
 host_dbus: true
