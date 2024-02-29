@@ -1,5 +1,6 @@
 ---
 name: Docker Image CI
+# yamllint disable-line rule:truthy
 on:
   push:
     branches: [meters-to-ha]
