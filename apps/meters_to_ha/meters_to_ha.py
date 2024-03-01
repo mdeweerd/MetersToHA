@@ -1899,7 +1899,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
 
             # Next line would log without hiding data
-            # self.mylog(r"Get Data URL {}".format(data_url), end="~~")           
+            # self.mylog(r"Get Data URL {}".format(data_url), end="~~")
             # Go to the URL.
             dl_starttime = time.time()
             self.__browser.get(data_url)
@@ -2875,7 +2875,10 @@ class MqttInjector(Injector):
             mqtt_port = int(self.configuration[PARAM_MQTT_PORT])
             mqtt_login = self.configuration[PARAM_MQTT_LOGIN]
             mqtt_password = self.configuration[PARAM_MQTT_PASSWORD]
-            auth = {"username": mqtt_login, "password": mqtt_password}
+            auth: publish.AuthParameter = {
+                "username": mqtt_login,
+                "password": mqtt_password,
+            }
             # tls_dict= {'ca_certs':"<ca_certs>", 'certfile':"<certfile>",
             #            'keyfile':"<keyfile>", 'tls_version':"<tls_version>",
             #            'ciphers':"<ciphers">}
@@ -2905,21 +2908,20 @@ class MqttInjector(Injector):
 
     def update_grdf_device(self, json_file):
         # pylint:disable=import-outside-toplevel
-        data = ""
+        data = {}
         import paho.mqtt.client as mqtt
         from paho.mqtt import publish
 
-        #data = self.veolia_to_dict(json_file)
+        # data = self.veolia_to_dict(json_file)
         with open(json_file, encoding="utf_8") as f:
             data = json.load(f)
-       
+
         if len(data) > 0:
-          pce = list(data.keys())[0]
-          data = data[pce]["releves"][-1]
-          self.mylog(f"MQTT GRDF data: {data}")
+            pce = list(data.keys())[0]
+            data = data[pce]["releves"][-1]
+            self.mylog(f"MQTT GRDF data: {data}")
         else:
-          self.mylog(f"MQTT GRDF data: file empty")
-          pass
+            self.mylog("MQTT GRDF data: No JSON data in reply")
 
         if data is not None:
             state_topic = f"grdf/{pce}/last_data"
@@ -2927,7 +2929,10 @@ class MqttInjector(Injector):
             mqtt_port = int(self.configuration[PARAM_MQTT_PORT])
             mqtt_login = self.configuration[PARAM_MQTT_LOGIN]
             mqtt_password = self.configuration[PARAM_MQTT_PASSWORD]
-            auth = {"username": mqtt_login, "password": mqtt_password}
+            auth: publish.AuthParameter = {
+                "username": mqtt_login,
+                "password": mqtt_password,
+            }
             # tls_dict= {'ca_certs':"<ca_certs>", 'certfile':"<certfile>",
             #            'keyfile':"<keyfile>", 'tls_version':"<tls_version>",
             #            'ciphers':"<ciphers">}
@@ -2940,16 +2945,16 @@ class MqttInjector(Injector):
             )
             data_out: dict[str, Any] = {}
             data_out = {
-              "period_start_datetime": data.get("dateDebutReleve",None),
-              "period_end_datetime": data.get("dateFinReleve", None),
-              "period_start_date": data.get("journeeGaziere", None),
-              "index_period_start_m3": data.get("indexDebut", None),
-              "index_period_end_m3": data.get("indexFin", None),
-              "volume_period_m3": data.get("volumeBrutConsomme", None),
-              "energy_period_kWh": data.get("energieConsomme", None),
-              "conversion_coefficient": data.get("coeffConversion", None),
-              "status": data.get("status", None) 
-              }  
+                "period_start_datetime": data.get("dateDebutReleve", None),
+                "period_end_datetime": data.get("dateFinReleve", None),
+                "period_start_date": data.get("journeeGaziere", None),
+                "index_period_start_m3": data.get("indexDebut", None),
+                "index_period_end_m3": data.get("indexFin", None),
+                "volume_period_m3": data.get("volumeBrutConsomme", None),
+                "energy_period_kWh": data.get("energieConsomme", None),
+                "conversion_coefficient": data.get("coeffConversion", None),
+                "status": data.get("status", None),
+            }
 
             publish.single(
                 state_topic,
