@@ -2905,7 +2905,7 @@ class MqttInjector(Injector):
 
     def update_grdf_device(self, json_file):
         # pylint:disable=import-outside-toplevel
-        data = ""
+        data = {}
         import paho.mqtt.client as mqtt
         from paho.mqtt import publish
 
