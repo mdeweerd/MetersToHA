@@ -14,7 +14,7 @@ repos:
     hooks:
       - id: mdformat
         name: Format Markdown
-        entry: mdformat # Executable to run, with fixed options
+        entry: mdformat  # Executable to run, with fixed options
         language: python
         types: [markdown]
         args: [--wrap, "75", --number]

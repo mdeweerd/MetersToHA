@@ -600,8 +600,9 @@ Pour info, il y a une interface web spécifique à AppDaemon (port 5050 par
 défaut) : [http://votreinstance:5050](http://votreinstance:5050/) qui donne
 entre outre accès à qqs traces et l’historique des appels de scripts.
 
-Sur la page \[http://votreinstance:5050/aui/index.html#/logs\] on peut
-trouver par exemple des traces. Exemple avec une erreur:
+Sur la page
+[http://votreinstance:5050/aui/index.html#/logs](http://votreinstance:5050/aui/index.html#/logs)
+on peut trouver par exemple des traces. Exemple avec une erreur:
 
 ```plaintext
 2022-12-10 13:29:13.182428 ERROR veolia_idf: Done MetersToHA
