@@ -601,7 +601,7 @@ défaut) : [http://votreinstance:5050](http://votreinstance:5050/) qui donne
 entre outre accès à qqs traces et l’historique des appels de scripts.
 
 Sur la page
-[http://votreinstance:5050/aui/index.html#/logs%5C%5C%5C%5C](http://votreinstance:5050/aui/index.html#/logs%5C%5C%5C%5C)
+[http://votreinstance:5050/aui/index.html#/logs](http://votreinstance:5050/aui/index.html#/logs)
 on peut trouver par exemple des traces. Exemple avec une erreur:
 
 ```plaintext
