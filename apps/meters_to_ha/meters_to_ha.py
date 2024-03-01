@@ -2943,7 +2943,7 @@ class MqttInjector(Injector):
             self.mylog(
                 f"MQTT GRDF Publish {mqtt_server}:{mqtt_port} {auth} {data!r}"
             )
-            data_out: dict[str, Any] = {}
+            data_out = {}
             data_out = {
                 "period_start_datetime": data.get("dateDebutReleve", None),
                 "period_end_datetime": data.get("dateFinReleve", None),
