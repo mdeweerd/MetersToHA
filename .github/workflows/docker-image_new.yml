@@ -6,6 +6,9 @@ on:
     branches: [meters-to-ha]
   pull_request:
     branches: [meters-to-ha]
+env:
+  DOCKER_HUB_NAME: ${{ secrets.DOCKER_HUB_NAME || github.repository }}
+  DOCKERFILE: ./DockerfileAlpine
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +27,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ${{ env.DOCKERFILE }}
           push: true
-          tags: ${{ github.repository }}:latest
+          tags: ${{ env.DOCKER_HUB_NAME }}:latest
