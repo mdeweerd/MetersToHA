@@ -93,7 +93,6 @@ PARAM_KEEP_OUTPUT = "keep_output"
 PARAM_CHROME_VERSION = "chrome_version"
 PARAM_LOG_LEVEL = "log_level"
 
-
 PARAM_SERVER_TYPE = "type"
 PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
 PARAM_DOMOTICZ_SERVER = "domoticz_server"
