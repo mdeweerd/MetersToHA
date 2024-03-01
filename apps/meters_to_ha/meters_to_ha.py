@@ -2940,9 +2940,9 @@ class MqttInjector(Injector):
             )
             data_out: dict[str, Any] = {}
             data_out = {
-              "datetime_period_start": data.get("dateDebutReleve",None),
-              "datetime_period_end": data.get("dateFinReleve", None),
-              "date_period_start": data.get("journeeGaziere", None),
+              "period_start_datetime": data.get("dateDebutReleve",None),
+              "period_end_datetime": data.get("dateFinReleve", None),
+              "period_start_date": data.get("journeeGaziere", None),
               "index_period_start_m3": data.get("indexDebut", None),
               "index_period_end_m3": data.get("indexFin", None),
               "volume_period_m3": data.get("volumeBrutConsomme", None),
