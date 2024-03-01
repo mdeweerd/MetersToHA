@@ -2914,11 +2914,11 @@ class MqttInjector(Injector):
             data = json.load(f)
        
         if len(data) > 0:
-          pce = list(data.keys())[0]
-          data = data[pce]["releves"][-1]
-          self.mylog(f"MQTT GRDF data: {data}")
+            pce = list(data.keys())[0]
+            data = data[pce]["releves"][-1]
+            self.mylog(f"MQTT GRDF data: {data}")
         else:
-          self.mylog(f"MQTT GRDF data: file empty")
+          self.mylog("MQTT GRDF data: file empty")
           pass
 
         if data is not None:
@@ -2938,7 +2938,7 @@ class MqttInjector(Injector):
             self.mylog(
                 f"MQTT GRDF Publish {mqtt_server}:{mqtt_port} {auth} {data!r}"
             )
-            data_out: dict[str, Any] = {}
+            data_out = {}
             data_out = {
               "period_start_datetime": data.get("dateDebutReleve",None),
               "period_end_datetime": data.get("dateFinReleve", None),
