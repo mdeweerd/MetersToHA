@@ -57,7 +57,9 @@ VERSION = "v2.0"
 
 LOGGER = logging.getLogger()
 
+HA_API_STATISTICS = "/api/services/recorder/import_statistics"
 HA_API_SENSOR_FORMAT = "/api/states/%s"
+PARAM_USE_CAPTCHA = "use_captcha"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
 PARAM_CAPMONSTER_TOKEN = "capmonster_token"
 PARAM_CAPTCHAAI_TOKEN = "captchaai_token"
@@ -79,6 +81,8 @@ PARAM_GRDF = "grdf"
 PARAM_VEOLIA_LOGIN = "veolia_login"
 PARAM_VEOLIA_PASSWORD = "veolia_password"
 PARAM_VEOLIA_CONTRACT = "veolia_contract"
+PARAM_GRDF_LOAD_HISTORICAL_DATA = "grdf_load_historical_data"
+PARAM_GRDF_CONTRACT = "grdf_contract"
 PARAM_GRDF_LOGIN = "grdf_login"
 PARAM_GRDF_PASSWORD = "grdf_password"
 PARAM_GRDF_PCE = "grdf_pce"
@@ -92,6 +96,7 @@ PARAM_SKIP_DOWNLOAD = "skip_download"
 PARAM_KEEP_OUTPUT = "keep_output"
 PARAM_CHROME_VERSION = "chrome_version"
 PARAM_LOG_LEVEL = "log_level"
+
 
 PARAM_SERVER_TYPE = "type"
 PARAM_DOMOTICZ_VEOLIA_IDX = "domoticz_idx"
@@ -422,7 +427,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     download_veolia_filename = "historique_jours_litres.csv"
     glob_download_veolia_filename = "historique_jours_litres*.csv"
     site_grdf_url = "https://monespace.grdf.fr/client/particulier/consommation"
-    # site_grdf_url = "ttps://login.monespace.grdf.fr/mire/connexion"
     download_grdf_filename = "historique_gazpar.json"
     hasFirefox = False
     hasChromium = False
@@ -443,6 +447,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.__wait = None  # type: WebDriverWait
         self.configuration = {
             # Config values (veolia)
+            PARAM_USE_CAPTCHA: False,
             PARAM_VEOLIA: False,
             PARAM_VEOLIA_LOGIN: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_PASSWORD: PARAM_OPTIONAL_VALUE,
@@ -452,8 +457,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_GRDF_LOGIN: PARAM_OPTIONAL_VALUE,
             PARAM_GRDF_PASSWORD: PARAM_OPTIONAL_VALUE,
             PARAM_GRDF_PCE: PARAM_OPTIONAL_VALUE,
+            PARAM_GRDF_LOAD_HISTORICAL_DATA: PARAM_OPTIONAL_VALUE,
             # Browser/Scraping config values
-            PARAM_SCREENSHOT: False,
+            PARAM_SCREENSHOT: PARAM_OPTIONAL_VALUE,
             PARAM_SKIP_DOWNLOAD: False,
             PARAM_KEEP_OUTPUT: False,
             PARAM_GECKODRIVER: which("geckodriver")
@@ -479,7 +485,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPMONSTER_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPTCHAAI_TOKEN: PARAM_OPTIONAL_VALUE,
-            PARAM_LOG_LEVEL: "INFO",  # error, warning, info, debug
+            PARAM_LOG_LEVEL: "DEBUG",  # error, warning, info, debug
         }
 
         self.mylog("Start loading configuration")
@@ -761,18 +767,19 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             st="~~",
         )
         self.mylog("Start the browser", end="")
+
         try:
             if "chromium" in inspect.getmembers(webdriver):
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    service_args=chromium_service_args,  # More debug info
-                    log_output=chromedriver_log,
+                    service_args=chromium_service_args#,  # More debug info
+                    #log_output=chromedriver_log
                 )
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    service_args=chromium_service_args,  # More debug info
-                    log_output=chromedriver_log,
+                    service_args=chromium_service_args#,  # More debug info
+                    #log_output=chromedriver_log
                 )
             if hasUndetectedDriver:
                 sys.path.append(
@@ -1710,8 +1717,9 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         self.__browser.get(self.site_grdf_url)
         self.__wait.until(document_initialised)
-
-        time.sleep(3)
+        
+        if self.configuration[PARAM_SCREENSHOT]:
+            self.get_screenshot("00_screenshot_before_user.png")
 
         content: None | str = None
         isLoggedIn = False
@@ -1746,13 +1754,43 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Wait for Connexion #####
             self.mylog("Connexion au site GRDF", end="")
 
+            self.mylog("Get url", end="")
             self.__browser.get(self.__class__.site_grdf_url)
             self.mylog(st="OK")
 
+            # Wait for Email #####
+            self.mylog("Waiting for Email", end="")
+            ep = EC.presence_of_element_located((By.ID, "input27"))
+            el_email = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
+            self.mylog(st="OK")
+            
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("01_screenshot_before_user.png")
+            
+            # Type Email #####
+            self.mylog("Type Email", end="")
+            el_email.clear()
+            el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
+            self.mylog(st="OK") 
+
+            re_btn = self.__browser.find_element(
+                By.ID, "grdfButton"
+            )
+            re_btn.click()            
+            time.sleep(3)
+            
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("02_screenshot_after_user_suivant.png")
+            
             # Wait for Password #####
             self.mylog("Waiting for Password", end="")
 
-            ep = EC.presence_of_element_located((By.ID, "pass"))
+            ep = EC.presence_of_element_located((By.ID, "input54"))
             el_password = self.__wait.until(
                 ep,
                 message="failed, page timeout (timeout="
@@ -1761,100 +1799,108 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             self.mylog(st="OK")
 
-            # Wait for Email #####
-            self.mylog("Waiting for Email", end="")
-            ep = EC.presence_of_element_located((By.ID, "mail"))
-            el_email = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration[PARAM_TIMEOUT])
-                + ")",
-            )
-            self.mylog(st="OK")
-
-            # Type Email #####
-            self.mylog("Type Email", end="")
-            el_email.clear()
-            el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
-            self.mylog(st="OK")
-
             # Type Password #####
             self.mylog("Type Password", end="")
             el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
             self.mylog(st="OK")
-
-            # Some delay before clicking captcha
-            # time.sleep(random.uniform(31.5, 33))
-            # time.sleep(random.uniform(1.25, 3))
-
-            # Give the user some time to resolve the captcha
-            # FEAT: Wait until it disappears, use 2captcha if configured
+            
+            re_btn = self.__browser.find_element(
+                By.ID, "grdfButton"
+            )
+            re_btn.click()   
+            time.sleep(3)
+                       
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("03_screenshot_after_password_se_connecter.png")             
 
             CONNEXION_XPATH = r"//input[@value='Connexion']"
+            
+            if self.configuration[PARAM_USE_CAPTCHA]:
+            
+                self.mylog("Proceed with captcha resolution. ", end="~~")
+                if self.resolve_captcha2() is not None:
+                    # Some time for captcha to remove.
+                    self.mylog("Automatic resolution succeeded. ", end="~~")
+                    time.sleep(2)
+                else:
+                    # Manual
+                    time.sleep(0.33)
 
-            self.mylog("Proceed with captcha resolution. ", end="~~")
-            if self.resolve_captcha2() is not None:
-                # Some time for captcha to remove.
-                self.mylog("Automatic resolution succeeded. ", end="~~")
-                time.sleep(2)
-            else:
-                # Manual
-                time.sleep(0.33)
+                    # Not sure that click is needed for 2captcha
+                    clickRecaptcha = True
+                    if clickRecaptcha:
+                        self.mylog("Clicking on the captcha button. ", end="~~")
+                        self.__browser.switch_to.frame(0)
+                        re_btn = self.__browser.find_element(
+                            By.CLASS_NAME, "recaptcha-checkbox-border"
+                        )
+                        re_btn.click()
+                        self.__browser.switch_to.default_content()
 
-                # Not sure that click is needed for 2captcha
-                clickRecaptcha = True
-                if clickRecaptcha:
-                    self.mylog("Clicking on the captcha button. ", end="~~")
-                    self.__browser.switch_to.frame(0)
-                    re_btn = self.__browser.find_element(
-                        By.CLASS_NAME, "recaptcha-checkbox-border"
-                    )
-                    re_btn.click()
-                    self.__browser.switch_to.default_content()
+                        # Try to click connexion in case captcha worked.
+                        try:
+                            self.click_in_view(
+                                By.XPATH,
+                                CONNEXION_XPATH,
+                                # wait_message="",
+                                click_message="Click on connexion",
+                                delay=random.uniform(1, 2),
+                            )
+                            # Even if click succeeded, not always connected
+                        except Exception:
+                            pass
 
-                    # Try to click connexion in case captcha worked.
+                    waitUntilConnexionGone = 2
+                    if self._use_display:
+                        # Allow some some time to resolve captcha, and connect
+                        self.mylog("Waiting 30 seconds for the user. ", end="~~")
+                        waitUntilConnexionGone = 30
+                    else:
+                        # Not using display, only wait a bit
+                        self.mylog(
+                            "Not using external display, proceed (delay 2s). ",
+                            end="~~",
+                        )
+
                     try:
-                        self.click_in_view(
+                        self.wait_until_disappeared(
                             By.XPATH,
                             CONNEXION_XPATH,
-                            # wait_message="",
-                            click_message="Click on connexion",
-                            delay=random.uniform(1, 2),
+                            wait_message=None,
+                            timeout=waitUntilConnexionGone,
                         )
-                        # Even if click succeeded, not always connected
+                        # If button disappeared, then logged in
+                        isLoggedIn = True
                     except Exception:
-                        pass
+                        pass            
 
-                waitUntilConnexionGone = 2
-                if self._use_display:
-                    # Allow some some time to resolve captcha, and connect
-                    self.mylog("Waiting 30 seconds for the user. ", end="~~")
-                    waitUntilConnexionGone = 30
-                else:
-                    # Not using display, only wait a bit
-                    self.mylog(
-                        "Not using external display, proceed (delay 2s). ",
-                        end="~~",
-                    )
+            self.__browser.switch_to.default_content()
+            time.sleep(3)
+            
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("03a_screenshot_after_switch_to_default_content.png")
 
+            if not isLoggedIn:
+                # Check if there is a Cookies Consent popup deny button #####
+                deny_btn = None
                 try:
-                    self.wait_until_disappeared(
-                        By.XPATH,
-                        CONNEXION_XPATH,
-                        wait_message=None,
-                        timeout=waitUntilConnexionGone,
+                    deny_btn = self.__browser.find_element(
+                        By.ID, "btn_option_deny_banner"
                     )
-                    # If button disappeared, then logged in
-                    isLoggedIn = True
                 except Exception:
                     pass
 
-            self.__browser.switch_to.default_content()
-
-            if self.configuration[PARAM_SCREENSHOT]:
-                self.get_screenshot("screen_before_connection.png")
-
-            if not isLoggedIn:
+                if deny_btn is not None:
+                    self.click_in_view(
+                        By.ID,
+                        "btn_option_deny_banner",
+                        wait_message="Waiting for cookie popup",
+                        click_message="Click on deny",
+                        delay=0,  # random.uniform(1, 2),
+                    )
+                if self.configuration[PARAM_SCREENSHOT]:
+                    self.get_screenshot("05_screenshot_after_deny_button.png")                    
+                    
                 try:
                     self.click_in_view(
                         By.XPATH,
@@ -1864,11 +1910,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         delay=random.uniform(1, 2),
                         timeout=2,
                     )
-                    time.sleep(5)
+                    #time.sleep(5)
                     self.mylog("End of wait after connexion. ", end="~~")
                 except Exception:
                     # Already clicked or other error
                     pass
+                if self.configuration[PARAM_SCREENSHOT]:    
+                    self.get_screenshot("06_screenshot_after_connexion_path.png")    
 
             # Get data from GRDF ############
 
@@ -1880,7 +1928,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 # r"?dateDebut={}&dateFin={}&frequence=Journalier&pceList[]={}"
                 r"?dateDebut={}&dateFin={}&pceList[]={}"
             ).format(
-                (dt.datetime.now() - dt.timedelta(days=14)).strftime(
+                (dt.datetime.now() - dt.timedelta(days=30)).strftime(
                     "%Y-%m-%d"
                 ),
                 dt.datetime.now().strftime("%Y-%m-%d"),
@@ -1897,12 +1945,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 end="~~",
             )
 
-            # Next line would log without hiding data
-            # self.mylog(r"Get Data URL {}".format(data_url), end="~~")
             # Go to the URL.
             dl_starttime = time.time()
             self.__browser.get(data_url)
-
+            # sleep required to not jump too fast
+            time.sleep(2)
+            if self.configuration[PARAM_SCREENSHOT]:
+                self.get_screenshot("07_screenshot_after_data_url.png")
             try:
                 content = self.__browser.find_element(By.TAG_NAME, "pre").text
             except selenium.common.exceptions.NoSuchElementException:
@@ -1912,6 +1961,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             self.mylog("Get Data Content. ", end="~~")
             # result = self.__browser.page_source
+            self.mylog(f"Get Data2 {self.__browser.get(data_url)}")
             try:
                 content = self.__browser.find_element(By.TAG_NAME, "pre").text
             except selenium.common.exceptions.NoSuchElementException:
@@ -2059,6 +2109,40 @@ class Injector(Worker):
 
                 return data
         return None
+
+    def parse_grdf_historical_data(self, json_file, pce):
+        self.mylog(f"Parsing json file: {json_file}")       
+        stats_array = []
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+            rows = data[pce]["releves"]
+            date_format = "%Y-%m-%dT%H:%M:%S%z"
+            # Iterate through each row in  order
+            for row in rows:
+                #self.mylog(f"Row {row}", end="~~")
+                date_obj = dt.datetime.strptime(row["dateDebutReleve"], date_format)
+                
+                date_with_timezone = date_obj.replace(tzinfo=dt.timezone.utc)
+
+                date_formatted = date_with_timezone.strftime(
+                    "%Y-%m-%dT%H:%M:%S%z"
+                )
+                stat = {
+                    "start": date_formatted,  # formatted date
+                    "state": row["volumeBrutConsomme"],
+                    "sum": row["indexFin" ],
+                }
+                # Add the stat to the array
+                stats_array.append(stat)
+                
+        self.mylog(f"Parsed stats array '{stats_array}'. ", end="~~")
+        self.mylog(st="OK")
+        return stats_array
+        
+    def update_grdf_historical_data(self, stats_array, pce):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/GRDF_Update_Hist_Data"
+        )        
 
 
 ###############################################################################
@@ -2366,6 +2450,25 @@ class HomeAssistantInjector(Injector):
         super().__init__(
             config_dict, super_print=super_print, use_display=use_display
         )
+    
+    def update_grdf_historical_data(self, stats_array, pce):
+        # Prepare the statistics that need to be sent
+        self.mylog("Publish all the historical data in the statistics")
+        data = {
+            "has_mean": False,
+            "has_sum": True,
+            "statistic_id": (
+                "sensor.grdf_%s_total"
+                % pce
+            ),
+            "unit_of_measurement": "m³",
+            "source": "recorder",
+            "stats": stats_array,
+        }
+        self.mylog(f"PCE: {pce}, data: {data}")
+        
+        self.open_url(HA_API_STATISTICS, data)
+        self.mylog(st="OK")        
 
     def open_url(self, uri, data=None):
         """
@@ -2389,6 +2492,7 @@ class HomeAssistantInjector(Injector):
                     verify=not (self.configuration[PARAM_INSECURE]),
                     timeout=30,
                 )
+
             else:
                 response = requests.post(
                     api_url,
@@ -2397,6 +2501,7 @@ class HomeAssistantInjector(Injector):
                     verify=not (self.configuration[PARAM_INSECURE]),
                     timeout=30,
                 )
+                self.mylog(f"URL POST response: {response}")
         except Exception as e:
             # HANDLE CONNECTIVITY ERROR
             raise RuntimeError(f"url={api_url} : {e}")
@@ -2845,6 +2950,7 @@ class MqttInjector(Injector):
             PARAM_URL: None,
             # Needed for veolia only (to do: add to request as parameter)
             PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
+            PARAM_GRDF_CONTRACT: PARAM_OPTIONAL_VALUE, 
             PARAM_MQTT_SERVER: None,
             PARAM_MQTT_LOGIN: None,
             PARAM_MQTT_PASSWORD: None,
@@ -2911,16 +3017,17 @@ class MqttInjector(Injector):
         import paho.mqtt.client as mqtt
         from paho.mqtt import publish
 
-        # data = self.veolia_to_dict(json_file)
+        #data = self.veolia_to_dict(json_file)
         with open(json_file, encoding="utf_8") as f:
             data = json.load(f)
-
+       
         if len(data) > 0:
-            pce = list(data.keys())[0]
-            data = data[pce]["releves"][-1]
-            self.mylog(f"MQTT GRDF data: {data}")
+          pce = list(data.keys())[0]
+          data = data[pce]["releves"][-1]
+          self.mylog(f"MQTT GRDF data: {data}")
         else:
-            self.mylog("MQTT GRDF data: No JSON data in reply")
+          self.mylog(f"MQTT GRDF data: file empty")
+          pass
 
         if data is not None:
             state_topic = f"grdf/{pce}/last_data"
@@ -2942,18 +3049,18 @@ class MqttInjector(Injector):
             self.mylog(
                 f"MQTT GRDF Publish {mqtt_server}:{mqtt_port} {auth} {data!r}"
             )
-            data_out: dict[str, Any] = {}
+            data_out = {}
             data_out = {
-                "period_start_datetime": data.get("dateDebutReleve", None),
-                "period_end_datetime": data.get("dateFinReleve", None),
-                "period_start_date": data.get("journeeGaziere", None),
-                "index_period_start_m3": data.get("indexDebut", None),
-                "index_period_end_m3": data.get("indexFin", None),
-                "volume_period_m3": data.get("volumeBrutConsomme", None),
-                "energy_period_kWh": data.get("energieConsomme", None),
-                "conversion_coefficient": data.get("coeffConversion", None),
-                "status": data.get("status", None),
-            }
+              "period_start_datetime": data.get("dateDebutReleve",None),
+              "period_end_datetime": data.get("dateFinReleve", None),
+              "period_start_date": data.get("journeeGaziere", None),
+              "index_period_start_m3": data.get("indexDebut", None),
+              "index_period_end_m3": data.get("indexFin", None),
+              "volume_period_m3": data.get("volumeBrutConsomme", None),
+              "energy_period_kWh": data.get("energieConsomme", None),
+              "conversion_coefficient": data.get("coeffConversion", None),
+              "status": data.get("status", None) 
+              }  
 
             publish.single(
                 state_topic,
@@ -2973,6 +3080,11 @@ class MqttInjector(Injector):
 
     def cleanup(self, keep_output=False):
         pass
+        
+    def update_grdf_historical_data(self, stats_array, pce):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/GRDF_Update_Hist_Data"
+        )             
 
 
 class UrlInjector(Injector):
@@ -3078,6 +3190,11 @@ class UrlInjector(Injector):
 
     def cleanup(self, keep_output=False):
         pass
+        
+    def update_grdf_historical_data(self, stats_array, pce):
+        raise NotImplementedError(
+            f"{self.WORKER_DESC}/GRDF_Update_Hist_Data"
+        )             
 
 
 def exit_on_error(
@@ -3447,9 +3564,16 @@ def doWork():
                     st="WW",
                 )
                 gazpar_file = crawler.get_gazpar_file()
-
+            o.mylog(f"Gazpar_file: {gazpar_file}", st="WW")
             # Inject data
             injector.update_grdf_device(gazpar_file)
+            # Parse the CSV file   
+            array_stats = injector.parse_grdf_historical_data(
+                gazpar_file, configuration_json.get(PARAM_GRDF_PCE))
+
+            # Push historical data
+            if configuration_json.get(PARAM_GRDF_LOAD_HISTORICAL_DATA):
+                injector.update_grdf_historical_data(array_stats, configuration_json.get(PARAM_GRDF_PCE))
 
         except Exception as exc:
             exit_on_error(workers, str(exc), use_display=args.display, o=o)
