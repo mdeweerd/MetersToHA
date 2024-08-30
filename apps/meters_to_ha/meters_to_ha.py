@@ -58,10 +58,12 @@ VERSION = "v2.0"
 LOGGER = logging.getLogger()
 
 HA_API_SENSOR_FORMAT = "/api/states/%s"
+PARAM_NO_CAPTCHA = "nocaptcha"
 PARAM_2CAPTCHA_TOKEN = "2captcha_token"
 PARAM_CAPMONSTER_TOKEN = "capmonster_token"
 PARAM_CAPTCHAAI_TOKEN = "captchaai_token"
 CAPTCHA_TOKENS = (
+    PARAM_NO_CAPTCHA,
     PARAM_CAPMONSTER_TOKEN,
     PARAM_2CAPTCHA_TOKEN,
     PARAM_CAPTCHAAI_TOKEN,
@@ -476,6 +478,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: self.install_dir,
             PARAM_LOGS_FOLDER: self.install_dir,
+            PARAM_NO_CAPTCHA: PARAM_OPTIONAL_VALUE,
             PARAM_2CAPTCHA_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPMONSTER_TOKEN: PARAM_OPTIONAL_VALUE,
             PARAM_CAPTCHAAI_TOKEN: PARAM_OPTIONAL_VALUE,
@@ -1088,6 +1091,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if key is not None and key != "":
                 method = m
                 break
+
+        if method == PARAM_NO_CAPTCHA and key:
+            self.mylog(
+                "Captcha resolution is disabled by config.",
+                st="WW",
+            )
+            return method
 
         if method is None:
             self.mylog(
@@ -1749,24 +1759,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.__browser.get(self.__class__.site_grdf_url)
             self.mylog(st="OK")
 
-            # Wait for Password #####
-            self.mylog("Waiting for Password", end="")
-
-            ep = EC.presence_of_element_located((By.ID, "pass"))
-            el_password = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration[PARAM_TIMEOUT])
-                + ")",
-            )
-            self.mylog(st="OK")
-
             # Wait for Email #####
             self.mylog("Waiting for Email", end="")
-            ep = EC.presence_of_element_located((By.ID, "mail"))
+            ep = EC.presence_of_element_located(
+                (By.XPATH, r"//input[@name='identifier']")
+            )
             el_email = self.__wait.until(
                 ep,
-                message="failed, page timeout (timeout="
+                message="failed to locate email field, page timeout (timeout="
                 + str(self.configuration[PARAM_TIMEOUT])
                 + ")",
             )
@@ -1776,6 +1776,33 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog("Type Email", end="")
             el_email.clear()
             el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
+            self.mylog(st="OK")
+
+            # Try to click Next button to enter password
+            try:
+                self.click_in_view(
+                    By.XPATH,
+                    r"//input[@value='Suivant']",
+                    # wait_message="",
+                    click_message="Click on connexion",
+                    delay=random.uniform(1, 2),
+                )
+                # Even if click succeeded, not always connected
+            except Exception:
+                pass
+
+            # Wait for Password #####
+            self.mylog("Waiting for Password", end="")
+
+            ep = EC.presence_of_element_located(
+                (By.XPATH, r"//input[@name='credentials.passcode']")
+            )
+            el_password = self.__wait.until(
+                ep,
+                message="failed, page timeout (timeout="
+                + str(self.configuration[PARAM_TIMEOUT])
+                + ")",
+            )
             self.mylog(st="OK")
 
             # Type Password #####
@@ -1790,12 +1817,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Give the user some time to resolve the captcha
             # FEAT: Wait until it disappears, use 2captcha if configured
 
-            CONNEXION_XPATH = r"//input[@value='Connexion']"
+            CONNEXION_XPATH = r"//input[@value='Se Connecter']"
 
             self.mylog("Proceed with captcha resolution. ", end="~~")
             if self.resolve_captcha2() is not None:
                 # Some time for captcha to remove.
-                self.mylog("Automatic resolution succeeded. ", end="~~")
+                self.mylog("Captcha resolution done. ", end="~~")
                 time.sleep(2)
             else:
                 # Manual
