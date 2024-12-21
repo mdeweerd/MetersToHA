@@ -6,11 +6,13 @@ REM Déterminez la version principale de Chrome
 REM - Utile si `pip install undetected-chromedriver` a été effectué
 for /f %%i in ('powershell -command "(Get-Command 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe').Version.ToString()"') do SET RESULT=%%i
 SET CHROME_VERSION=%RESULT:~0,3%
+ECHO "LOCAL CHROME VERSION %CHROME_VERSION%"
+REM SET CHROME_VERSION=130
 
 REM Démarre meters_to_ha.py pour GRDF.
 REM Suppose la présence de 'winconfig.json' pour la configuration.
 REM
-python -m pip install pyvirtualdisplay selenium undetected-chromedriver
+python -m pip install pyvirtualdisplay selenium undetected-chromedriver --upgrade
 
 REM Décommenté le GOTO vers le mode de fonctionnement retenu
 GOTO INTERACTIF
