@@ -2090,7 +2090,7 @@ class Injector(Worker):
                 # Verify data integrity :
                 d1 = datetime.strptime(date, "%Y-%m-%d")
                 d2 = datetime.now()
-                if abs((d2 - d1).days) > 30:
+                if abs((d2 - d1).days) > 31:
                     raise RuntimeError(
                         f"File contains too old data (monthly?!?): {row!r}"
                     )
@@ -2394,7 +2394,7 @@ class DomoticzInjector(Injector):
                     # Verify data integrity :
                     d1 = datetime.strptime(date, "%Y-%m-%d")
                     d2 = datetime.now()
-                    if abs((d2 - d1).days) > 30:
+                    if abs((d2 - d1).days) > 31:
                         raise RuntimeError(
                             "File contains too old data (monthly?!?): "
                             + str(row)
@@ -2592,7 +2592,7 @@ class HomeAssistantInjector(Injector):
                 # Verify data integrity :
                 d1 = datetime.strptime(date, "%Y-%m-%d")
                 d2 = datetime.now()
-                if abs((d2 - d1).days) > 30:
+                if abs((d2 - d1).days) > 31:
                     raise RuntimeError(
                         f"File contains too old data (monthly?!?): {row!r}"
                     )
@@ -2823,7 +2823,7 @@ class HomeAssistantInjector(Injector):
                 # Use the most recent data.
                 continue
 
-            if abs((row_date_time - datetime.now(timezone.utc)).days) > 30:
+            if abs((row_date_time - datetime.now(timezone.utc)).days) > 31:
                 raise RuntimeError(
                     f"File contains too old data (monthly?!?): {row}"
                 )
