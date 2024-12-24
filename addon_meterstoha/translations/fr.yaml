@@ -25,6 +25,10 @@ configuration:
     name: GRDF PCE
     description: GRDF Numéro du Point de Comptage et d'Estimation (PCE)
     example: "21546020012301"
+  grdf_load_historical_data:
+    name: GRDF Historique
+    description: Charge des données historiques de GRDF dans Home Assistant.  Nécessite Spook/recorder (https://spook.boo/recorder).  Utilise un entier qui pourrait representer le nombre de jours à charger dans le futur.  Actuellement une valeur non 0 charge environ 1 mois.
+    example: 1
   ha_server:
     name: Seveur Home Assistant
     description:
