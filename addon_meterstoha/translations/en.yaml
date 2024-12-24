@@ -22,6 +22,10 @@ configuration:
       GRDF identification of the "Point de Comptage et d'Estimation (PCE)"  (end
       Point Counter and Estimation)
     example: "21546020012301"
+  grdf_load_historical_data:
+    name: GRDF Historical Data
+    description: Load historical data from GRDF into Home Assistant.  Requires Spook/recorder (https://spook.boo/recorder).  Using int value which may become the number of days to load in a future version - 0 is none.
+    example: 1
   ha_server:
     name: Home Assistant Server
     description:
@@ -55,3 +59,7 @@ configuration:
     name: Veolia Password
     description: User Password for Veolia site
     example: YourSecret'Q
+  veolia_load_historical_data:
+    name: Veolia Historical Data
+    description: Load historical data from Veolia into Home Assistant.  Requires Spook/recorder (https://spook.boo/recorder).  Using int value which may become the number of days to load in a future version - 0 is none.
+    example: 1

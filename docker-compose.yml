@@ -1,7 +1,4 @@
 ---
-version: '3.5'
-
-
 services:
   # . #     #
   # . #     #  #####   #    #  #    #   #####  #    #
@@ -65,7 +62,7 @@ services:
   meters-to-ha-debian-trace-veolia:
     extends: meters-to-ha-debian
     command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
-      -c ./config.json  --run --debug --keep-output --veolia
+      -c ./config.json  --run --display --keep-output --veolia
 
 
   # .    #
@@ -99,7 +96,7 @@ services:
     command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json  --run
 
   #
-  # Standard targets, no debug
+  # Standard targets, no debug, no display
   #
   meters-to-ha-veolia:
     extends: meters-to-ha-alpine
@@ -123,51 +120,51 @@ services:
     command: ./apps/meters_to_ha/meters_to_ha.py --grdf -c ./config.json --run --keep-output
 
   #
-  # Debug targets (requires XServer)
+  # Debug targets (requires X-Server)
   #
 
-  # Run script in debug mode and keep the recovered output (data) in a file
+  # Run script with display and keep the recovered output (data) in a file
   #
-  # Run this using `docker compose run --rm meters-to-ha-debug-veolia` on the CLI
-  meters-to-ha-debug-veolia:
+  # Run this using `docker compose run --rm meters-to-ha-display-veolia` on the CLI
+  meters-to-ha-display-veolia:
     extends: meters-to-ha-alpine
-    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --veolia --run --debug --keep-output
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --veolia --run --display --keep-output
 
-  meters-to-ha-debug-grdf:
+  meters-to-ha-display-grdf:
     extends: meters-to-ha-alpine
-    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --grdf --run --debug --keep-output
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --grdf --run --display --keep-output
 
-  meters-to-ha-debug-local:
+  meters-to-ha-display-local:
     extends: meters-to-ha-alpine
-    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --debug --keep-output --local-config
+    command: ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --display --keep-output --local-config
 
   #
-  # Trace targets (requires XServer, outputs executed code lines)
+  # Trace targets (requires X-Server, outputs executed code lines)
   #
   #
   meters-to-ha-trace-veolia:
     extends: meters-to-ha-alpine
     command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
-      -c ./config.json  --run --debug --keep-output --veolia
+      -c ./config.json  --run --display --keep-output --veolia
 
   meters-to-ha-trace-grdf:
     extends: meters-to-ha-alpine
     command: python3 -m trace --ignore-dir=/usr/lib -t ./apps/meters_to_ha/meters_to_ha.py
-      -c ./config.json  --run --debug --keep-output --grdf
+      -c ./config.json  --run --display --keep-output --grdf
 
 
   #
-  # Debug target using WSL XServer
-  #  Note: Not very stable - works first time, Windows'XServer seems to fail after that.
+  # Debug target using WSL X-Server
+  #  Note: Not very stable - works first time, Windows'X-Server seems to fail after that.
   #
   meters-to-ha-wind:
-    extends: meters-to-ha-debug-local
+    extends: meters-to-ha-display-local
     environment:
       DISPLAY: :0
     command: >
        sh -c '
          i=0 ; while [ -f /tmp/.X$$i-lock ] ; do i=$$((i+1))  ; done ; echo $$i ;
-         DISPLAY=:$$i ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --debug --keep-output --local-config --veolia
+         DISPLAY=:$$i ./apps/meters_to_ha/meters_to_ha.py -c ./config.json --run --display --keep-output --local-config --veolia
        '
     volumes:
       - \\wsl.localhost\Debian\mnt\wslg\.X11-unix:/tmp/.X11-unix

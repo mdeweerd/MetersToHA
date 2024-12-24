@@ -25,6 +25,10 @@ configuration:
     name: GRDF PCE
     description: GRDF Numéro du Point de Comptage et d'Estimation (PCE)
     example: "21546020012301"
+  grdf_load_historical_data:
+    name: GRDF Historique
+    description: Charge des données historiques de GRDF dans Home Assistant.  Nécessite Spook/recorder (https://spook.boo/recorder).  Utilise un entier qui pourrait representer le nombre de jours à charger dans le futur.  Actuellement une valeur non 0 charge environ 1 mois.
+    example: 1
   ha_server:
     name: Seveur Home Assistant
     description:
@@ -66,6 +70,10 @@ configuration:
     name: Mot de passe Veolia
     description: Mot de passe pour le site veolia
     example: YourSecret'Q
+  veolia_load_historical_data:
+    name: Veolia Historique
+    description: Charge des données historiques de Veolia dans Home Assistant.  Nécessite Spook/recorder (https://spook.boo/recorder).  Utilise un entier qui pourrait representer le nombre de jours à charger dans le futur.  Actuellement une valeur non 0 charge environ 1 mois.
+    example: 1
   skip_download:
     name: Ne pas télécharger
     description:
@@ -78,7 +86,7 @@ configuration:
     description:
       Impacte les messages remonté.  Le niveau "trace" entraine la présence
       de chaque ligne exécutée dans 'service.log'
-  debug:
+  display:
     name: Activation Débogue sur Terminal X
     description: Ouvrira le navigateur sur le terminal X spécifié dans DISPLAY
   DISPLAY:

@@ -1,12 +1,12 @@
 ---
 name: MetersToHA
-version: dev
+version: 2024.12.3
 slug: meterstoha
 description: MetersToHA add-on for Home Assistant
 url: https://github.com/mdeweerd/MetersToHA
 homeassistant_api: true
 map:
-  - config:rw
+  - addon_config:rw
 # codenotary: dummyaddress@example.com
 init: false
 host_dbus: true
@@ -30,7 +30,7 @@ options:
   veolia_event: call_veolia
   keep_output: true
   screenshot: true
-  debug: false
+  display: false
   skip_download: false
 schema:
   log_level: list(error|warning|info|debug|trace)?
@@ -41,6 +41,7 @@ schema:
   grdf_password: password?
   grdf_pce: "match(^\\d+$)?"
   grdf_event: str?
+  grdf_load_historical_data: int(0,360)
   ha_server: url?
   ha_token: password?
   timeout: int(1,300)
@@ -48,6 +49,7 @@ schema:
   veolia_login: email?
   veolia_password: password?
   veolia_event: str?
+  veolia_load_historical_data: int(0,360)
   download_folder: str?
   DISPLAY: str?
   logs_folder: str?
@@ -56,7 +58,7 @@ schema:
   local_config: bool?
   insecure: bool?
   skip_download: bool?
-  debug: bool?
+  display: bool?
   # item: match(regex)
   mqtt_login: str?
   mqtt_password: password?

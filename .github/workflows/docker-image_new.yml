@@ -1,0 +1,32 @@
+---
+name: Docker Image CI
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches: [meters-to-ha]
+  pull_request:
+    branches: [meters-to-ha]
+env:
+  DOCKER_HUB_NAME: ${{ secrets.DOCKER_HUB_NAME || github.repository }}
+  DOCKERFILE: ./DockerfileAlpine
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build . --file ${{ env.DOCKERFILE }} --tag my-image-name:$(date +%s)
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Production versions
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE }}
+          push: true
+          tags: ${{ env.DOCKER_HUB_NAME }}:latest

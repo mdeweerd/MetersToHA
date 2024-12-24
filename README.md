@@ -245,7 +245,7 @@ Explication des champs:
 - Paramètre pour résolution de captcha.\
   Seulement si vous souhaitez
   résoudre les captchas automatiquement (GRDF, sinon vous devez utiliser
-  --debug qui nécessite un serveur X).\
+  --display qui nécessite un serveur X).\
   Un débat assez complet concernant
   ce type de service est dans
   [cet issue d'un autre projet](https://github.com/iv-org/invidious/issues/1256).
@@ -330,7 +330,7 @@ complémentaire MetersToHA sous HAOS.
 | --version-check                               | Vérifie s'il y a une nouvelle version du script (inactif)                                                                                              |
 | --veolia                                      | Récupère les données de Veolia                                                                                                                         |
 | --grdf                                        | Récupère les données auprès de GRDF                                                                                                                    |
-| -d, --debug                                   | Active l'interface graphique interactif (Serveur X nécessaire)                                                                                         |
+| --display                                     | Active l'interface graphique interactif (Serveur X nécessaire)                                                                                         |
 | --screenshot                                  | Prend une ou plusieurs captures d'écran du navigateur (pour débogue)                                                                                   |
 | --local-config                                | Utilise un répertoire local pour la configuration navigateur                                                                                           |
 | -l `LOGS_FOLDER`, --logs-folder `LOGS_FOLDER` | Dossier pour les fichiers des traces                                                                                                                   |
@@ -583,11 +583,11 @@ veolia_idf:
   # script: /config/meters_to_ha/meters_to_ha.py
   # optionnel (Par défaut: false) - add --keep-output option
   keep_output: true
-  # optionnel (Par défaut: false) - add --debug option - nécessite DISPLAY & serveur X!!
-  debug: true
+  # optionnel (Par défaut: false) - add --display option - nécessite DISPLAY & serveur X!!
+  display: false
   # optionnel (Par défaut: false) - Enable line by line trace output (also add outfile/errfile options to send the output to a file)
   trace: true
-  # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when debug is true)
+  # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when display is true)
   DISPLAY: 192.1.0.52:0
   # optionnel (Par défaut: None) - Fichier pour la sortie STDOUT du script
   outfile: /config/MetersToHA/meters_to_ha_script.log
@@ -595,9 +595,9 @@ veolia_idf:
   errfile: /config/MetersToHA/apps/meters_to_ha_err.log
 ```
 
-L'option `debug` peut être intéressant lors de la mise en place en cas de
-diffucultés mais nécessite un serveur X, la bonne configuration de DISPLAY
-et l'autorisation d'accès depuis la machine.\
+L'option `--display` peut être intéressant lors de la mise en place en cas
+de diffucultés mais nécessite un serveur X, la bonne configuration de
+DISPLAY et l'autorisation d'accès depuis la machine.\
 Par exemple avec
 
 - [Mobaxterm Portable](https://mobaxterm.mobatek.net/download-home-edition.html).\
@@ -621,8 +621,9 @@ Pour info, il y a une interface web spécifique à AppDaemon (port 5050 par
 défaut) : [http://votreinstance:5050](http://votreinstance:5050/) qui donne
 entre outre accès à qqs traces et l’historique des appels de scripts.
 
-Sur la page \[http://votreinstance:5050/aui/index.html#/logs\] on peut
-trouver par exemple des traces. Exemple avec une erreur:
+Sur la page
+[http://votreinstance:5050/aui/index.html#/logs](http://votreinstance:5050/aui/index.html#/logs)
+on peut trouver par exemple des traces. Exemple avec une erreur:
 
 ```plaintext
 2022-12-10 13:29:13.182428 ERROR veolia_idf: Done MetersToHA
@@ -693,9 +694,9 @@ grdf:
   # script: /config/meters_to_ha/meters_to_ha.py
   # optionnel (Par défaut: false) - add --keep-output option
   keep_output: true
-  # optionnel (Par défaut: false) - add --debug option - nécessite DISPLAY & serveur X!!
-  debug: true
-  # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when debug is true)
+  # optionnel (Par défaut: false) - add --display option - nécessite DISPLAY & serveur X!!
+  display: false
+  # optionnel (Par défaut: None) - Set DISPLAY for GUI interface (when display is true)
   DISPLAY: 192.1.0.52:0
   # optionnel (Par défaut: None) - Fichier pour la sortie STDOUT du script
   outfile: /config/appdaemon/apps/meters_to_ha_script.log
@@ -895,11 +896,11 @@ docker compose run --rm meters-to-ha-veolia
 docker compose run --rm meters-to-ha-grdf
 ```
 
-Ou en mode débogue (nécessite un serveur X local):
+Ou en mode avec affichage (nécessite un serveur X local):
 
 ```shell
-docker compose run --rm meters-to-ha-debug-veolia
-docker compose run --rm meters-to-ha-debug-grdf
+docker compose run --rm meters-to-ha-display-veolia
+docker compose run --rm meters-to-ha-display-grdf
 ```
 
 Docker a parfois
@@ -909,7 +910,7 @@ docker. Dans ce cas, vous pouvez fournir la configuration DISPLAY avec l'IP
 de votre PC directement avec `-eDISPLAY=`:
 
 ```shell
-docker compose run -eDISPLAY=10.33.2.69:0.0 --rm meters-to-ha-debug-grdf
+docker compose run -eDISPLAY=10.33.2.69:0.0 --rm meters-to-ha-display-grdf
 ```
 
 L'automatisation de l'exécution avec Docker dépendre de votre système - le
@@ -1023,14 +1024,14 @@ Un exemple d'un fichier de configuration est:
 }
 ```
 
-Sans l'option `--debug` le déroulement sera visible. Dans ce cas s'il y a
+Sans l'option `--display` le déroulement sera visible. Dans ce cas s'il y a
 un captcha à résoudre, le login ne sera pas réussi. L'option `--screenshot`
 permet d'enregister le ontenu du navigateur (caché) dans
 `screen_before_connection.png` ou vous pouvez vérifier s'il y avait un
 captcha ou pas.
 
 Sinon, pour la résolution du captcha sous Windows en mode interactif,
-l'option `--debug` est nécessaire. Lorsque le popup apparaiti, vous\
+l'option `--display` est nécessaire. Lorsque le popup apparait, vous\
 devez
 le captcha et le valider. Cliquez le bouton "Connexion" également. Si le
 captcha est validé automatiquement, le script avance automatiquement comme
@@ -1040,7 +1041,7 @@ Exemple de lancement, avec un fichier de configuration appelée
 `winconfig.json`, avec une capture d'écran avant connexion.
 
 ```shell
-python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --debug --screenshot
+python apps/meters_to_ha/meters_to_ha.py -c winconfig.json --grdf -r --display --screenshot
 ```
 
 Le fichier [METERSTOHA.BAT](METERSTOHA.BAT) montre plus de variantes sur le
@@ -1180,7 +1181,7 @@ Déroulement de l'exécution :
 4. Téléversement des données dans Domoticz
 
 ```shell
-./apps/meters_to_ha/meters_to_ha.py --run --keep-output --debug
+./apps/meters_to_ha/meters_to_ha.py --run --keep-output --display
 ```
 
 Afficher toutes les options disponibles :
@@ -1206,7 +1207,7 @@ Si vous rencontrez des problèmes à l'exécution, regardez dans un premier
 temps le fichier "veolia.log".
 
 Si cela ne suffit pas, pour aller plus loin il sera utile d'utiliser le
-mode débogue (option `--debug`).
+mode débogue (option `--display`).
 
 Dans ce dernier cas il y a 3 scenarios :
 
@@ -1221,7 +1222,7 @@ Dans ce dernier cas il y a 3 scenarios :
    [Docker](https://www.docker.com/) un serveur X (p.e.
    [VcXsvr](https://sourceforge.net/projects/vcxsrv/)) et le lancer (!)
    avec l'option "Disable Access Control", puis lancer l'un des scripts
-   `docker\*Run.BAT` après avoir ajouté l'option '--debug' à la ligne de
+   `docker\*Run.BAT` après avoir ajouté l'option '--display' à la ligne de
    lancement du script.
 
 Si vous voyez bien une fenêtre X s'afficher à l'écran c'est que
@@ -1251,7 +1252,7 @@ Le système Graphique (GUI) existe, mais l'affichage n'existe que dans une
 zone mémoire.
 
 Il est néanmoins possible de voir le déroulement en temps réel avec
-l'option `--debug`. L'affichage n'est alors plus "Headless" et il vous
+l'option `--display`. L'affichage n'est alors plus "Headless" et il vous
 faudra un serveur X attaché à un écran physique.
 
 ## Environnements testés:
