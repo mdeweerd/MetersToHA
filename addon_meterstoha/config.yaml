@@ -1,6 +1,6 @@
 ---
 name: MetersToHA
-version: 2024.12.3
+version: 2024.12.4
 slug: meterstoha
 description: MetersToHA add-on for Home Assistant
 url: https://github.com/mdeweerd/MetersToHA
@@ -41,7 +41,7 @@ schema:
   grdf_password: password?
   grdf_pce: "match(^\\d+$)?"
   grdf_event: str?
-  grdf_load_historical_data: int(0,360)
+  grdf_load_historical_data: int(0,360)?
   ha_server: url?
   ha_token: password?
   timeout: int(1,300)
@@ -49,7 +49,7 @@ schema:
   veolia_login: email?
   veolia_password: password?
   veolia_event: str?
-  veolia_load_historical_data: int(0,360)
+  veolia_load_historical_data: int(0,360)?
   download_folder: str?
   DISPLAY: str?
   logs_folder: str?
