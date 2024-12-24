@@ -1,6 +1,6 @@
 ---
 name: MetersToHA
-version: 2024.12.1
+version: 2024.12.2
 slug: meterstoha
 description: MetersToHA add-on for Home Assistant
 url: https://github.com/mdeweerd/MetersToHA
