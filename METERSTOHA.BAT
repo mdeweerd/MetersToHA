@@ -12,7 +12,10 @@ REM SET CHROME_VERSION=130
 REM Démarre meters_to_ha.py pour GRDF.
 REM Suppose la présence de 'winconfig.json' pour la configuration.
 REM
-python -m pip install pyvirtualdisplay selenium undetected-chromedriver --upgrade
+python -m pip install pyvirtualdisplay selenium undetected-chromedriver pyperclip --upgrade
+
+SET SERVICE_OPT=--grdf
+SET SERVICE_OPT=--veolia
 
 REM Décommenté le GOTO vers le mode de fonctionnement retenu
 GOTO INTERACTIF
@@ -22,12 +25,12 @@ REM GOTO TRACE
 
 :INTERACTIF
 REM Interactif:
-python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --grdf -r --keep-output --display --screenshot --chrome-version %CHROME_VERSION%
+python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json %SERVICE_OPT% -r --keep-output --display --screenshot --chrome-version %CHROME_VERSION%
 GOTO END
 
 :NONINTERACTIF
 REM NON INTERACTIF
-python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --grdf -r --keep-output --screenshot --chrome-version %CHROME_VERSION%
+python apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json %SERVICE_OPT% -r --keep-output --screenshot --chrome-version %CHROME_VERSION%
 
 GOTO END:
 
@@ -35,7 +38,7 @@ GOTO END:
 REM Avec trace détaillée
 for /f %%i in ('python -c "import sys ; print(';'.join(sys.path)[1:])"') do SET PY_PATH=%%i
 python -m trace "--ignore-dir=%PY_PATH%" -t ^
-apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --display --grdf -r --keep-output --screenshot --chrome-version %CHROME_VERSION% 
+apps/meters_to_ha/meters_to_ha.py -c ./winconfig.json --display %SERVICE_OPT% -r --keep-output --screenshot --chrome-version %CHROME_VERSION% 
 
 :END
 

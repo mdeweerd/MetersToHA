@@ -121,6 +121,7 @@ repos:
           - paho-mqtt
           - aiohttp
           - regex
+          - pyperclip
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy

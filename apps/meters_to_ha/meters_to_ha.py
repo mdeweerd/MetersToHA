@@ -52,6 +52,8 @@ from shutil import which
 from typing import Any
 from urllib.parse import urlencode, urlparse
 
+import pyperclip
+
 VERSION = "v2.0"
 
 LOGGER = logging.getLogger()
@@ -203,11 +205,14 @@ try:
 
     import selenium
     from selenium import webdriver
+    from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
+    from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
     from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
+
 
 except ImportError as excImport:
     print(
@@ -1071,6 +1076,25 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         os.rename(max_file, new_path)
         return new_path
 
+    def set_clipboard_and_paste(self, element, text):
+        # To avoid special key interpretations (^,~,`), copy to clipboard
+        # and then paste it to the browser
+
+        # Set the desired text in the clipboard
+        pyperclip.copy(text)
+        # Simulate a paste operation
+        actions = ActionChains(self.__browser)
+        actions.click(element).perform()  # Ensure the element is focused
+        actions.key_down(Keys.CONTROL).send_keys("v").key_up(
+            Keys.CONTROL
+        ).perform()
+
+    def set_input_value(self, element, value: str):
+        # Use JavaScript to set the value of the input field (untested)
+        self.__browser.execute_script(
+            "arguments[0].value = arguments[1];", element, value
+        )
+
     def click_in_view(  # pylint: disable=R0913
         self,
         method,
@@ -1560,8 +1584,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Type Password ########
             self.mylog("Type Password", end="")
             el_password.clear()
-            el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+            self.set_clipboard_and_paste(
+                el_password, self.configuration[PARAM_VEOLIA_PASSWORD]
+            )
             self.mylog(st="OK")
+
+            # time.sleep(60)   # Check password field contents
 
             # Click Submit #########
             self.click_in_view(
@@ -1867,7 +1895,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Type Password ########
             self.mylog("Type Password", end="")
             el_password.clear()
-            el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+            # el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
+            self.set_clipboard_and_paste(
+                el_password, self.configuration[PARAM_VEOLIA_PASSWORD]
+            )
             self.mylog(st="OK")
 
             self.get_screenshot("1-credential.png")
@@ -2105,7 +2136,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
             # Type Password #####
             self.mylog("Type Password", end="")
-            el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
+            # el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
+            self.set_clipboard_and_paste(
+                el_password, self.configuration[PARAM_GRDF_PASSWORD]
+            )
             self.mylog(st="OK")
 
             CONNEXION_XPATH = (
