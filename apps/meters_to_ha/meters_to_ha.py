@@ -571,9 +571,15 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def get_log_level(self) -> int:
         """Get numeric value for logging level in configuration"""
-        return logging.getLevelName(
-            self.configuration[PARAM_LOG_LEVEL].upper()
-        )
+        log_level_str = self.configuration[PARAM_LOG_LEVEL]
+        level = logging.getLevelName(log_level_str.upper())
+        if isinstance(level, str):
+            self.mylog(
+                f"Invalid log level '{log_level_str}' in configuration."
+                " Falling back to DEBUG."
+            )
+            return logging.DEBUG
+        return level
 
     # INIT DISPLAY & BROWSER
     def init_firefox(self):
