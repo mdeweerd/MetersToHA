@@ -2483,8 +2483,8 @@ class Injector(Worker):
             if website == SERVICE_EAU_VEOLIA_FR:
                 date_format = "%d/%m/%Y"
             else:
-                date_format = "%Y-%m-%d"
-            # Iterate through each row in  order, skipping the csv header line
+                date_format = "%Y-%m-%d %H:%M:%S"
+            # Iterate through each row in order, skipping the csv header line
             for row in rows:
                 method = row[3]  # "Mesuré" or "Estimé"
                 if method in ("E", "Estimé"):

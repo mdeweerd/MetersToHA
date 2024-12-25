@@ -17,10 +17,10 @@ python -m pip install pyvirtualdisplay selenium undetected-chromedriver pypercli
 SET SERVICE_OPT=--grdf
 SET SERVICE_OPT=--veolia
 
+REM GOTO TRACE
 REM Décommenté le GOTO vers le mode de fonctionnement retenu
 GOTO INTERACTIF
 REM GOTO NONINTERACTIF
-REM GOTO TRACE
 
 
 :INTERACTIF
