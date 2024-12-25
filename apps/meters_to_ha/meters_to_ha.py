@@ -1083,6 +1083,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # To avoid special key interpretations (^,~,`), copy to clipboard
         # and then paste it to the browser
 
+        delay = 0.1
         # Set the desired text in the clipboard
         pyperclip.copy(text)
         # Simulate a paste operation
@@ -1091,6 +1092,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         actions.key_down(Keys.CONTROL).send_keys("v").key_up(
             Keys.CONTROL
         ).perform()
+        time.sleep(delay)
+        if element.get_attribute("value") == "":
+            # Paste did not work, send keys as backup method
+            element.send_keys(text)
 
     def set_input_value(self, element, value: str):
         # Use JavaScript to set the value of the input field (untested)
