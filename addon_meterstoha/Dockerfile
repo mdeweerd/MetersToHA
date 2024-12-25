@@ -37,6 +37,7 @@ RUN \
         py3-trio \
         py3-paho-mqtt \
         py3-pyperclip \
+        xclip \
   && pip install --no-cache-dir \
         'urllib3>=1.24.2' \
         'colorama>=0.3.7' \

@@ -16,6 +16,7 @@ RUN apk add --no-cache \
         xvfb \
         py3-pip \
         xorg-server-xephyr \
+        xclip \
         chromium-chromedriver \
         chromium \
         py3-openssl \
