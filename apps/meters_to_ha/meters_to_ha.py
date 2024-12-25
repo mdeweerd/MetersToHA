@@ -657,15 +657,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Replaced maximize_window by set_window_size
             # to get the window full screen
             browser.set_window_size(1600, 1200)
-            # Avoid to be recognized as a bot by anti-bot website
-            #   (useful for service.eau.veolia.fr)
-            browser.execute_cdp_cmd(
-                "Network.setUserAgentOverride",
-                {
-                    "userAgent": USER_AGENT_FF,
-                    "platform": "Linux",
-                },
-            )
+            if not hasUndetectedDriver:
+                # Avoid to be recognized as a bot by anti-bot website
+                #   (useful for service.eau.veolia.fr)
+                browser.execute_cdp_cmd(
+                    "Network.setUserAgentOverride",
+                    {
+                        "userAgent": USER_AGENT_FF,
+                        "platform": "Linux",
+                    },
+                )
 
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
             self.__wait = WebDriverWait(browser, timeout=timeout)
@@ -845,16 +846,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     service=chromeService,
                     options=options,
                 )
-            # Avoid to be recognized as a bot by anti-bot website
-            #   (useful for service.eau.veolia.fr)
-            browser.execute_cdp_cmd(
-                "Network.setUserAgentOverride",
-                {
-                    "userAgent": USER_AGENT_CHROME,
-                    "platform": "Linux",
-                },
-            )
-            browser.set_window_size(1600, 1200)
+            if not hasUndetectedDriver:
+                # Avoid to be recognized as a bot by anti-bot website
+                #   (useful for service.eau.veolia.fr)
+                browser.execute_cdp_cmd(
+                    "Network.setUserAgentOverride",
+                    {
+                        "userAgent": USER_AGENT_CHROME,
+                        "platform": "Linux",
+                    },
+                )
+            # browser.set_window_size(1600, 1200)
+            browser.maximize_window()
             timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
             self.__wait = WebDriverWait(browser, timeout)
         except AttributeError:
