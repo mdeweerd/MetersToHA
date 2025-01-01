@@ -1632,8 +1632,16 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             else:
                 self.mylog(st="OK")
 
-        # Wait until element is at least visible
-        ep = EC.visibility_of_any_elements_located((By.CSS_SELECTOR, r".logo"))
+        # Wait until the page after login is loaded by checking
+        # that at least one of these elements is visible
+        ep = EC.visibility_of_element_located(
+            (
+                By.XPATH,
+                r"//span[" r"contains(text(), 'Alertes de consommation')"
+                # r" or contains(text(), 'HISTORIQUE')"
+                + r"]",
+            )
+        )
         self.__wait.until(
             ep,
             message="Failed, page timeout (timeout="
@@ -1641,67 +1649,76 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             + ")",
         )
 
-        # Wait until spinner is gone #####
+        # Wait until spinner is gone # (Note: may need to be updated) ####
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
 
         self.__browser.switch_to.default_content()
 
         # Different handling dependent on multiple or single contract
-
-        self.mylog("Wait for MENU contrats or historique", end="")
-        ep = EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                r"//span[contains(text(), 'CONTRATS')"
-                r" or contains(text(), 'HISTORIQUE')]",
+        if False:  # New site, multiple contract handling unknown
+            self.mylog("Wait for MENU contrats or historique", end="")
+            ep = EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    r"//span[contains(text(), 'CONTRATS')"
+                    r" or contains(text(), 'HISTORIQUE')]",
+                )
             )
-        )
-        try:
-            el = self.__wait.until(
-                ep,
-                message="failed, page timeout (timeout="
-                + str(self.configuration[PARAM_TIMEOUT])
-                + ")",
-            )
-        except Exception:
-            pass
+            try:
+                el = self.__wait.until(
+                    ep,
+                    message="failed, page timeout (timeout="
+                    + str(self.configuration[PARAM_TIMEOUT])
+                    + ")",
+                )
+            except Exception:
+                pass
 
-        self.mylog(st="OK")
+            self.mylog(st="OK")
 
-        time.sleep(2)
-
-        menu_type = str(el.get_attribute("innerHTML"))
-
-        # Click on Menu #####
-        self.mylog(f"Click on menu : {menu_type}", end="")
-
-        el.click()
-
-        self.mylog(st="OK")
-
-        # GESTION DU PARCOURS MULTICONTRATS
-        if menu_type == "CONTRATS":
             time.sleep(2)
-            contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
-            self.click_in_view(
-                By.LINK_TEXT,
-                contract_id,
-                wait_message=f"Select contract : {contract_id}",
-                click_message="Click on contract",
-                delay=0,
-            )
+
+            menu_type = str(el.get_attribute("innerHTML"))
+
+            # Click on Menu #####
+            self.mylog(f"Click on menu : {menu_type}", end="")
+
+            el.click()
+
+            self.mylog(st="OK")
+
+            # GESTION DU PARCOURS MULTICONTRATS
+            if menu_type == "CONTRATS":
+                time.sleep(2)
+                contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
+                self.click_in_view(
+                    By.LINK_TEXT,
+                    contract_id,
+                    wait_message=f"Select contract : {contract_id}",
+                    click_message="Click on contract",
+                    delay=0,
+                )
 
         time.sleep(2)
 
-        # Click Historique #####
         self.click_in_view(
             By.LINK_TEXT,
-            "Historique",
-            wait_message="Wait for historique menu",
-            click_message="Click on historique menu",
+            "Consommation",
+            wait_message="Wait for consommation link",
+            click_message="Click on consommation link",
             delay=4,
         )
+
+        if False:
+            # Click Historique (not needed, already selected) #####
+            self.click_in_view(
+                By.LINK_TEXT,
+                "Historique",
+                wait_message="Wait for historique menu",
+                click_message="Click on historique menu",
+                delay=4,
+            )
 
         time.sleep(10)
 
