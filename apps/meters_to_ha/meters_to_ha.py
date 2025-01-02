@@ -444,7 +444,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # Go to login page directly
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
     # Go to login page directly only when not logged in
-    site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+    # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
+    site_url = "https://rock-vedif.my.site.com/Particulier/s/"
     site_service_eau_veolia_fr = (
         "https://www.service.eau.veolia.fr/home"
         "/eau-dans-la-ville/accueil_eau.html"
