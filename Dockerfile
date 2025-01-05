@@ -38,6 +38,7 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
         python3-requests \
         python3-paho-mqtt \
         python3-pyperclip \
+        xsel \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
