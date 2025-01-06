@@ -500,6 +500,8 @@ system_packages:
   - py3-attrs
   - py3-outcome
   - py3-trio
+  - py3-pyperclip
+  - xclip
 ```
 
 - Activer le Watchdog du AddOn, Démarrer le AddOn
