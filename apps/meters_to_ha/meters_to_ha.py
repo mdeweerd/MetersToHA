@@ -1639,11 +1639,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         ep = EC.visibility_of_element_located(
             (
                 By.XPATH,
-                r"//span[" r"contains(text(), 'Alertes de consommation')"
-                # r" or contains(text(), 'HISTORIQUE')"
+                r"//span["
+                r"contains(text(), 'Alertes de consommation')"
+                + r" or contains(text(), 'Contrats')"
                 + r"]",
             )
         )
+
         self.__wait.until(
             ep,
             message="Failed, page timeout (timeout="
@@ -1657,78 +1659,93 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         self.__browser.switch_to.default_content()
 
-        # Different handling dependent on multiple or single contract
-        if False:  # New site, multiple contract handling unknown
-            self.mylog("Wait for MENU contrats or historique", end="")
-            ep = EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    r"//span[contains(text(), 'CONTRATS')"
-                    r" or contains(text(), 'HISTORIQUE')]",
-                )
+        try:
+            multipleContracts_element = self.__browser.find_element(
+                By.XPATH,
+                r"//span[" + r"contains(text(), 'Contrats')" + r"]",
             )
-            try:
-                el = self.__wait.until(
-                    ep,
-                    message="failed, page timeout (timeout="
-                    + str(self.configuration[PARAM_TIMEOUT])
-                    + ")",
-                )
-            except Exception:
-                pass
-
-            self.mylog(st="OK")
-
+            multipleContracts_element.click()
             time.sleep(2)
+            hasMultipleContractFlow = True
+        except selenium.common.exceptions.NoSuchElementException:
+            hasMultipleContractFlow = False
 
-            menu_type = str(el.get_attribute("innerHTML"))
+        print("Has multiple: %r", hasMultipleContractFlow)
+        # Different handling dependent on multiple or single contract
+        if (
+            hasMultipleContractFlow
+        ):  # New site, multiple contract handling unknown
+            contract_link_els = self.__browser.find_elements(
+                By.XPATH,
+                r"//div["
+                + r"@class='fra-contrat-table-row'"
+                + r" and .//span[text()='Actif']"
+                + r"]//span[contains(@class,'link')]/a",
+            )
+            number_of_active_contracts = len(contract_link_els)
+            self.mylog(
+                f"Check contracts (#={number_of_active_contracts}", end=""
+            )
+            contract_link = None
+            if number_of_active_contracts == 0:
+                self.mylog("Error: no active contract", st="EE")
+            elif number_of_active_contracts == 1:
+                contract_link = contract_link_els[0]
+                self.mylog(st="OK")
 
-            # Click on Menu #####
-            self.mylog(f"Click on menu : {menu_type}", end="")
-
-            el.click()
-
-            self.mylog(st="OK")
-
-            # GESTION DU PARCOURS MULTICONTRATS
-            if menu_type == "CONTRATS":
-                time.sleep(2)
+            if contract_link is None:
                 contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
-                self.click_in_view(
-                    By.LINK_TEXT,
-                    contract_id,
-                    wait_message=f"Select contract : {contract_id}",
-                    click_message="Click on contract",
-                    delay=0,
+                contract_link = self.__browser.find_element(
+                    By.XPATH,
+                    r"//div["
+                    + r"@class='fra-contrat-table-row'"
+                    + r"]//span[contains(@class, 'link')]/a[text()='"
+                    + contract_id
+                    + r"']",
                 )
+                if False:
+                    self.click_in_view(
+                        By.LINK_TEXT,
+                        contract_id,
+                        wait_message=f"Select contract : {contract_id}",
+                        click_message="Click on contract",
+                        delay=0,
+                    )
+
+            if contract_link is not None:
+                contract_link.click()
 
         time.sleep(2)
 
-        self.click_in_view(
-            By.LINK_TEXT,
-            "Consommation",
-            wait_message="Wait for consommation link",
-            click_message="Click on consommation link",
-            delay=4,
-        )
-
-        if False:
-            # Click Historique (not needed, already selected) #####
+        if 1 == len(
+            self.__browser.find_elements(By.LINK_TEXT, "Consommation")
+        ):
             self.click_in_view(
                 By.LINK_TEXT,
-                "Historique",
+                "Consommation",
+                wait_message="Wait for consommation link",
+                click_message="Click on consommation link",
+                delay=4,
+            )
+            time.sleep(2)
+
+        liters_xpath = r"//span[contains(text(), 'Litres')]/parent::node()"
+        if 0 == len(self.__browser.find_elements(By.XPATH, liters_xpath)):
+            # Click Historique, (Liters item not found, so History not shown)
+            self.click_in_view(
+                By.XPATH,
+                r"//*[(self::a and text()='Historique')"
+                r" or (self::span and contains(text(), 'Historique'))]",
                 wait_message="Wait for historique menu",
                 click_message="Click on historique menu",
                 delay=4,
             )
 
-        time.sleep(10)
-
         try:
             # Click Litres #####
             self.click_in_view(
                 By.XPATH,
-                r"//span[contains(text(), 'Litres')]/parent::node()",
+                liters_xpath,
                 wait_message="Wait for button Litres",
                 click_message="Click on button Litres",
                 delay=2,
@@ -3005,8 +3022,9 @@ class HomeAssistantInjector(Injector):
         self.open_url(
             HA_API_SENSOR_FORMAT
             % (
-                "sensor.veolia_%s_total"
-                % (self.configuration[PARAM_VEOLIA_CONTRACT],),
+                "sensor.veolia_{}_total".format(
+                    self.configuration[PARAM_VEOLIA_CONTRACT]
+                ),
             ),
             sensor_data,
         )
