@@ -1093,17 +1093,28 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         delay = 0.1
         # Set the desired text in the clipboard
-        pyperclip.copy(text)
-        # Simulate a paste operation
-        actions = ActionChains(self.__browser)
-        actions.click(element).perform()  # Ensure the element is focused
-        actions.key_down(Keys.CONTROL).send_keys("v").key_up(
-            Keys.CONTROL
-        ).perform()
-        time.sleep(delay)
+        try:
+            pyperclip.copy(text)
+            # Simulate a paste operation
+            actions = ActionChains(self.__browser)
+            actions.click(element).perform()  # Ensure the element is focused
+            actions.key_down(Keys.CONTROL).send_keys("v").key_up(
+                Keys.CONTROL
+            ).perform()
+            time.sleep(delay)
+        except pyperclip.PyperclipException as e:
+            self.mylog(f"Could not use pyperclip {e}.", end="WW")
+
         if element.get_attribute("value") == "":
             # Paste did not work, send keys as backup method
+            self.mylog("Falling back to sending keystrokes.", end="WW")
             element.send_keys(text)
+            final_text = element.get_attribute("value")
+            if final_text != text:
+                self.mylog(
+                    "Contents of field does not match expected text.",
+                    end="WW",
+                )
 
     def set_input_value(self, element, value: str):
         # Use JavaScript to set the value of the input field (untested)
@@ -1559,7 +1570,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Wait for Password ######
             # More than one email element on the page,
             # visibility depends on screen size.
-            self.mylog("Waiting for Password", end="")
+            self.mylog("Waiting for Password.", end="")
 
             ep = EC.visibility_of_any_elements_located(
                 (By.CSS_SELECTOR, r'input[type="password"]')
@@ -1598,7 +1609,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
             # Type Password ########
-            self.mylog("Type Password", end="")
+            self.mylog("Type Password.", end="")
             el_password.clear()
             self.set_clipboard_and_paste(
                 el_password, self.configuration[PARAM_VEOLIA_PASSWORD]
@@ -1611,8 +1622,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.click_in_view(
                 By.CLASS_NAME,
                 "submit-button",
-                wait_message="Waiting for submit button",
-                click_message="Click on submit button",
+                wait_message="Waiting for submit button.",
+                click_message="Click on submit button.",
                 delay=1,
             )
 
@@ -1904,7 +1915,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             # Wait for Password ######
             # More than one email element on the page,
             # visibility depends on screen size.
-            self.mylog("Waiting for Password", end="")
+            self.mylog("Waiting for Password.", end="")
 
             ep = EC.visibility_of_any_elements_located(
                 (By.XPATH, r"//input[@id='veolia_password']")
@@ -1943,7 +1954,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
             # Type Password ########
-            self.mylog("Type Password", end="")
+            self.mylog("Type Password.", end="")
             el_password.clear()
             # el_password.send_keys(self.configuration[PARAM_VEOLIA_PASSWORD])
             self.set_clipboard_and_paste(
@@ -1956,8 +1967,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.click_in_view(
                 By.CLASS_NAME,
                 "btSubmit",
-                wait_message="Waiting for submit button",
-                click_message="Click on submit button",
+                wait_message="Waiting for submit button.",
+                click_message="Click on submit button.",
                 delay=1,
             )
             time.sleep(0.5)  # Small wait after submit
@@ -2014,8 +2025,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         self.click_in_view(
             By.XPATH,
             r"//a[@id='btnExport_histo']",
-            wait_message="Wait for button Telechargement",
-            click_message="Click on button Telechargement",
+            wait_message="Wait for button Telechargement.",
+            click_message="Click on button Telechargement.",
             delay=10,
         )
         self.mylog("Rename downloaded file")
@@ -2111,20 +2122,20 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 self.click_in_view(
                     By.ID,
                     "btn_option_deny_banner",
-                    wait_message="Waiting for cookie popup",
-                    click_message="Click on deny",
+                    wait_message="Waiting for cookie popup.",
+                    click_message="Click on deny.",
                     delay=0,  # random.uniform(1, 2),
                 )
 
             # Wait for Connexion #####
-            self.mylog("Connexion au site GRDF", end="")
+            self.mylog("Connexion au site GRDF.", end="")
 
-            self.mylog("Get url", end="")
+            self.mylog("Get url.", end="")
             self.__browser.get(self.__class__.site_grdf_url)
             self.mylog(st="OK")
 
             # Wait for Email #####
-            self.mylog("Waiting for Email", end="")
+            self.mylog("Waiting for Email.", end="")
             ep = EC.presence_of_element_located(
                 (By.XPATH, r"//input[@name='identifier']")
             )
@@ -2141,7 +2152,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 self.get_screenshot("01_screenshot_before_user.png")
 
             # Type Email #####
-            self.mylog("Type Email", end="")
+            self.mylog("Type Email.", end="")
             el_email.clear()
             el_email.send_keys(self.configuration[PARAM_GRDF_LOGIN])
             self.mylog(st="OK")
@@ -2152,7 +2163,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     By.XPATH,
                     r"//input[@value='Suivant']",
                     # wait_message="",
-                    click_message="Click on connexion",
+                    click_message="Click on connexion.",
                     delay=random.uniform(1, 2),
                 )
                 # Even if click succeeded, not always connected
@@ -2170,7 +2181,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 self.get_screenshot("02_screenshot_after_user_suivant.png")
 
             # Wait for Password #####
-            self.mylog("Waiting for Password", end="")
+            self.mylog("Waiting for Password.", end="")
 
             ep = EC.presence_of_element_located(
                 (By.XPATH, r"//input[@name='credentials.passcode']")
@@ -2185,7 +2196,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             self.mylog(st="OK")
 
             # Type Password #####
-            self.mylog("Type Password", end="")
+            self.mylog("Type Password.", end="")
             # el_password.send_keys(self.configuration[PARAM_GRDF_PASSWORD])
             self.set_clipboard_and_paste(
                 el_password, self.configuration[PARAM_GRDF_PASSWORD]
@@ -2237,7 +2248,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     By.XPATH,
                     CONNEXION_XPATH,
                     # wait_message="",
-                    click_message="Click on connexion",
+                    click_message="Click on connexion.",
                     delay=random.uniform(1, 2),
                 )
                 # Even if click succeeded, not always connected
@@ -2290,8 +2301,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     self.click_in_view(
                         By.ID,
                         "btn_option_deny_banner",
-                        wait_message="Waiting for cookie popup",
-                        click_message="Click on deny",
+                        wait_message="Waiting for cookie popup.",
+                        click_message="Click on deny.",
                         delay=0,  # random.uniform(1, 2),
                     )
                 if self.configuration[PARAM_SCREENSHOT]:
@@ -2302,7 +2313,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                         By.XPATH,
                         CONNEXION_XPATH,
                         # wait_message="",
-                        click_message="Click on connexion",
+                        click_message="Click on connexion.",
                         delay=random.uniform(1, 2),
                         timeout=2,
                     )
@@ -2356,7 +2367,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             try:
                 content = self.__browser.find_element(By.TAG_NAME, "pre").text
             except selenium.common.exceptions.NoSuchElementException:
-                self.mylog("Get data url second time in 5 seconds", end="~~")
+                self.mylog("Get data url second time in 5 seconds.", end="~~")
                 time.sleep(5)
                 self.__browser.get(data_url)
 
@@ -2388,7 +2399,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                                 f" older than {dl_starttime}. {msg}"
                             )
                         else:
-                            self.mylog(f"Got {filename}", end="~~")
+                            self.mylog(f"Got {filename}.", end="~~")
                             with open(filename, encoding="utf_8") as file:
                                 content = file.read()
                 except Exception as e:
@@ -2452,7 +2463,9 @@ class Injector(Worker):
 
             method = row[3]  # "Mesuré" or "Estimé"
             if method in ("Estimé",):
-                self.mylog(f"File contains estimated data in last line: {row}")
+                self.mylog(
+                    f"File contains estimated data in last line: {row}."
+                )
                 # Try previous row which may be a measurement
                 row = p_row
                 p_row = rows[-3]
@@ -2475,7 +2488,7 @@ class Injector(Worker):
                 #  previous real value or higher than the next
                 #  real value)
                 raise RuntimeError(
-                    f"File contains estimated data in last lines: {row!r}"
+                    f"File contains estimated data in last lines: {row!r}."
                 )
 
             # Check line integrity (Date starting with 2 (Year))
@@ -2485,7 +2498,7 @@ class Injector(Worker):
                 d2 = dt.datetime.now()
                 if abs((d2 - d1).days) > 31:
                     raise RuntimeError(
-                        f"File contains too old data (monthly?!?): {row!r}"
+                        f"File contains too old data (monthly?!?): {row!r}."
                     )
                 self.mylog(
                     f"    previous value  {p_date_time}: "
@@ -2680,7 +2693,7 @@ class DomoticzInjector(Injector):
         return j
 
     def sanity_check(self):
-        self.mylog("Check domoticz connectivity", st="--", end="")
+        self.mylog("Check domoticz connectivity.", st="--", end="")
         response = self.open_url("/json.htm?type=command&param=getversion")
         if response["status"].lower() == "ok":
             self.mylog(st="OK")
@@ -2699,7 +2712,7 @@ class DomoticzInjector(Injector):
         else:
             url = f"/json.htm?type=command&param=getdevices&rid={rid}"
 
-        self.mylog("Check domoticz Device", end="")
+        self.mylog("Check domoticz Device.", end="")
         # generate 2 urls, one for historique, one for update
         response = self.open_url(url)
 
@@ -2739,7 +2752,7 @@ class DomoticzInjector(Injector):
             else:
                 self.mylog(
                     "wrong sensor type. Go to Domoticz/Hardware"
-                    ' - Create a pseudo-sensor type "Managed Counter"',
+                    ' - Create a pseudo-sensor type "Managed Counter".',
                     st="EE",
                 )
                 properly_configured = False
@@ -2751,7 +2764,7 @@ class DomoticzInjector(Injector):
             else:
                 self.mylog(
                     "wrong sensor type. Go to Domoticz/Hardware"
-                    ' - Create a pseudo-sensor type "Managed Counter"',
+                    ' - Create a pseudo-sensor type "Managed Counter".',
                     st="EE",
                 )
                 properly_configured = False
@@ -2766,9 +2779,9 @@ class DomoticzInjector(Injector):
             else:
                 self.mylog(
                     "wrong switch type. Go to Domoticz"
-                    " - Select your counter"
-                    " - click edit"
-                    " - change type to water",
+                    " - Select your counter;"
+                    " - click edit;"
+                    " - change type to water.",
                     st="EE",
                 )
                 properly_configured = False
@@ -2783,9 +2796,9 @@ class DomoticzInjector(Injector):
             else:
                 self.mylog(
                     "wrong counter divided. Go to Domoticz"
-                    " - Select your counter"
-                    " - click edit"
-                    ' - set "Counter Divided" to 1000',
+                    " - Select your counter;"
+                    " - click edit;"
+                    ' - set "Counter Divided" to 1000.',
                     st="EE",
                 )
                 properly_configured = False
@@ -2800,16 +2813,16 @@ class DomoticzInjector(Injector):
             else:
                 self.mylog(
                     "wrong value for meter offset. Go to Domoticz"
-                    " - Select your counter"
-                    " - click edit"
-                    ' - set "Meter Offset" to 0',
+                    " - Select your counter;"
+                    " - click edit;"
+                    ' - set "Meter Offset" to 0.',
                     st="EE",
                 )
                 properly_configured = False
 
             if properly_configured is False:
                 raise RuntimeError(
-                    "Set your device correctly and run the script again"
+                    "Set your device correctly and run the script again."
                 )
 
     def update_veolia_device(self, csv_file):
@@ -2869,12 +2882,12 @@ class DomoticzInjector(Injector):
 
         # Update Dashboard
         if url_current:
-            self.mylog("    update current value", end="")
+            self.mylog("    update current value.", end="")
             self.open_url(url_current)
             self.mylog(st="OK")
 
         if url_daily:
-            self.mylog("    update daily value", end="")
+            self.mylog("    update daily value.", end="")
             self.open_url(url_daily)
             self.mylog(st="OK")
 
@@ -2976,7 +2989,7 @@ class HomeAssistantInjector(Injector):
         return j
 
     def sanity_check(self):
-        self.mylog("Check Home Assistant connectivity", st="--", end="")
+        self.mylog("Check Home Assistant connectivity.", st="--", end="")
         response = self.open_url("/api/")
         if response["message"] == "API running.":
             self.mylog(st="OK")
@@ -2984,7 +2997,7 @@ class HomeAssistantInjector(Injector):
             self.mylog(st="EE")
             if "result" not in response:
                 raise RuntimeError(
-                    "No valid response '%s' from %s"
+                    "No valid response '%s' from %s."
                     % (
                         response["message"],
                         self.configuration[PARAM_HA_SERVER],
@@ -3045,7 +3058,9 @@ class HomeAssistantInjector(Injector):
 
             method = row[3]  # "Mesuré" or "Estimé"
             if method in ("Estimé",):
-                self.mylog(f"File contains estimated data in last line: {row}")
+                self.mylog(
+                    f"File contains estimated data in last line: {row}."
+                )
                 # Try previous row which may be a measurement
                 row = p_row
                 p_row = rows[-3]
@@ -3061,14 +3076,14 @@ class HomeAssistantInjector(Injector):
             p_meter_period_total = p_row[2]
 
             if method in ("Estimé",):
-                self.mylog("    Skip Method " + method)
+                self.mylog(f"    Skip Method {method}.")
                 # Do not use estimated values which may result
                 # in a total that is not increasing
                 # (when the estimated value is smaller than the
                 #  previous real value or higher than the next
                 #  real value)
                 raise RuntimeError(
-                    f"File contains estimated data in last lines: {row!r}"
+                    f"File contains estimated data in last lines: {row!r}."
                 )
 
             # Check line integrity (Date starting with 2 (Year))
@@ -3078,7 +3093,7 @@ class HomeAssistantInjector(Injector):
                 d2 = dt.datetime.now()
                 if abs((d2 - d1).days) > 31:
                     raise RuntimeError(
-                        f"File contains too old data (monthly?!?): {row!r}"
+                        f"File contains too old data (monthly?!?): {row!r}."
                     )
                 self.mylog(
                     f"    previous value  {p_date_time}: "
@@ -3253,7 +3268,7 @@ class HomeAssistantInjector(Injector):
             state = get_state_file(self.configuration[STATE_FILE])
             if "grdf" in state:
                 grdf_state = state["grdf"]
-                self.mylog(f"grdf_state: {grdf_state!r}", "~~")
+                self.mylog(f"grdf_state: {grdf_state!r}.", "~~")
                 previous_kWh = float(grdf_state["state"])
                 previous_date_str = grdf_state["attributes"]["date_time"]
                 previous_date = dt.datetime.fromisoformat(previous_date_str)
@@ -3322,7 +3337,7 @@ class HomeAssistantInjector(Injector):
                         f" ({row_date_time})"
                         " is lower"
                         f" than old index {previous_m3} m³ ({previous_date})."
-                        " Error in source or old data - stopping",
+                        " Error in source or old data - stopping.",
                         st="EE",
                     )
                     break
@@ -3337,7 +3352,7 @@ class HomeAssistantInjector(Injector):
         # Has data (latest data)
         if date_time is None:
             self.mylog(
-                "    No new data, no update",
+                "    No new data, no update.",
                 st="WW",
             )
             if entity_data is not None:
@@ -3351,7 +3366,7 @@ class HomeAssistantInjector(Injector):
                 f"    update value is {date_time.isoformat()}:"
                 f" {meter_m3_total} m³ -"
                 f" {current_total_kWh} kWh -"
-                f" {meter_kWh_day} kWh",
+                f" {meter_kWh_day} kWh.",
                 end="",
             )
 
