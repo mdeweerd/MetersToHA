@@ -1699,21 +1699,28 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             contract_link = None
             if number_of_active_contracts == 0:
-                self.mylog("Error: no active contract", st="EE")
+                # SEDIF nouvelle UI : pas de lien cliquable, l'historique est deja affiche
+                self.mylog("No clickable contract found - continue", st="OK")
             elif number_of_active_contracts == 1:
                 contract_link = contract_link_els[0]
                 self.mylog(st="OK")
 
-            if contract_link is None:
-                contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
-                contract_link = self.__browser.find_element(
-                    By.XPATH,
-                    r"//div["
-                    + r"@class='fra-contrat-table-row'"
-                    + r"]//span[contains(@class, 'link')]/a[text()='"
-                    + contract_id
-                    + r"']",
-                )
+            
+                if contract_link is None:
+                    # Nouvelle UI : le contrat peut ne PAS etre cliquable ; on essaie un XPath plus tolerant
+                    contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
+                    xpath = (
+                        f"//div[contains(@class,'fra-contract-detail-link')]//a[contains(normalize-space(.), '{contract_id}')]"
+                        f" | //a[contains(normalize-space(.), '{contract_id}')]"
+                    )
+                    links = self.__browser.find_elements(By.XPATH, xpath)
+                    contract_link = links[0] if links else None
+
+                if contract_link is not None:
+                    # click robuste (evite element not interactable)
+                    self.__browser.execute_script("arguments[0].scrollIntoView(true);", contract_link)
+                    self.__browser.execute_script("arguments[0].click();", contract_link)
+
                 if False:
                     self.click_in_view(
                         By.LINK_TEXT,
