@@ -447,6 +447,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     # site_url = "https://rock-vedif.my.site.com/Particulier/s/"
     site_url = "https://connexion.leaudiledefrance.fr/s/login/"
+    site_url_post_login = "https://connexion.leaudiledefrance.fr/espace-particuliers/s/historique"
     site_service_eau_veolia_fr = (
         "https://www.service.eau.veolia.fr/home"
         "/eau-dans-la-ville/accueil_eau.html"
@@ -1669,6 +1670,31 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         time.sleep(1)
 
         self.__browser.switch_to.default_content()
+        # --- Bypass SEDIF: aller directement sur la page Historique ---
+        try:
+            # Si "url" est passé dans la conf, on le privilégie ; sinon fallback sur /s/historique
+            target_url = (self.configuration.get(PARAM_URL, "") or "").strip() \
+                        or self.__class__.site_url_post_login
+            self.__browser.get(target_url)
+            self.mylog(f"DEBUG URL after nav: {self.__browser.current_url}", st="~~")
+
+            # Attendre qu’on voie un des contrôles clés de la page Historique
+            self.__wait.until(
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Conso')] | //button[contains(., 'Consommation')]")),
+                    EC.presence_of_element_located((By.XPATH, "//span[contains(., 'Litres')]")),
+                    EC.presence_of_element_located((By.XPATH, "//span[contains(., 'Jours')]")),
+                    EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Téléchargement')] | //a[contains(., 'Téléchargement') or contains(., 'Télécharger')]"))
+                )
+            )
+
+            # Court-circuit: ne tente pas la logique de sélection de contrat
+            hasMultipleContractFlow = False
+            contract_link = None
+            self.mylog("Bypass contract selection: already on Historique", st="OK")
+        except Exception as e:
+            self.mylog(f"Historique bypass failed: {e}", st="WW")
+        # --- fin bypass ---
 
         try:
             multipleContracts_element = self.__browser.find_element(
