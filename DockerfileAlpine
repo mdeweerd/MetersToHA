@@ -1,5 +1,5 @@
 ## Start from the official Alpine image
-FROM alpine:3.17
+FROM alpine:3.21
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
@@ -31,12 +31,14 @@ RUN apk add --no-cache \
         py3-trio \
         py3-paho-mqtt \
         py3-pyperclip \
-  && pip install \
-        'urllib3>=1.24.2' \
-        'colorama>=0.3.7' \
-        'selenium>=3.14.1' \
-        'PyVirtualDisplay>=0.2.4' \
-        'requests>=2.23.0'
+        py3-urllib3 \
+        py3-requests
+
+RUN python3 -m venv /venv
+RUN /venv/bin/pip install selenium PyVirtualDisplay
+
+ENV PATH="/venv/bin:$PATH"
 
 RUN addgroup -g 1000 docker &&  adduser -D -u 1000 -G docker docker && apk add alpine-conf && setup-keymap fr fr
+RUN echo "source /venv/bin/activate" >> ~/.profile
 
