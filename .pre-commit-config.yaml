@@ -144,13 +144,16 @@ repos:
     rev: v3.0.1
     hooks:
       - id: docker-compose-check
-  - repo: https://github.com/lovesegfault/beautysh.git
-    rev: v6.2.1
+  # - repo: https://github.com/lovesegfault/beautysh.git
+  #   rev: v6.2.1
+  # Version from PR to avoid error
+  - repo: https://github.com/CongLuanTran/beautysh
+    rev: 70a275ae7b6f92f828c383ecc67b274d0e737aef
     hooks:
       - id: beautysh
         exclude: (run.sh)$
-        additional_dependencies:
-          - setuptools
+        # additional_dependencies:
+        #   - setuptools
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.5
     hooks:
