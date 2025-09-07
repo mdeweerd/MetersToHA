@@ -709,7 +709,7 @@ ajouter un automatisme à votre configuration Home Assistant comme ceci:
 
 ```yaml
 alias: Veolia
-description: Déclencher l'événement qui démarre l'application MetersToHa sous
+description: Déclencher l'événement qui démarre l'application MetersToHa sous 
   AppDaemon
 trigger:
   - platform: time_pattern
@@ -719,7 +719,7 @@ trigger:
 condition: []
 action:
   - delay: '{{ range(0, 90*60+1) | random }}'
-    alias: Avec un délai variable pour ne pas charger le serveur tous en même
+    alias: Avec un délai variable pour ne pas charger le serveur tous en même 
       temps.
   - event: call_meters_to_ha
     event_data: {}
@@ -758,7 +758,7 @@ condition:
       > 17*3600 }}
 action:
   - delay: '{{ range(0, 55*60+1) | random }}'
-    alias: Avec un délai variable pour ne pas charger le serveur tous en même
+    alias: Avec un délai variable pour ne pas charger le serveur tous en même 
       temps.
   - event: call_grdf
     event_data: {}
