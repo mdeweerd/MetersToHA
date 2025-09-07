@@ -111,8 +111,7 @@ fournisseurs suivants :
 
 - [Veolia IDF - https://www.vedif.eau.veolia.fr](https://www.vedif.eau.veolia.fr/)
   valable pour Veolia en IDF.\
-  Vous pouvez trouver votre portail en
-  fonction de la ville en visitant
+  Vous pouvez trouver votre portail en fonction de la ville en visitant
   [https://www.eau.veolia.fr](https://www.eau.veolia.fr/)> CONNECTEZ-VOUS.
 - [GRDF - https://monespace.grdf.fr](https://monespace.grdf.fr/client/particulier/accueil).
 
@@ -124,9 +123,8 @@ Il y a différentes options pour mettre en place MetersToHA:
   - Avec 'AppDaemon', comme 'composant'.
 
 Après l'installation proprement dit, il faudra configurer MetersToHA.\
-Cela
-implique soit la création d'un fichier de configuration JSON, soit - avec
-le add-on MetersToHA sous Home Assistant OS - le remplissage de la
+Cela implique soit la création d'un fichier de configuration JSON, soit -
+avec le add-on MetersToHA sous Home Assistant OS - le remplissage de la
 configuration dans l'interface.
 
 Et "enfin", il faudra provoquer l'exécution de MetersToHA.
@@ -205,26 +203,24 @@ Exemple de configuration:
 ```
 
 Les fournisseurs consultables dépendent des paramètres renseignés.\
-C.a.d.
-qu'il convient de supprimer les clefs inutiles, remplacer "2captcha_token"
-par "capmonster_token" ou "captchaai_token" en fonction de votre service,
-modifiez la valeur de "type" en fonction de votre plateforme.
+C.a.d. qu'il convient de supprimer les clefs inutiles, remplacer
+"2captcha_token" par "capmonster_token" ou "captchaai_token" en fonction de
+votre service, modifiez la valeur de "type" en fonction de votre
+plateforme.
 
 Explication des champs:
 
 - `veolia_login`, `veolia_password`: `veolia_contract` :\
-  Les informations
-  de login sur le site de Veolia, et le numéro de votre contrat.
+  Les informations de login sur le site de Veolia, et le numéro de votre
+  contrat.
 
 - `veolia_website` :\
   Le site web de veolia qui vous concerne.\
-  Par défaut
-  "IDF"\
+  Par défaut "IDF"\
   Valeurs acceptées : "IDF" ou "service.eau.veolia.fr".
 
 - `veolia_load_historical_data` :\
-  Chargement des données historiques de
-  Veolia\
+  Chargement des données historiques de Veolia\
   :warning: : dépendance avec spook.
 
 - `grdf_login`, `grdf_password`, `grdf_pce`: Les informations de login sur
@@ -243,48 +239,39 @@ Explication des champs:
   Seulement pour Home Assistant
 
 - Paramètre pour résolution de captcha.\
-  Seulement si vous souhaitez
-  résoudre les captchas automatiquement (GRDF, sinon vous devez utiliser
-  --display qui nécessite un serveur X).\
-  Un débat assez complet concernant
-  ce type de service est dans
+  Seulement si vous souhaitez résoudre les captchas automatiquement (GRDF,
+  sinon vous devez utiliser --display qui nécessite un serveur X).\
+  Un débat assez complet concernant ce type de service est dans
   [cet issue d'un autre projet](https://github.com/iv-org/invidious/issues/1256).
   Inutile d'ouvrir un issue de débat ici, sauf pour proposer une
   alternative s'appuyant (moins) sur l'humain.\
-  Pour Veolia, vous n'avez
-  pas besoin de ce type de service.\
-  1,07 captchas/jour ont du être résolus
-  en moyenne dans une configuration ou Meters2HA est exécuté jusqu'à deux
-  fois par soir (au cas ou le premier appel n'a pas donné de résultat).
-  Pour 27% des jours, aucune résolution n'était nécessaire, pour 55% une
-  seule résolution, et pour 18%, 2 résolutions.\
-  <a id="captcha"></a>Trois
-  services sont compatibles, ajouté le paramètre du service choisi, les
-  estimations sont sur la base des tarifs et observations en aout 2023:
+  Pour Veolia, vous n'avez pas besoin de ce type de service.\
+  1,07 captchas/jour ont du être résolus en moyenne dans une configuration
+  ou Meters2HA est exécuté jusqu'à deux fois par soir (au cas ou le premier
+  appel n'a pas donné de résultat). Pour 27% des jours, aucune résolution
+  n'était nécessaire, pour 55% une seule résolution, et pour 18%, 2
+  résolutions.\
+  <a id="captcha"></a>Trois services sont compatibles, ajouté le paramètre
+  du service choisi, les estimations sont sur la base des tarifs et
+  observations en aout 2023:
 
   - <a id="2captcha"></a>`2captcha_token`: 3€ - ±1000 captchas - environ
-    2.5 ans (choisir
-    Paypal).\
+    2.5 ans (choisir Paypal).\
     [2captcha.com](https://2captcha.com/?from=16639177).\
-    2captcha
-    indique que les captchas sont résolus par des personnes.
+    2captcha indique que les captchas sont résolus par des personnes.
   - <a id="captchamonster"></a>`capmonster_token`: $6 - ±10000 captchas -
-    environ 25
-    ans.\
+    environ 25 ans.\
     [capmonster.cloud](https://capmonster.cloud/SelectPaymentType).\
-    Montant
-    minimum $6 pour environ 10000 captchas (paypal), soit 25 ans. Zennolabs
-    indique que les captchas sont résolus automatiquement (par machine).
+    Montant minimum $6 pour environ 10000 captchas (paypal), soit 25 ans.
+    Zennolabs indique que les captchas sont résolus automatiquement (par
+    machine).
   - <a id="captchaai"></a>`captchaai_token`: Offert (demande mensuelle) ou
     $15/mois soit $180/an.\
-    [CaptchaAI](https://captchaai.com/?from=151169)
-    vous permet de
+    [CaptchaAI](https://captchaai.com/?from=151169) vous permet de
     [renouveler sur demande mensuel un token valable un mois après chaque activation](.github/miscdoc/CaptchaAI.md).\
-    Cela
-    semble contraignant mais vous permet de démarrer.\
-    Bien suivre
-    <a href=".github/miscdoc/CaptchaAI.md" target="_blank">la procédure</a>
-    à chaque fois.
+    Cela semble contraignant mais vous permet de démarrer.\
+    Bien suivre <a href=".github/miscdoc/CaptchaAI.md" target="_blank">la
+    procédure</a> à chaque fois.
 
 - `type`: "ha" pour Home Assistant, "domoticz" pour Domoticz, "url" pour
   écrire vers un fichier ou "POST"er vers une URL, "mqtt" pour MQTT.
@@ -340,14 +327,14 @@ complémentaire MetersToHA sous HAOS.
 | --server-type `SERVER_TYPE`                   | Type de destination 'url', 'ha', 'dom', 'mqtt'. Si 'url', le paramètre '--url' est nécessaire                                                          |
 | --url URL                                     | Destination du fichier récupéré: Autre fichier (file://...) ou URL web pour une requête POST (http(s)://...)                                           |
 | --skip-download                               | Ne télécharge pas le fichier mais utilise le fichier déjà en place, utile pour utiliser un fichier téléchargé interactivement ou bien pour le débogue. |
-| --chrome-version CHROME_VERSION               | La version (principale) de chrome lorsque `undetected-chromedriver` est installé.  Un nombre tel que 109, 110, ... .                                   |
+| --chrome-version CHROME_VERSION               | La version (principale) de chrome lorsque `undetected-chromedriver` est installé. Un nombre tel que 109, 110, ... .                                    |
 
 Lorsqu'une option est à la fois disponible dans le fichier de configuration
 que comme option en ligne de commande, la ligne de commande prend la
 priorité.\
-Par exemple, l'option `server-type` est la même que `type` dans
-le fichier de configuration. Ce qui permet par exemple d'effectuer un
-transfert vers un web service en spécifiant
+Par exemple, l'option `server-type` est la même que `type` dans le fichier
+de configuration. Ce qui permet par exemple d'effectuer un transfert vers
+un web service en spécifiant
 `--server-type url --url https://mon-service.web --skip-download`.
 
 ## Installation avec Home Assistant OS
@@ -439,10 +426,9 @@ il faut cliquer "Créer un jeton":
 L'installation avec
 [AppDaemon](https://appdaemon.readthedocs.io/en/latest/INSTALL.html) permet
 d'utiliser la même machine que celle de HomeAssistant OS (HAOS) et
-nécessite environ 500Mo pour l'installation de AppDaemon et les
-paquets.\
-C'est un peu plus complexe à mettre en place que la methode
-"Module Complémentaire".
+nécessite environ 500Mo pour l'installation de AppDaemon et les paquets.\
+C'est un peu plus complexe à mettre en place que la methode "Module
+Complémentaire".
 
 Une fois AppDaemon installé, vous pourrez ajouter MetersToHA
 [HACS](https://hacs.xyz/) après
@@ -469,10 +455,9 @@ Les scripts sont placés dans le répertoire
 :warning: Si vous aviez une installation d'avant 2023.11, le chemin
 `/config` a changé en `/homeassistant` - d'ou l'ajout des `init_commands`
 et la modification de la configuration `apps.yaml`.\
-La configuration de
-appdaemon est sous `/addon_configs/a0d7b954_appdaemon`. Suite à ce
-déplacement de répertoire (/config -> /homeassistant), il faut mettre le
-bon chemin vers les ssecrets dans
+La configuration de appdaemon est sous `/addon_configs/a0d7b954_appdaemon`.
+Suite à ce déplacement de répertoire (/config -> /homeassistant), il faut
+mettre le bon chemin vers les ssecrets dans
 `/addon_configs/a0d7b954_appdaemon/appdaemon.yaml`:
 `secrets: /homeassistant/secrets.yaml`.
 
@@ -603,8 +588,7 @@ DISPLAY et l'autorisation d'accès depuis la machine.\
 Par exemple avec
 
 - [Mobaxterm Portable](https://mobaxterm.mobatek.net/download-home-edition.html).\
-  Recommandé
-  car:
+  Recommandé car:
   - "Sans installation";
   - Lance un Serveur X automatiquement;
   - Un popop pour demander l'autorisation lorsque le process tente de se
@@ -665,8 +649,7 @@ Extrait de la fin d'une trace:
 La configuration c'est presque comme pour Veolia IDF. Comme la consommation
 GAZPAR est plutôt disponible en fin de journée, il est intéressant de
 consulter GRDF vers 21h par exemple.\
-Je recommande donc de personnaliser
-l'`event_name`.
+Je recommande donc de personnaliser l'`event_name`.
 
 Pour GRDF un captcha est présent sur la page et depuis Janvier 2023 les
 scripts "simples" ne suffisent plus.
@@ -726,7 +709,8 @@ ajouter un automatisme à votre configuration Home Assistant comme ceci:
 
 ```yaml
 alias: Veolia
-description: Déclencher l'événement qui démarre l'application MetersToHa sous AppDaemon
+description: Déclencher l'événement qui démarre l'application MetersToHa sous 
+  AppDaemon
 trigger:
   - platform: time_pattern
     hours: '1'
@@ -735,7 +719,8 @@ trigger:
 condition: []
 action:
   - delay: '{{ range(0, 90*60+1) | random }}'
-    alias: Avec un délai variable pour ne pas charger le serveur tous en même temps.
+    alias: Avec un délai variable pour ne pas charger le serveur tous en même 
+      temps.
   - event: call_meters_to_ha
     event_data: {}
     alias: Déclenche l'événement définit dans la configuration 'AppDaemon'
@@ -773,7 +758,8 @@ condition:
       > 17*3600 }}
 action:
   - delay: '{{ range(0, 55*60+1) | random }}'
-    alias: Avec un délai variable pour ne pas charger le serveur tous en même temps.
+    alias: Avec un délai variable pour ne pas charger le serveur tous en même 
+      temps.
   - event: call_grdf
     event_data: {}
 mode: single
@@ -808,8 +794,8 @@ Prérequis :
 - Créer un Matériel de Type "Dummy" depuis Domoticz> Setup> Hardware
 
 - Créer un "Virtual Sensor" de type : "Managed Counter".\
-  Pour cela, depuis
-  la ligne du Matériel Dummy, cliquer sur le bouton dédié.
+  Pour cela, depuis la ligne du Matériel Dummy, cliquer sur le bouton
+  dédié.
 
 - Configurer le sensor depuis Domoticz> Utility. Utiliser le bouton "Edit"
   de votre sensor dans l'onglet devices.
@@ -920,8 +906,7 @@ conteneur Docker ne tourne pas en tache de fond - il n'est pas prévu pour
 automatiser la tache par lui-même.
 
 Sous Windows vous pourrez utiliser l'outil "Planificateur de tâches".\
-Sous
-Linux, vous utiliserez cron (crontab).
+Sous Linux, vous utiliserez cron (crontab).
 
 Pour mettre à jour une image docker, il faut recourir à 'build'. Exemple:
 
@@ -1002,8 +987,8 @@ Ensuite vous devez [installer MetersToHA](#installation-de-meterstoha).
 Pour le lancement sous Windows, vous devez renseigner les chemins de
 `chrome` et `chromedriver` (absolu ou relatifs depuis là ou vous lancez le
 script).\
-Vous pouvez omettre `chromedriver` si vous avez installé le
-module `undetected-chromedriver`.
+Vous pouvez omettre `chromedriver` si vous avez installé le module
+`undetected-chromedriver`.
 
 Un exemple d'un fichier de configuration est:
 
@@ -1034,10 +1019,9 @@ captcha ou pas.
 
 Sinon, pour la résolution du captcha sous Windows en mode interactif,
 l'option `--display` est nécessaire. Lorsque le popup apparait, vous\
-devez
-le captcha et le valider. Cliquez le bouton "Connexion" également. Si le
-captcha est validé automatiquement, le script avance automatiquement comme
-en mode caché et vous n'aurez pas à résoudre de captcha.
+devez le captcha et le valider. Cliquez le bouton "Connexion" également. Si
+le captcha est validé automatiquement, le script avance automatiquement
+comme en mode caché et vous n'aurez pas à résoudre de captcha.
 
 Exemple de lancement, avec un fichier de configuration appelée
 `winconfig.json`, avec une capture d'écran avant connexion.
@@ -1060,13 +1044,12 @@ Vous pouvez planifier l'exécution de la tâche sous Windows.
 
 Pour y parvenir, cherchez `Planificateur de tâches` dans la zone de
 recherche windows.\
-Choissez "Créer une tâche de base" et suivre le
-processus. Choississez "Tous les jours" et "Démarrez le" à une heure qui
-sera celle de tous les jours. Puis "Démarrer un programme".\
-Il est ensuite
-important de choisir votre `pythonw.exe` comme programme, les paramètres et
-"Commencez dans" qui doit correspondre au chemin de MetersToHA (contenant
-le sous-répertoire apps).
+Choissez "Créer une tâche de base" et suivre le processus. Choississez
+"Tous les jours" et "Démarrez le" à une heure qui sera celle de tous les
+jours. Puis "Démarrer un programme".\
+Il est ensuite important de choisir votre `pythonw.exe` comme programme,
+les paramètres et "Commencez dans" qui doit correspondre au chemin de
+MetersToHA (contenant le sous-répertoire apps).
 
 ![](images/Win11PlanificationTache.png)
 
@@ -1077,8 +1060,8 @@ pourrez y ajuster également d'autres paramètres (voir les onglets).
 Trouvez la tache dans "Bibliothèque du Planificateur de tâches" et faites
 "Exécuter" (dans le menu accessible par clique droit de la tâche) afin de
 vérifier que cela fonctionne (vérifiez les fichiers de sortie).\
-Quand cela
-ne fonctionne pas, assurez-vous que tous les chemins sont corrects.
+Quand cela ne fonctionne pas, assurez-vous que tous les chemins sont
+corrects.
 
 ### Installation de MetersToHA
 
@@ -1086,9 +1069,8 @@ Vous pouvez extraire les fichiers de ce dépôt ou vous voulez.
 
 Le script `apps/meters_to_ha/meters_to_ha.py` et son fichier de
 configuration `config.json` suffisent (en sus des prérequis).\
-Le fichier
-`config.json.exemple` peut servir comme base pour réaliser votre fichier de
-configuration.
+Le fichier `config.json.exemple` peut servir comme base pour réaliser votre
+fichier de configuration.
 
 En utilisant git, vous facilitez la mise à jour, sinon téléchargez
 l'archive.
@@ -1238,13 +1220,11 @@ vous pourrez utiliser le mode débogue.
 ## Principe de fonctionnement
 
 L'outil simule la visite du site a grâce à l'outil `selenium`.\
-Il procède
-alors aux étapes d'identification, parcourt les pages autant que
+Il procède alors aux étapes d'identification, parcourt les pages autant que
 nécessaire, et télécharge un fichier d'historique adéquat.\
-Ce fichier est
-alors décortiqué pour en extraire les informations utiles.\
-Ces données
-sont ensuite envoyés au système domotique choisi à travers son API.
+Ce fichier est alors décortiqué pour en extraire les informations utiles.\
+Ces données sont ensuite envoyés au système domotique choisi à travers son
+API.
 
 `Selenium` exécute un navigateur Firefox ou Chromium en mode "Headless".
 
@@ -1285,9 +1265,9 @@ A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
   `{"code":500,"message":"Internal Server Error"}` (visible dans
   `historique_gazpar.json`).
   - Que faire?\
-    Vérifiez `historique_gazpar.json` et si le problème n'est
-    pas ponctuel, vérifiez d'abord sur votre compte GRDF. Sinon ouvrir un
-    ticket avec les informations.
+    Vérifiez `historique_gazpar.json` et si le problème n'est pas ponctuel,
+    vérifiez d'abord sur votre compte GRDF. Sinon ouvrir un ticket avec les
+    informations.
 - Absence de données (GRDF) :
   - Parfois c'est le message interne trouvé dans `historique_gazpar.json`.
     Du coup, les données ultérieures ne sont pas interprétées car il a été
@@ -1296,8 +1276,8 @@ A noter qu'Ubuntu supporte probablement aussi la solution avec Chromium.
   - Peut aussi être dû à une erreur dans les données restituées (comme pour
     le #13). Vérifiez dans les traces si cela perdure.
   - Que faire?\
-    Patienter/vérifier le contenu de `historique_gazpar.json`.
-    Vérifier que c'est cohérent avec votre compte GRDF.
+    Patienter/vérifier le contenu de `historique_gazpar.json`. Vérifier que
+    c'est cohérent avec votre compte GRDF.
 
 ## Remerciements/Contributeurs
 
