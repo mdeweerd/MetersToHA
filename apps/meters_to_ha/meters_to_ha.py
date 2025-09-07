@@ -447,7 +447,10 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     # site_url = "https://rock-vedif.my.site.com/Particulier/s/"
     site_url = "https://connexion.leaudiledefrance.fr/s/login/"
-    site_url_post_login = "https://connexion.leaudiledefrance.fr/espace-particuliers/s/historique"
+    site_url_post_login = (
+        "https://connexion.leaudiledefrance.fr"
+        "/espace-particuliers/s/historique"
+    )
     site_service_eau_veolia_fr = (
         "https://www.service.eau.veolia.fr/home"
         "/eau-dans-la-ville/accueil_eau.html"
@@ -1233,7 +1236,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         if False:
             captcha_results = "XXXXMARIOXXXXMARIO"
             SELECT_SCRIPT_TEMPLATE = """
-               document.querySelector('[name="g-recaptcha-response"]').innerText='{}'
+               document.querySelector('[name="g-recaptcha-response"]')
+                   .innerText='{}'
             """
             select_script = SELECT_SCRIPT_TEMPLATE.format(captcha_results)
             # print(f"select_script}\n")
@@ -1459,7 +1463,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def chrome_getDownloadedFileName(self, waitTime: float) -> str | None:
         """Get downloaded filename in chrome"""
-        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/
+        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/ # noqa
         self.__browser.execute_script("window.open()")
         time.sleep(20)
         # switch to new tab
@@ -1497,7 +1501,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
     def ff_getDownloadedFileName(self, waitTime: float) -> str | None:
         """Wait and get last downloaded file"""
-        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/
+        # https://itecnote.com/tecnote/python-selenium-give-file-name-when-downloading/ # noqa
         self.__browser.execute_script("window.open()")
         WebDriverWait(self.__browser, 10).until(EC.new_window_is_opened)
         self.__browser.switch_to.window(self.__browser.window_handles[-1])
@@ -1670,28 +1674,52 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         time.sleep(1)
 
         self.__browser.switch_to.default_content()
-        # --- Bypass SEDIF: aller directement sur la page Historique ---
+        # --- Bypass SEDIF: Accès directly "Historique" page ---
         try:
-            # Si "url" est passé dans la conf, on le privilégie ; sinon fallback sur /s/historique
-            target_url = (self.configuration.get(PARAM_URL, "") or "").strip() \
-                        or self.__class__.site_url_post_login
-            self.__browser.get(target_url)
-            self.mylog(f"DEBUG URL after nav: {self.__browser.current_url}", st="~~")
+            # If "url" is provided in the configuration, use it ;
+            # otherwise fallback to /s/historique
 
-            # Attendre qu’on voie un des contrôles clés de la page Historique
+            target_url = (
+                self.configuration.get(PARAM_URL, "") or ""
+            ).strip() or self.__class__.site_url_post_login
+            self.__browser.get(target_url)
+            self.mylog(
+                f"DEBUG URL after nav: {self.__browser.current_url}", st="~~"
+            )
+
+            # Wait for expected controls from the "Historique" page
             self.__wait.until(
                 EC.any_of(
-                    EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Conso')] | //button[contains(., 'Consommation')]")),
-                    EC.presence_of_element_located((By.XPATH, "//span[contains(., 'Litres')]")),
-                    EC.presence_of_element_located((By.XPATH, "//span[contains(., 'Jours')]")),
-                    EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Téléchargement')] | //a[contains(., 'Téléchargement') or contains(., 'Télécharger')]"))
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            "//button[contains(., 'Conso')]"
+                            " | //button[contains(., 'Consommation')]",
+                        )
+                    ),
+                    EC.presence_of_element_located(
+                        (By.XPATH, "//span[contains(., 'Litres')]")
+                    ),
+                    EC.presence_of_element_located(
+                        (By.XPATH, "//span[contains(., 'Jours')]")
+                    ),
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            "//button[contains(., 'Téléchargement')]"
+                            " | //a[contains(., 'Téléchargement')"
+                            " or contains(., 'Télécharger')]",
+                        )
+                    ),
                 )
             )
 
             # Court-circuit: ne tente pas la logique de sélection de contrat
             hasMultipleContractFlow = False
             contract_link = None
-            self.mylog("Bypass contract selection: already on Historique", st="OK")
+            self.mylog(
+                "Bypass contract selection: already on Historique", st="OK"
+            )
         except Exception as e:
             self.mylog(f"Historique bypass failed: {e}", st="WW")
         # --- fin bypass ---
@@ -1725,27 +1753,33 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             contract_link = None
             if number_of_active_contracts == 0:
-                # SEDIF nouvelle UI : pas de lien cliquable, l'historique est deja affiche
+                # SEDIF: "Historique" already shown (no clickable link)
                 self.mylog("No clickable contract found - continue", st="OK")
             elif number_of_active_contracts == 1:
                 contract_link = contract_link_els[0]
                 self.mylog(st="OK")
 
-            
                 if contract_link is None:
-                    # Nouvelle UI : le contrat peut ne PAS etre cliquable ; on essaie un XPath plus tolerant
-                    contract_id = str(self.configuration[PARAM_VEOLIA_CONTRACT])
+                    # SEDIF: Contract may not be clickable, try broader XPATH
+                    contract_id = str(
+                        self.configuration[PARAM_VEOLIA_CONTRACT]
+                    )
                     xpath = (
-                        f"//div[contains(@class,'fra-contract-detail-link')]//a[contains(normalize-space(.), '{contract_id}')]"
-                        f" | //a[contains(normalize-space(.), '{contract_id}')]"
+                        "//div[contains(@class,'fra-contract-detail-link')]"
+                        f"//a[contains(normalize-space(.), '{contract_id}')] "
+                        f"| //a[contains(normalize-space(.), '{contract_id}')]"
                     )
                     links = self.__browser.find_elements(By.XPATH, xpath)
                     contract_link = links[0] if links else None
 
                 if contract_link is not None:
                     # click robuste (evite element not interactable)
-                    self.__browser.execute_script("arguments[0].scrollIntoView(true);", contract_link)
-                    self.__browser.execute_script("arguments[0].click();", contract_link)
+                    self.__browser.execute_script(
+                        "arguments[0].scrollIntoView(true);", contract_link
+                    )
+                    self.__browser.execute_script(
+                        "arguments[0].click();", contract_link
+                    )
 
                 if False:
                     self.click_in_view(
