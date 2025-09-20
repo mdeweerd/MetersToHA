@@ -45,6 +45,7 @@ schema:
   ha_server: url?
   ha_token: password?
   timeout: int(1,300)
+  post_login_url: url?
   veolia_contract: "match(^\\d+$)?"
   veolia_login: email?
   veolia_password: password?

@@ -45,7 +45,7 @@ git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout M
 
 echo "Generate configuration file"
 
-keys="log_level logs_folder veolia_login veolia_password veolia_contract veolia_load_historical_data grdf_login grdf_password grdf_pce grdf_load_historical_data timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
+keys="log_level logs_folder post_login_url veolia_login veolia_password veolia_contract veolia_load_historical_data grdf_login grdf_password grdf_pce grdf_load_historical_data timeout download_folder domoticz_idx domoticz_server domoticz_login domoticz_password mqtt_server mqtt_port mqtt_login mqtt_password"
 event_keys="veolia grdf"
 event_conf=""
 events=""
