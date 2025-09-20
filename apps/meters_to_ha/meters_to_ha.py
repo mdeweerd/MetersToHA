@@ -123,6 +123,8 @@ PARAM_MQTT_PASSWORD = "mqtt_password"
 PARAM_INSECURE = "insecure"
 
 PARAM_URL = "url"
+# Url to go to for history after login (veolia)
+PARAM_POST_LOGIN_URL = "post_login_url"
 
 SERVICE_EAU_VEOLIA_FR = "service.eau.veolia.fr"
 
@@ -485,6 +487,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_VEOLIA_CONTRACT: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_WEBSITE: PARAM_OPTIONAL_VALUE,
             PARAM_VEOLIA_LOAD_HISTORICAL_DATA: PARAM_OPTIONAL_VALUE,
+            PARAM_POST_LOGIN_URL: False,
             # Config values (gazpar)
             PARAM_GRDF: False,
             PARAM_GRDF_LOGIN: PARAM_OPTIONAL_VALUE,
@@ -1674,14 +1677,18 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         time.sleep(1)
 
         self.__browser.switch_to.default_content()
-        # --- Bypass SEDIF: Accès directly "Historique" page ---
+        # --- Bypass SEDIF: Access "Historique" page ---
         try:
             # If "url" is provided in the configuration, use it ;
             # otherwise fallback to /s/historique
+            self.mylog(
+                f"DEBUG URL after login: {self.__browser.current_url}", st="~~"
+            )
 
             target_url = (
-                self.configuration.get(PARAM_URL, "") or ""
-            ).strip() or self.__class__.site_url_post_login
+                self.configuration.get(PARAM_POST_LOGIN_URL, "")
+                or self.__class__.site_url_post_login
+            ).strip()
             self.__browser.get(target_url)
             self.mylog(
                 f"DEBUG URL after nav: {self.__browser.current_url}", st="~~"

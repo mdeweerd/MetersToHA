@@ -1,5 +1,5 @@
 ## Start from the official Ubuntu image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
