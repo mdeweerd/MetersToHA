@@ -5,7 +5,7 @@ MetersToHA est plus simple à mettre en place avec ce module complémentaire
 ## Configuration
 
 Pour plus d'information voir
-[https://github.com/mdeweerd/MetersToHA](https://github.com/mdeweerd/MetersToHA).
+[https://github.com/mdeweerd/meterstoha](https://github.com/mdeweerd/meterstoha).
 
 Des options sont nécessaires, cela dépend de votre situation lesquelles.
 Par exemple, les options "GRDF" sont inutiles si vous cherchez seulement à
@@ -59,7 +59,7 @@ qu'actuellement.
 ## Changelog & Releases
 
 Voir l'historique "Git" sur
-[https://github.com/mdeweerd/MetersToHA](https://github.com/mdeweerd/MetersToHA)
+[https://github.com/mdeweerd/meterstoha](https://github.com/mdeweerd/meterstoha)
 pour le moment.
 
 ## Débogue
@@ -81,7 +81,7 @@ utiles.
 ## Support
 
 Faire une demande sur
-[https://github.com/mdeweerd/MetersToHA/issues](https://github.com/mdeweerd/MetersToHA/issues)
+[https://github.com/mdeweerd/meterstoha/issues](https://github.com/mdeweerd/meterstoha/issues)
 ou le forum
 [Home Assistatn Communauté Francophone](https://forum.hacf.fr/).
 

@@ -23,7 +23,7 @@ if bashio::config.has_value "git_version" ; then
   GIT_VERSION_STR="${GIT_VERSION/\"/\\\"}"
 fi
 
-git clone --depth=1 "https://github.com/mdeweerd/MetersToHA.git" --no-checkout MetersToHA
+git clone --depth=1 "https://github.com/mdeweerd/meterstoha.git" --no-checkout MetersToHA
 (
   cd MetersToHA || exit 255
   git sparse-checkout set apps

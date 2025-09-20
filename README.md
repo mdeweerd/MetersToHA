@@ -360,7 +360,7 @@ lorsque l'add-on doit alimenter le Home Assistant de la même installation
 
 #### Home Assistant Add-On - méthode manuelle
 
-Ajouter https://github.com/mdeweerd/MetersToHA comme Dépôt à travers le
+Ajouter https://github.com/mdeweerd/meterstoha comme Dépôt à travers le
 menu:
 
 - Aller vers Modules Complémentaires>Boutique des modules complémentaires>⋮
@@ -378,7 +378,7 @@ menu:
 
 Un clic sur le bouton suivant va vous ouvrir une page de redirection de HA.
 
-[![Ouvrir votre instance Home Assistant et afficher la page de configuration du add-on.](https://my.home-assistant.io/badges/supervisor_addon.svg)](https://my.home-assistant.io/redirect/supervisor_addon/?addon=9120b5c7_meterstoha&repository_url=https%3A%2F%2Fgithub.com%2Fmdeweerd%2FMetersToHA)
+[![Ouvrir votre instance Home Assistant et afficher la page de configuration du add-on.](https://my.home-assistant.io/badges/supervisor_addon.svg)](https://my.home-assistant.io/redirect/supervisor_addon/?addon=9120b5c7_meterstoha&repository_url=https%3A%2F%2Fgithub.com%2Fmdeweerd%2Fmeterstoha)
 
 Ensuite un click sur le crayon (si c'est la première fois) pour mettre
 votre domaine (enregistré en local):
@@ -497,7 +497,7 @@ Cette procédure suppose que HACS est déjà actif et configuré pour
 `AppDaemon`. Ainsi que `AppDaemon` soit activé.
 
 1. Ajouter
-   [GitHub - mdeweerd/MetersToHA](https://github.com/mdeweerd/MetersToHA)
+   [GitHub - mdeweerd/meterstoha](https://github.com/mdeweerd/MetersToHA)
    comme source de type AppDaemon:
 
    ![](images/AjoutDepot.png)
@@ -1081,8 +1081,8 @@ Récupération initiale:
 
 ```shell
 cd REPERTOIRE_DE_DESTIONATION
-git clone https://github.com/mdeweerd/MetersToHA
-cd MetersToHA
+git clone https://github.com/mdeweerd/meterstoha
+cd meterstoha
 
 pip3 install -r requirements.txt
 # ou

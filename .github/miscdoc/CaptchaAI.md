@@ -9,7 +9,7 @@ mois gratuit avec la procédure suivante.
 1. Suivre ce [lien d'affiliation](https://captchaai.com/?from=151169) pour
    s'inscrire.
 2. Demander de bénéficier de
-   [l'offre](https://github.com/mdeweerd/MetersToHA/issues/8#issuecomment-1704032953)
+   [l'offre](https://github.com/mdeweerd/meterstoha/issues/8#issuecomment-1704032953)
    à travers un Ticket
    ([Home>Dashboard>Tickets](https://captchaai.com/tickets.php#?from=151169)>New Ticket):
 
