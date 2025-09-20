@@ -16,7 +16,6 @@ jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-deploy.yaml@main
     with:
-      path: ./addon_meterstoha
       image: ghcr.io/mdeweerd/MetersToHa
     secrets: inherit
     #secrets:
