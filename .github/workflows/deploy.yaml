@@ -15,6 +15,6 @@ on:
 jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-deploy.yaml@main
-    secrets: inherit
-    #secrets:
-    #  DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+    #secrets: inherit
+    secrets:
+      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
