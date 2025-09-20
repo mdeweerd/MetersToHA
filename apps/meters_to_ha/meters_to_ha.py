@@ -448,6 +448,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # Go to login page directly only when not logged in
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     # site_url = "https://rock-vedif.my.site.com/Particulier/s/"
+
+    # Note: Page after login can be for an individual or a Condominium manager
+    #
+    # https://connexion.leaudiledefrance.fr/particuliers/s/
+    # https://connexion.leaudiledefrance.fr/espace-bailleurs-syndics/s/
     site_url = "https://connexion.leaudiledefrance.fr/s/login/"
     site_service_eau_veolia_fr = (
         "https://www.service.eau.veolia.fr/home"
