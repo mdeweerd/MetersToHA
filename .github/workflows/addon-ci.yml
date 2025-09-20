@@ -14,3 +14,18 @@ on:
 jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-ci.yaml@main
+<<<<<<< Updated upstream
+=======
+    with:
+      #addon-directory: addon_meterstoha
+      push: true
+      image: "ghcr.io/mdeweerd/MetersToHA"
+    secrets: 
+      registry-username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      registry-password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    with:
+      addon: ./addon_meterstoha
+      publish: true
+      image: ghcr.io/mdeweerd/meterstoha
+    secrets: inherit
+>>>>>>> Stashed changes
