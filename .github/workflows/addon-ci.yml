@@ -14,6 +14,10 @@ on:
 jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-ci.yaml@main
-    image: "ghcr.io/mdeweerd/MetersToHA"
-    registry-username: ${{ secrets.DOCKER_HUB_USERNAME }}
-    registry-password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    with:
+      addon-directory: addon_meterstoha
+      push: true
+      image: "ghcr.io/mdeweerd/MetersToHA"
+    secrets: 
+      registry-username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      registry-password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
