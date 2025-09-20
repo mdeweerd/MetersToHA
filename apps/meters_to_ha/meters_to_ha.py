@@ -449,10 +449,6 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
     # site_url = "https://espace-client.vedif.eau.veolia.fr/s/"
     # site_url = "https://rock-vedif.my.site.com/Particulier/s/"
     site_url = "https://connexion.leaudiledefrance.fr/s/login/"
-    site_url_post_login = (
-        "https://connexion.leaudiledefrance.fr"
-        "/espace-particuliers/s/historique"
-    )
     site_service_eau_veolia_fr = (
         "https://www.service.eau.veolia.fr/home"
         "/eau-dans-la-ville/accueil_eau.html"
@@ -1685,10 +1681,14 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 f"DEBUG URL after login: {self.__browser.current_url}", st="~~"
             )
 
+            current_url = self.__browser.current_url
+            if not current_url.endswith('/'):
+                current_url += '/'
             target_url = (
-                self.configuration.get(PARAM_POST_LOGIN_URL, "")
-                or self.__class__.site_url_post_login
+                self.configuration.get(PARAM_POST_LOGIN_URL, False)
+                or f"{current_url}historique"
             ).strip()
+
             self.__browser.get(target_url)
             self.mylog(
                 f"DEBUG URL after nav: {self.__browser.current_url}", st="~~"
