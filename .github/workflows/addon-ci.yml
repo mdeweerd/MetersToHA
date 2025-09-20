@@ -15,7 +15,6 @@ jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-ci.yaml@main
     with:
-      addon: addon_meterstoha
-      publish: true
+      publish: true      
       image: ghcr.io/mdeweerd/MetersToHA
     secrets: inherit
