@@ -16,5 +16,7 @@ jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-deploy.yaml@main
     #secrets: inherit
+    with:
+      repository: MetersToHA
     secrets:
       DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
