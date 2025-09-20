@@ -15,5 +15,9 @@ on:
 jobs:
   workflows:
     uses: hassio-addons/workflows/.github/workflows/addon-deploy.yaml@main
-    secrets:
-      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+    with:
+      path: ./addon_meterstoha
+      image: ghcr.io/mdeweerd/MetersToHa
+    secrets: inherit
+    #secrets:
+    #  DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
