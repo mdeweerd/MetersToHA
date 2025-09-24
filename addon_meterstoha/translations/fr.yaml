@@ -53,6 +53,11 @@ configuration:
     name: Type de Serveur
     description: Le type de votre serveur ('ha'=Home Assistant, mqtt, ...)
     example: ha
+  type:
+    name: post_login_url
+    description:
+      Url auquel accéder après login (utilisé pour veolia).
+      En principe pas nécessaire.
   veolia_event:
     name: Déclencheur Veolia
     description:
