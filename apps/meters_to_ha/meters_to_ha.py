@@ -1662,8 +1662,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 r"//span["
                 r"contains(text(), 'Alertes de consommation')"
                 + r" or contains(text(), 'Contrats')"
-                + r" or contains(text(), 'consulter l\'historique')"
-                + r' or contains(translate(text(), "CLH", "clh"), "consulter l\'historique")' 
+                + r" or contains(text(), 'consulter l')"
+                + r' or contains(translate(text(), "CLH", "clh"), "consulter l")' 
                 + r"]",
             )
         )
