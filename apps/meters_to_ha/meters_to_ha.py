@@ -2650,7 +2650,6 @@ class Injector(Worker):
 
             # Remove the first row (header) from the list that is not useful
             rows = rows[1:]
-            last_total = 0
 
             # Set date format for service (IDF || service.eau.veolia.fr)
             if website == SERVICE_EAU_VEOLIA_FR:
@@ -2661,10 +2660,8 @@ class Injector(Worker):
             for row in rows:
                 method = row[3]  # "Mesuré" or "Estimé"
                 if method in ("E", "Estimé"):
-                    # Ignore estimated index (we use the last total)
-                    meter_total = last_total + int(row[2])
-                else:
-                    meter_total = int(row[1]) + int(row[2])
+                    # Ignore estimated values
+                    continue
 
                 date_obj = dt.datetime.strptime(row[0], date_format)
 
@@ -2677,11 +2674,10 @@ class Injector(Worker):
                 stat = {
                     "start": date_formatted,  # formatted date
                     "state": int(row[2]),
-                    "sum": meter_total,
+                    "sum": int(row[1])
                 }
                 # Add the stat to the array
                 stats_array.append(stat)
-                last_total = meter_total
 
         self.mylog(st="OK")
         return stats_array
