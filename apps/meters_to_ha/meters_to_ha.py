@@ -3121,19 +3121,51 @@ class HomeAssistantInjector(Injector):
                 )
 
     def update_veolia_historical_data(self, stats_array):
-        # Prepare the statistics that need to be sent
+        # Prepare the statistics that need to be sent for _period_total
+
+        total_stats = [
+                {"start": stat["start"], "state": stat["sum"]}
+                for stat in stats_array
+        ]
         data = {
             "has_mean": False,
-            "has_sum": True,
+            "has_sum": False,
             "statistic_id": (
                 "sensor.veolia_%s_total"
                 % self.configuration[PARAM_VEOLIA_CONTRACT]
             ),
             "unit_of_measurement": "L",
             "source": "recorder",
-            "stats": stats_array,
+            "stats": total_stats,
         }
-        self.mylog("Publish all the historical data in the statistics")
+
+        self.mylog(f"Publish all the historical data in the statistics of _total sensor : {total_stats}")
+        self.open_url(HA_API_STATISTICS, data)
+        self.mylog(st="OK")
+
+        # Prepare the statistics that need to be sent
+        period_stats = [
+                {
+                    "start": stat["start"],
+                    "state": stat["state"],
+                    "mean": stat["state"],
+                    "min": stat["state"],
+                    "max": stat["state"]
+                }
+                for stat in stats_array
+        ]
+        data = {
+            "has_mean": True,
+            "has_sum": False,
+            "statistic_id": (
+                "sensor.veolia_%s_period_total"
+                % self.configuration[PARAM_VEOLIA_CONTRACT]
+            ),
+            "unit_of_measurement": "L",
+            "source": "recorder",
+            "stats": period_stats,
+        }
+        self.mylog(f"Publish all the historical data in the statistics of _period_total sensor : {period_stats}")
         self.open_url(HA_API_STATISTICS, data)
         self.mylog(st="OK")
 
