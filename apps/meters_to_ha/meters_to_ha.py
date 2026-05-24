@@ -2624,10 +2624,14 @@ class Injector(Worker):
             for row in rows:
                 method = row[3]  # "Mesuré" or "Estimé"
                 if method in ("E", "Estimé"):
-                    # Ignore estimated index (we use the last total)
-                    meter_total = last_total + int(row[2])
-                else:
-                    meter_total = int(row[1]) + int(row[2])
+                    # Skip estimated data as suggested in issue #38
+                    # Estimated values will be available later as measured values
+                    self.mylog(f"    Skipping estimated data: {row[0]}")
+                    continue
+                
+                # For "Mesuré" rows, row[1] already contains the total counter value
+                # which includes all previous consumption. We don't need to add row[2].
+                meter_total = int(row[1])
 
                 date_obj = dt.datetime.strptime(row[0], date_format)
 
