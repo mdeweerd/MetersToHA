@@ -1572,7 +1572,11 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             return v_file
 
         # Wait for Connexion #####
-        self.mylog("Connexion au site Veolia Eau Ile de France", end="")
+        self.mylog(
+            "Connexion au site Veolia Eau Ile de France"
+            + f": {self.__class__.site_url}",
+            end="",
+        )
 
         LOGGER.debug(f"Url: {self.__class__.site_url}")
         self.__browser.get(self.__class__.site_url)
