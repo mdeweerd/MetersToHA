@@ -211,10 +211,18 @@ try:
     from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
     from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-    from selenium.webdriver.firefox.service import Service as FirefoxService
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
+
+    # Firefox-specific imports (optional, may not be available in Alpine)
+    try:
+        from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+        from selenium.webdriver.firefox.service import Service as FirefoxService
+        HAS_FIREFOX = True
+    except ImportError:
+        HAS_FIREFOX = False
+        FirefoxBinary = None
+        FirefoxService = None
 
 
 except ImportError as excImport:
@@ -644,18 +652,22 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
             opts.set_preference("browser.helperApps.alwaysAsk.force", False)
 
-            # Set firefox binary to use
-            opts.binary_location = FirefoxBinary(
-                str(self.configuration[PARAM_FIREFOX])
-            )
+            # Set firefox binary to use (if available)
+            if FirefoxBinary is not None:
+                opts.binary_location = FirefoxBinary(
+                    str(self.configuration[PARAM_FIREFOX])
+                )
 
-            ff_service = FirefoxService(
-                executable_path=self.configuration[PARAM_GECKODRIVER],
-                log_path=os.path.join(
-                    self.configuration[PARAM_LOGS_FOLDER], "geckodriver.log"
-                ),
-            )
-            if not hasattr(ff_service, "process"):
+            if FirefoxService is not None:
+                ff_service = FirefoxService(
+                    executable_path=self.configuration[PARAM_GECKODRIVER],
+                    log_path=os.path.join(
+                        self.configuration[PARAM_LOGS_FOLDER], "geckodriver.log"
+                    ),
+                )
+            else:
+                ff_service = None
+            if ff_service is not None and not hasattr(ff_service, "process"):
                 # Webdriver may complain about missing process.
                 ff_service.process = None
 
