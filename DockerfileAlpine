@@ -34,8 +34,8 @@ RUN apk add --no-cache \
         py3-urllib3 \
         py3-requests
 
-RUN python3 -m venv /venv
-RUN /venv/bin/pip install selenium PyVirtualDisplay pyperclip
+RUN python3 -m venv --system-site-packages /venv
+RUN /venv/bin/pip install selenium PyVirtualDisplay
 
 ENV PATH="/venv/bin:$PATH"
 
