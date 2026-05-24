@@ -4010,7 +4010,7 @@ def doWork():
         "'This version of ChromeDriver only supports Chrome version ...'",
         required=False,
         nargs=1,
-        type=int,
+        type=str,
     )
     args = parser.parse_args()
 
