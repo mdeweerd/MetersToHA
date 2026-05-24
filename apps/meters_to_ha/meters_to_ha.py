@@ -2674,7 +2674,7 @@ class Injector(Worker):
                 stat = {
                     "start": date_formatted,  # formatted date
                     "state": int(row[2]),
-                    "sum": int(row[1])
+                    "sum": int(row[1]),
                 }
                 # Add the stat to the array
                 stats_array.append(stat)
@@ -3124,8 +3124,8 @@ class HomeAssistantInjector(Injector):
         # Prepare the statistics that need to be sent for _period_total
 
         total_stats = [
-                {"start": stat["start"], "state": stat["sum"]}
-                for stat in stats_array
+            {"start": stat["start"], "state": stat["sum"]}
+            for stat in stats_array
         ]
         data = {
             "has_mean": False,
@@ -3139,20 +3139,23 @@ class HomeAssistantInjector(Injector):
             "stats": total_stats,
         }
 
-        self.mylog(f"Publish all the historical data in the statistics of _total sensor : {total_stats}")
+        self.mylog(
+            "Publish all the historical data in the statistics"
+            f" of _total sensor : {total_stats}"
+        )
         self.open_url(HA_API_STATISTICS, data)
         self.mylog(st="OK")
 
         # Prepare the statistics that need to be sent
         period_stats = [
-                {
-                    "start": stat["start"],
-                    "state": stat["state"],
-                    "mean": stat["state"],
-                    "min": stat["state"],
-                    "max": stat["state"]
-                }
-                for stat in stats_array
+            {
+                "start": stat["start"],
+                "state": stat["state"],
+                "mean": stat["state"],
+                "min": stat["state"],
+                "max": stat["state"],
+            }
+            for stat in stats_array
         ]
         data = {
             "has_mean": True,
@@ -3165,7 +3168,10 @@ class HomeAssistantInjector(Injector):
             "source": "recorder",
             "stats": period_stats,
         }
-        self.mylog(f"Publish all the historical data in the statistics of _period_total sensor : {period_stats}")
+        self.mylog(
+            "Publish all the historical data in the statistics of"
+            f" _period_total sensor : {period_stats}"
+        )
         self.open_url(HA_API_STATISTICS, data)
         self.mylog(st="OK")
 
