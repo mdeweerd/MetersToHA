@@ -29,6 +29,7 @@
 # SOFTWARE.
 
 """Update the manifest file."""
+
 import json
 import os
 import sys

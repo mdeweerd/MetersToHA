@@ -3,6 +3,7 @@
 @author: s0nik42
 @author: https://github.com/mdeweerd
 """
+
 # Meters To Home Automation
 #
 # Forked from https://github.com/s0nik42/veolia-idf to:
@@ -306,7 +307,7 @@ class Worker:
         else:
             print(
                 f"{st} {string} ", end=end, flush=True
-            )  # type:ignore[call-overload]
+            )  # type: ignore[call-overload]
 
     def cleanup(self, keep_output=False):
         pass
@@ -499,22 +500,34 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             PARAM_SCREENSHOT: PARAM_OPTIONAL_VALUE,
             PARAM_SKIP_DOWNLOAD: False,
             PARAM_KEEP_OUTPUT: False,
-            PARAM_GECKODRIVER: which("geckodriver")
-            if which("geckodriver")
-            else os.path.join(config_dict[INSTALL_DIR], "geckodriver"),
-            PARAM_FIREFOX: which("firefox")
-            if which("firefox")
-            else os.path.join(config_dict[INSTALL_DIR], "firefox"),
-            PARAM_CHROMIUM: which("chromium")
-            if which("chromium")
-            else which("chromium-browser")
-            if which("chromium-browser")
-            else "/usr/bin/chromium-browser"
-            if os.path.exists("/usr/bin/chromium-browser")
-            else os.path.join(config_dict[INSTALL_DIR], "chromium"),
-            PARAM_CHROMEDRIVER: which("chromedriver")
-            if which("chromedriver")
-            else os.path.join(config_dict[INSTALL_DIR], "chromedriver"),
+            PARAM_GECKODRIVER: (
+                which("geckodriver")
+                if which("geckodriver")
+                else os.path.join(config_dict[INSTALL_DIR], "geckodriver")
+            ),
+            PARAM_FIREFOX: (
+                which("firefox")
+                if which("firefox")
+                else os.path.join(config_dict[INSTALL_DIR], "firefox")
+            ),
+            PARAM_CHROMIUM: (
+                which("chromium")
+                if which("chromium")
+                else (
+                    which("chromium-browser")
+                    if which("chromium-browser")
+                    else (
+                        "/usr/bin/chromium-browser"
+                        if os.path.exists("/usr/bin/chromium-browser")
+                        else os.path.join(config_dict[INSTALL_DIR], "chromium")
+                    )
+                )
+            ),
+            PARAM_CHROMEDRIVER: (
+                which("chromedriver")
+                if which("chromedriver")
+                else os.path.join(config_dict[INSTALL_DIR], "chromedriver")
+            ),
             PARAM_CHROME_VERSION: PARAM_OPTIONAL_VALUE,
             PARAM_TIMEOUT: "30",
             PARAM_DOWNLOAD_FOLDER: self.install_dir,
@@ -684,7 +697,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                     },
                 )
 
-            timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
+            timeout = int(self.configuration[PARAM_TIMEOUT])  # type: ignore
             self.__wait = WebDriverWait(browser, timeout=timeout)
         except Exception:
             raise
@@ -833,13 +846,13 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             if "chromium" in inspect.getmembers(webdriver):
                 chromeService = webdriver.chromium.service.ChromiumService(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    service_args=chromium_service_args  # ,  # More debug info
+                    service_args=chromium_service_args,  # ,  # More debug info
                     # log_output=chromedriver_log
                 )
             else:
                 chromeService = webdriver.chrome.service.Service(
                     executable_path=self.configuration[PARAM_CHROMEDRIVER],
-                    service_args=chromium_service_args  # ,  # More debug info
+                    service_args=chromium_service_args,  # ,  # More debug info
                     # log_output=chromedriver_log
                 )
             if hasUndetectedDriver:
@@ -874,7 +887,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 )
             # browser.set_window_size(1600, 1200)
             browser.maximize_window()
-            timeout = int(self.configuration[PARAM_TIMEOUT])  # type:ignore
+            timeout = int(self.configuration[PARAM_TIMEOUT])  # type: ignore
             self.__wait = WebDriverWait(browser, timeout)
         except AttributeError:
             self.mylog("chromium unknown in selenium webdriver", end="--")
@@ -1002,7 +1015,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 int,
                 re.search(
                     r"(\d+).(\d+)", str(output)
-                ).groups(),  # type:ignore[union-attr]
+                ).groups(),  # type: ignore[union-attr]
             )
         except Exception:
             raise
@@ -1130,7 +1143,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             "arguments[0].value = arguments[1];", element, value
         )
 
-    def click_in_view(  # pylint: disable=R0913
+    def click_in_view(  # pylint: disable=R0913,R0917
         self,
         method,
         key,
@@ -1514,14 +1527,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         endTime = time.time() + waitTime
         while True:
             try:
-                fileName = self.__browser.execute_script(
-                    """
+                fileName = self.__browser.execute_script("""
                     return document.querySelector(
                     '#contentAreaDownloadsView .downloadMainArea
                     .downloadContainer description:nth-of-type(1)')
                     .value
-                    """
-                )
+                    """)
                 if fileName:
                     return fileName
             except:  # noqa: B001, E722
@@ -1563,6 +1574,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             + ")",
         )
 
+        isLoggedIn = False
         try:
             # If profile element is present, likely already logged in
             if self.configuration[PARAM_SCREENSHOT]:
@@ -1663,7 +1675,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 r"contains(text(), 'Alertes de consommation')"
                 + r" or contains(text(), 'Contrats')"
                 + r" or contains(text(), 'consulter l\'historique')"
-                + r' or contains(translate(text(), "CLH", "clh"), "consulter l\'historique")' 
+                + r' or contains(translate(text(), "CLH", "clh"),'
+                + r'   "consulter l\'historique")'
                 + r"]",
             )
         )
@@ -1689,8 +1702,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             )
 
             current_url = self.__browser.current_url
-            if not current_url.endswith('/'):
-                current_url += '/'
+            if not current_url.endswith("/"):
+                current_url += "/"
             target_url = (
                 self.configuration.get(PARAM_POST_LOGIN_URL, False)
                 or f"{current_url}historique"
@@ -1980,6 +1993,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
             + ")",
         )
 
+        isLoggedIn = False
         try:
             # If profile element is present, likely already logged in
             if self.configuration[PARAM_SCREENSHOT]:
@@ -2908,6 +2922,8 @@ class DomoticzInjector(Injector):
 
     def update_veolia_device(self, csv_file):
         self.mylog("Parsing veolia csv file")
+        url_current = None
+        url_daily = None
         with open(csv_file, encoding="utf_8") as f:
             # Remove first line
 
@@ -3816,18 +3832,22 @@ def exit_on_error(
         print(
             "Ended with error%s"
             % (
-                ""
-                if use_display
-                else " : // re-run with '--display' option if you can",
+                (
+                    ""
+                    if use_display
+                    else " : // re-run with '--display' option if you can"
+                ),
             )
         )
     else:
         o.mylog(
             "Ended with error%s"
             % (
-                ""
-                if use_display
-                else " : // re-run with '--display' option if you can",
+                (
+                    ""
+                    if use_display
+                    else " : // re-run with '--display' option if you can"
+                ),
             ),
             st="EE",
         )

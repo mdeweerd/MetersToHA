@@ -7,6 +7,7 @@ the event data as JSON in the second argument.
 @author  https://github.com/mdeweerd
 @licence https://opensource.org/license/mit/
 """
+
 import argparse
 import asyncio
 import functools

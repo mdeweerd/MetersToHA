@@ -10,6 +10,7 @@
 """
 Module for use with AppDaemon on Home Assistant
 """
+
 import os
 import subprocess as s
 import sys
@@ -21,7 +22,7 @@ METERS_TO_HA_SCRIPT = "meters_to_ha.py"
 
 
 # pylint: disable=no-member
-class MetersToHA(hass.Hass):
+class MetersToHA(hass.Hass):  # pylint: disable=too-many-ancestors
     def initialize(self):
         if "event_name" in self.args:
             event_name = self.args["event_name"]
