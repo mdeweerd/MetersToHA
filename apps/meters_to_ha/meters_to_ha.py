@@ -1668,15 +1668,17 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
 
         # Wait until the page after login is loaded by checking
         # that at least one of these elements is visible
+        # button_text = "consulter l'historique"  # Old value
+        button_text = "consulter"  # New value, may be too broad
         ep = EC.visibility_of_element_located(
             (
                 By.XPATH,
                 r"//span["
                 r"contains(text(), 'Alertes de consommation')"
                 + r" or contains(text(), 'Contrats')"
-                + r" or contains(text(), 'consulter l\'historique')"
+                + rf' or contains(text(), "{button_text}")'
                 + r' or contains(translate(text(), "CLH", "clh"),'
-                + r'   "consulter l\'historique")'
+                + rf'   "{button_text}")'
                 + r"]",
             )
         )

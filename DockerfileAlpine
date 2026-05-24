@@ -1,5 +1,5 @@
 ## Start from the official Alpine image
-FROM alpine:3.22
+FROM alpine:3.23
 
 LABEL maintainer="MDW <MDW@private.fr>"
 
@@ -35,7 +35,7 @@ RUN apk add --no-cache \
         py3-requests
 
 RUN python3 -m venv /venv
-RUN /venv/bin/pip install selenium PyVirtualDisplay
+RUN /venv/bin/pip install selenium PyVirtualDisplay pyperclip
 
 ENV PATH="/venv/bin:$PATH"
 
