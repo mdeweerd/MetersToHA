@@ -1659,12 +1659,12 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         ep = EC.visibility_of_element_located(
             (
                 By.XPATH,
-                r"//span["
-                r"contains(text(), 'Alertes de consommation')"
-                + r" or contains(text(), 'Contrats')"
-                + r" or contains(text(), 'consulter l\'historique')"
-                + r' or contains(translate(text(), "CLH", "clh"), "consulter l\'historique")' 
-                + r"]",
+                "//span["
+                "contains(text(), 'Alertes de consommation')"
+                + " or contains(text(), 'Contrats')"
+                + " or contains(text(), 'consulter')"
+                + ' or contains(translate(text(), "CLH", "clh"), "consulter")' 
+                + "]",
             )
         )
 
@@ -2624,10 +2624,14 @@ class Injector(Worker):
             for row in rows:
                 method = row[3]  # "Mesuré" or "Estimé"
                 if method in ("E", "Estimé"):
-                    # Ignore estimated index (we use the last total)
-                    meter_total = last_total + int(row[2])
-                else:
-                    meter_total = int(row[1]) + int(row[2])
+                    # Skip estimated data as suggested in issue #38
+                    # Estimated values will be available later as measured values
+                    self.mylog(f"    Skipping estimated data: {row[0]}")
+                    continue
+                
+                # For "Mesuré" rows, row[1] already contains the total counter value
+                # which includes all previous consumption. We don't need to add row[2].
+                meter_total = int(row[1])
 
                 date_obj = dt.datetime.strptime(row[0], date_format)
 
@@ -3086,8 +3090,12 @@ class HomeAssistantInjector(Injector):
                 )
 
     def update_veolia_historical_data(self, stats_array):
-        # Prepare the statistics that need to be sent
-        data = {
+        # Prepare the statistics that need to be sent for _total sensor
+        total_stats = [
+            {"start": stat["start"], "state": stat["sum"]}
+            for stat in stats_array
+        ]
+        data_total = {
             "has_mean": False,
             "has_sum": True,
             "statistic_id": (
@@ -3096,10 +3104,36 @@ class HomeAssistantInjector(Injector):
             ),
             "unit_of_measurement": "L",
             "source": "recorder",
-            "stats": stats_array,
+            "stats": total_stats,
         }
-        self.mylog("Publish all the historical data in the statistics")
-        self.open_url(HA_API_STATISTICS, data)
+        self.mylog("Publish total historical data in the statistics")
+        self.open_url(HA_API_STATISTICS, data_total)
+        self.mylog(st="OK")
+
+        # Prepare the statistics that need to be sent for _period_total sensor
+        period_stats = [
+            {
+                "start": stat["start"],
+                "state": stat["state"],
+                "mean": stat["state"],
+                "min": stat["state"],
+                "max": stat["state"]
+            }
+            for stat in stats_array
+        ]
+        data_period = {
+            "has_mean": True,
+            "has_sum": False,
+            "statistic_id": (
+                "sensor.veolia_%s_period_total"
+                % self.configuration[PARAM_VEOLIA_CONTRACT]
+            ),
+            "unit_of_measurement": "L",
+            "source": "recorder",
+            "stats": period_stats,
+        }
+        self.mylog("Publish period historical data in the statistics")
+        self.open_url(HA_API_STATISTICS, data_period)
         self.mylog(st="OK")
 
     def update_veolia_service_eau_veolia_fr_device(self, stats_array):
@@ -3442,6 +3476,36 @@ class HomeAssistantInjector(Injector):
                 update_state_file(
                     self.configuration[STATE_FILE], {"grdf": entity_data}
                 )
+            
+            # Preserve gas_daily_kwh sensor on reboot or no new data (issue #3)
+            # Try to get the last known value from HA
+            for daily_sensor in (
+                sensor_name_daily_pce_kwh,
+                sensor_name_daily_generic_kwh,
+            ):
+                try:
+                    response = self.open_url(HA_API_SENSOR_FORMAT % (daily_sensor,))
+                    if isinstance(response, dict) and "state" in response:
+                        # Preserve the last known value
+                        last_daily_kwh = response["state"]
+                        last_attributes = response.get("attributes", {})
+                        
+                        # Update the sensor to preserve its value
+                        preserve_data = {
+                            "state": last_daily_kwh,
+                            "attributes": {
+                                **last_attributes,
+                                "last_check": now_isostr,
+                            },
+                        }
+                        r = self.open_url(
+                            HA_API_SENSOR_FORMAT % (daily_sensor,), preserve_data
+                        )
+                        self.mylog(f"Preserved {daily_sensor}: {last_daily_kwh}")
+                        break
+                except RuntimeError:
+                    # Sensor doesn't exist yet or is unavailable
+                    pass
         else:
             self.mylog(
                 f"    update value is {date_time.isoformat()}:"
