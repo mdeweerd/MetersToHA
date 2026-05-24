@@ -1,10 +1,10 @@
 ---
 build_from:
-  aarch64: ghcr.io/hassio-addons/base:18.1.1
-  amd64: ghcr.io/hassio-addons/base:18.1.1
-  # armhf: ghcr.io/hassio-addons/base:18.1.1
-  armv7: ghcr.io/hassio-addons/base:18.1.1
-  # i386: ghcr.io/hassio-addons/base:18.1.1
+  aarch64: ghcr.io/hassio-addons/base:20.1.1
+  amd64: ghcr.io/hassio-addons/base:20.1.1
+  # armhf: ghcr.io/hassio-addons/base:20.1.1
+  armv7: ghcr.io/hassio-addons/base:20.1.1
+  # i386: ghcr.io/hassio-addons/base:20.1.1
 # codenotary:
 #   base_image: dummy@dummy.com
 #   signer: dummy@dummy.com
