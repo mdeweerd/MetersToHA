@@ -217,7 +217,10 @@ try:
     # Firefox-specific imports (optional, may not be available in Alpine)
     try:
         from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-        from selenium.webdriver.firefox.service import Service as FirefoxService
+        from selenium.webdriver.firefox.service import (
+            Service as FirefoxService,
+        )
+
         HAS_FIREFOX = True
     except ImportError:
         HAS_FIREFOX = False
@@ -662,7 +665,8 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
                 ff_service = FirefoxService(
                     executable_path=self.configuration[PARAM_GECKODRIVER],
                     log_path=os.path.join(
-                        self.configuration[PARAM_LOGS_FOLDER], "geckodriver.log"
+                        self.configuration[PARAM_LOGS_FOLDER],
+                        "geckodriver.log",
                     ),
                 )
             else:
@@ -1570,6 +1574,7 @@ class ServiceCrawler(Worker):  # pylint:disable=too-many-instance-attributes
         # Wait for Connexion #####
         self.mylog("Connexion au site Veolia Eau Ile de France", end="")
 
+        LOGGER.debug(f"Url: {self.__class__.site_url}")
         self.__browser.get(self.__class__.site_url)
         time.sleep(0.5)  # Small wait after submit
         self.__wait.until(document_initialised)
