@@ -3515,7 +3515,7 @@ class HomeAssistantInjector(Injector):
                 update_state_file(
                     self.configuration[STATE_FILE], {"grdf": entity_data}
                 )
-            
+
             # Preserve gas_daily_kwh sensor on reboot or no new data (issue #3)
             # Try to get the last known value from HA
             for daily_sensor in (
@@ -3523,12 +3523,14 @@ class HomeAssistantInjector(Injector):
                 sensor_name_daily_generic_kwh,
             ):
                 try:
-                    response = self.open_url(HA_API_SENSOR_FORMAT % (daily_sensor,))
+                    response = self.open_url(
+                        HA_API_SENSOR_FORMAT % (daily_sensor,)
+                    )
                     if isinstance(response, dict) and "state" in response:
                         # Preserve the last known value
                         last_daily_kwh = response["state"]
                         last_attributes = response.get("attributes", {})
-                        
+
                         # Update the sensor to preserve its value
                         preserve_data = {
                             "state": last_daily_kwh,
@@ -3538,9 +3540,12 @@ class HomeAssistantInjector(Injector):
                             },
                         }
                         r = self.open_url(
-                            HA_API_SENSOR_FORMAT % (daily_sensor,), preserve_data
+                            HA_API_SENSOR_FORMAT % (daily_sensor,),
+                            preserve_data,
                         )
-                        self.mylog(f"Preserved {daily_sensor}: {last_daily_kwh}")
+                        self.mylog(
+                            f"Preserved {daily_sensor}: {last_daily_kwh}"
+                        )
                         break
                 except RuntimeError:
                     # Sensor doesn't exist yet or is unavailable
