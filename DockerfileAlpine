@@ -35,7 +35,7 @@ RUN apk add --no-cache \
         py3-requests
 
 RUN python3 -m venv /venv
-RUN /venv/bin/pip install selenium PyVirtualDisplay
+RUN /venv/bin/pip install selenium PyVirtualDisplay pyperclip requests urllib3 colorama
 
 ENV PATH="/venv/bin:$PATH"
 
