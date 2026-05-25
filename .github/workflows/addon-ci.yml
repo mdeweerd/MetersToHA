@@ -30,12 +30,12 @@ jobs:
       target: ${{ steps.information.outputs.target }}
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run app information action
         id: information
-        uses: frenck/action-addon-information@ce1377e9851cf569c29329e65fb2c57e67ca0f69 # v1.4.2
+        uses: frenck/action-addon-information@ce1377e9851cf569c29329e65fb2c57e67ca0f69  # v1.4.2
 
   lint-app:
     name: Lint App
@@ -44,11 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run App Lint
-        uses: frenck/action-addon-linter@f995494fd84fae6310d23617e66d0e37de4f14eb # v2.21.0
+        uses: frenck/action-addon-linter@f995494fd84fae6310d23617e66d0e37de4f14eb  # v2.21.0
         with:
           path: "./${{ needs.information.outputs.target }}"
 
@@ -59,11 +59,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run Hadolint
-        uses: brpaz/hadolint-action@c27bd9edc1e95eed30474db8f295ff5807ebca14 # v1.5.0
+        uses: brpaz/hadolint-action@c27bd9edc1e95eed30474db8f295ff5807ebca14  # v1.5.0
         with:
           dockerfile: "./${{ needs.information.outputs.target }}/Dockerfile"
 
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run JQ
@@ -91,11 +91,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run Shellcheck
-        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e3b4bbc42af0e2d47 # 2.0.0
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e3b4bbc42af0e2d47  # 2.0.0
         env:
           SHELLCHECK_OPTS: -s bash
 
@@ -104,22 +104,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run YAMLLint
-        uses: frenck/action-yamllint@34b4bbcaeabedcfefad6adea8c5bbc42af0e2d47 # v1.5
+        uses: frenck/action-yamllint@34b4bbcaeabedcfefad6adea8c5bbc42af0e2d47  # v1.5
 
   lint-prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run Prettier
-        uses: creyD/prettier_action@8c18391fdc98ed0d884c636f60975edac71b8f0 # v4.6
+        uses: creyD/prettier_action@8c18391fdc98ed0d884c636f60975edac71b8f0  # v4.6
         with:
           prettier_options: --check **/*.{json,js,md,yaml}
         env:
@@ -130,11 +130,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d  # v0.5.6
 
   dependency-review:
     name: Dependency review
@@ -142,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Dependency review
@@ -165,11 +165,11 @@ jobs:
         architecture: ${{ fromJson(needs.information.outputs.architectures) }}
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
       - name: Compose build flags
         id: flags
         env:
@@ -189,7 +189,7 @@ jobs:
             exit 1
           fi
       - name: Build
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
         with:
           push: false
           context: ${{ needs.information.outputs.target }}
