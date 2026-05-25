@@ -3,7 +3,7 @@ build_from:
   aarch64: ghcr.io/hassio-addons/base:20.1.1
   amd64: ghcr.io/hassio-addons/base:20.1.1
   # armhf: ghcr.io/hassio-addons/base:20.1.1
-  armv7: ghcr.io/hassio-addons/base:20.1.1
+  # armv7 is deprecated and no longer supported as of Home Assistant 2025.12
   # i386: ghcr.io/hassio-addons/base:20.1.1
 # codenotary:
 #   base_image: dummy@dummy.com

@@ -1,6 +1,6 @@
 ---
 name: MetersToHA
-version: "v2026.5.3"
+version: dev
 slug: meterstoha
 description: MetersToHA add-on for Home Assistant
 url: https://github.com/mdeweerd/meterstoha
@@ -13,7 +13,7 @@ host_dbus: true
 arch:
   - aarch64
   - amd64
-  - armv7
+  # armv7 is deprecated and no longer supported as of Home Assistant 2025.12
   # Next architectures are missing the chromium-browser
   # Need to check for firefox availability
   # - armhf
