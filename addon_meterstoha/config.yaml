@@ -1,8 +1,8 @@
 ---
 name: MetersToHA
-version: dev
+version: "2026.5.3"
 slug: meterstoha
-description: MetersToHA add-on for Home Assistant
+description: MetersToHA app for Home Assistant
 url: https://github.com/mdeweerd/meterstoha
 homeassistant_api: true
 map:
@@ -18,6 +18,7 @@ arch:
   # Need to check for firefox availability
   # - armhf
   # - i386
+image: "ghcr.io/mdeweerd/meterstoha"
 options:
   log_level: info
   timeout: "30"
@@ -70,4 +71,4 @@ schema:
   domoticz_server: url?
   domoticz_idx: str?
   git_version: str?
-# image: ghcr.io/mdeweerd/meterstoha/addon_meterstoha/{arch}
+# image: ghcr.io/mdeweerd/meterstoha/{arch}
