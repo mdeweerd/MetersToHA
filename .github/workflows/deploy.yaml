@@ -11,6 +11,7 @@ on:
     branches: [meters-to-ha]
     types:
       - completed
+  workflow_dispatch:
 
 permissions:
   contents: read
