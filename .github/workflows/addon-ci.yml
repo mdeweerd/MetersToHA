@@ -62,7 +62,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Hadolint
-        uses: brpaz/hadolint-action@c27bd9edc1e95eed3047db8f295ff5807ebca14  # v1.5.0
+        uses: brpaz/hadolint-action@v1.5.0
         with:
           dockerfile: "./${{ needs.information.outputs.target }}/Dockerfile"
 
@@ -94,7 +94,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Shellcheck
-        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e3b4bbc42af0e2d47  # 2.0.0
+        uses: ludeeus/action-shellcheck@2.0.0
         env:
           SHELLCHECK_OPTS: -s bash
 
@@ -118,7 +118,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Prettier
-        uses: creyD/prettier_action@8c18391fdc98ed0d884c636f60975edac71b8f0  # v4.6
+        uses: creyD/prettier_action@v4.6
         with:
           prettier_options: --check **/*.{json,js,md,yaml}
         env:
@@ -145,4 +145,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Dependency review
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
