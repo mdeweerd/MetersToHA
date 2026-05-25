@@ -105,7 +105,7 @@ jobs:
       packages: write
     steps:
       - name: Publish multi-arch manifest
-        uses: home-assistant/builder/actions/publish-multi-arch-manifest@2026.03.2
+        uses: home-assistant/builder/actions/publish-multi-arch-manifest@8b139affa26d40fa3cc0d0cb77a8aefaf417a460
         with:
           architectures: ${{ needs.prepare.outputs.architectures }}
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
