@@ -1,18 +1,19 @@
 ## Start from the official Ubuntu image
 FROM ubuntu:24.04
 
+# hadolint ignore=DL3006
 LABEL maintainer="MDW <MDW@private.fr>"
 
 ## Set environment variables
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-# Not on 22.04:        firefox-geckodriver, need ppa
-
+# Not on 22.04: firefox-geckodriver, need ppa
 
 # Next lines would upgrade image - skipping
 #    && apt-get upgrade -y \
 #    && apt-get dist-upgrade -y \
 
+# hadolint ignore=DL3003
 RUN export DEBIAN_FRONTEND="noninteractive" \
     && echo 'APT::Keep-Downloaded-Packages "false";' \
       > /etc/apt/apt.conf.d/01disable-cache \
@@ -42,9 +43,11 @@ RUN export DEBIAN_FRONTEND="noninteractive" \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup -gid 1000 docker &&  adduser -disabled-password -u 1000 -gid 1000 docker
+# hadolint ignore=DL3003
+RUN addgroup -gid 1000 docker && adduser -disabled-password -u 1000 -gid 1000 docker
 
 # Install packages to Python3
+# hadolint ignore=DL3003
 # RUN pip3 install --upgrade pip \
 #    && pip3 install \
 #        "urllib3>=1.24.2" \
