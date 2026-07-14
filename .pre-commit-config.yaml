@@ -95,7 +95,7 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - pyproject-flake8>=7.0.0
+          # - pyproject-flake8>=7.0.0  # force in hook
           - flake8-bugbear>=25.11.29
           - flake8-comprehensions>=3.17.0
           - flake8_2020>=1.8.1
