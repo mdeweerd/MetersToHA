@@ -10,7 +10,7 @@ repos:
   #     - id: prettier
   - repo: https://github.com/executablebooks/mdformat
     # Do this before other tools "fixing" the line endings
-    rev: 1.0.0
+    rev: 2d496dbc18e31b83a1596685347ffe0b6041daf0  # 1.0.0
     hooks:
       - id: mdformat
         name: Format Markdown
@@ -24,9 +24,9 @@ repos:
           - mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
-          - setuptools==80
+          - setuptools==83.0.0
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
     hooks:
       - id: no-commit-to-branch
         args: [--branch, main]
@@ -53,11 +53,11 @@ repos:
           # order of keys in manifest.json is "special"
           - --no-sort-keys
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
+    rev: ffb6a759a979008c0e6dff86e39f4745a2d9eac4  # v3.1.0
     hooks:
       - id: prettier
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.38.0
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # v1.38.0
     hooks:
       - id: yamllint
         args:
@@ -65,11 +65,11 @@ repos:
           - -d
           - "{extends: relaxed, rules: {line-length: {max: 90}}}"
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: 75992aaa40730136014f34227e0135f63fc951b4  # v3.21.2
     hooks:
       - id: pyupgrade
   - repo: https://github.com/psf/black
-    rev: 26.5.1
+    rev: 87928e6d6761a4a6d22250e1fee5601b3998086e  # 26.5.1
     hooks:
       - id: black
         args:
@@ -77,12 +77,12 @@ repos:
           - --quiet
           - -l 79
   - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-    rev: v1.0.6
+    rev: be256dab724687e8c3d7d6f52c1b263e2de6d439  # v1.0.6
     hooks:
       - id: python-bandit-vulnerability-check
         args: [--skip, "B105,B110,B311,B404,B603", --recursive, apps]
   - repo: https://github.com/fsouza/autoflake8
-    rev: v0.4.1
+    rev: c1d5e997827b2b52225adf965bbf3cd545465d1e  # v0.4.1
     hooks:
       - id: autoflake8
         args:
@@ -91,28 +91,28 @@ repos:
           - --expand-star-imports
           - .
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.3.0
+    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f  # 7.3.0
     hooks:
       - id: flake8
         additional_dependencies:
-          - pyproject-flake8>=0.0.1a2
-          - flake8-bugbear>=22.1.11
-          - flake8-comprehensions>=3.8.0
-          - flake8_2020>=1.6.1
+          - pyproject-flake8>=7.0.0
+          - flake8-bugbear>=25.11.29
+          - flake8-comprehensions>=3.17.0
+          - flake8_2020>=1.8.1
           - mccabe
-          - pycodestyle>=2.10.0
-          - pyflakes>=2.4.0
+          - pycodestyle>=2.14.0
+          - pyflakes>=3.4.0
   - repo: https://github.com/PyCQA/isort
-    rev: 8.0.1
+    rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # 8.0.1
     hooks:
       - id: isort
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # v2.4.2
     hooks:
       - id: codespell
         exclude: (\.md|apps.yaml|translations/.*.yaml)$
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.5
+    rev: 8a396357098337ba8be714fffdf2d00947a9778c  # v4.0.6
     hooks:
       - id: pylint
         # exclude: ^$
@@ -126,7 +126,7 @@ repos:
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: 41e691678310dfd3833f7ab4e180ddb014310356  # v2.3.0
     hooks:
       - id: mypy
         args:
@@ -142,18 +142,18 @@ repos:
           - urllib3
           - regex
   - repo: https://github.com/IamTheFij/docker-pre-commit
-    rev: v3.0.1
+    rev: f626253b23de45412865c07fd076ff95d4cd77a7  # v3.0.1
     hooks:
       - id: docker-compose-check
   - repo: https://github.com/lovesegfault/beautysh.git
-    rev: v6.4.3
+    rev: 885128fe2600889194c69fa19326cf55a3462777  # v6.4.3
     hooks:
       - id: beautysh
         exclude: (run.sh)$
         # additional_dependencies:
         #   - setuptools
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # v0.11.0.1
     hooks:
       - id: shellcheck
         files: ^[^\.].*\.sh$
