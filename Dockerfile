@@ -1,5 +1,5 @@
 ## Start from the official Ubuntu image
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # hadolint ignore=DL3006
 LABEL maintainer="MDW <MDW@private.fr>"
