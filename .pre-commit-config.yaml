@@ -24,7 +24,7 @@ repos:
           - mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
-          - setuptools==80
+          - setuptools==83.0.0
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -65,7 +65,7 @@ repos:
           - -d
           - "{extends: relaxed, rules: {line-length: {max: 90}}}"
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
   - repo: https://github.com/psf/black
@@ -95,24 +95,24 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - pyproject-flake8>=0.0.1a2
-          - flake8-bugbear>=22.1.11
-          - flake8-comprehensions>=3.8.0
-          - flake8_2020>=1.6.1
+          - pyproject-flake8>=7.0.0
+          - flake8-bugbear>=25.11.29
+          - flake8-comprehensions>=3.17.0
+          - flake8_2020>=1.8.1
           - mccabe
-          - pycodestyle>=2.10.0
-          - pyflakes>=2.4.0
+          - pycodestyle>=2.14.0
+          - pyflakes>=3.4.0
   - repo: https://github.com/PyCQA/isort
     rev: 8.0.1
     hooks:
       - id: isort
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.4.2
     hooks:
       - id: codespell
         exclude: (\.md|apps.yaml|translations/.*.yaml)$
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.5
+    rev: v4.0.6
     hooks:
       - id: pylint
         # exclude: ^$
@@ -126,7 +126,7 @@ repos:
         args:
           - --reports=no
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: v2.3.0
     hooks:
       - id: mypy
         args:
